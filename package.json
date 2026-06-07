@@ -12,6 +12,7 @@
     "db:push": "node scripts/set-db-provider.mjs && prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:import-media": "tsx prisma/import-media.ts",
+    "media:manifest": "node scripts/build-media-manifest.mjs",
     "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"

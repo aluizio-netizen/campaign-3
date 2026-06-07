@@ -14,6 +14,23 @@ import path from "node:path";
 const db = new PrismaClient();
 const PUBLIC = path.join(process.cwd(), "public", "media");
 
+// Manifesto versionado (lista de nomes de arquivos). Permite importar a
+// biblioteca mesmo no Render, onde public/media não está presente.
+type MediaManifest = {
+  audio: Record<string, string[]>;
+  pages: Record<string, string[]>;
+};
+function loadManifest(): MediaManifest | null {
+  const p = path.join(process.cwd(), "prisma", "media-manifest.json");
+  if (!fs.existsSync(p)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(p, "utf8")) as MediaManifest;
+  } catch {
+    return null;
+  }
+}
+const manifest = loadManifest();
+
 const ALBUMS = [
   { key: "album-1", title: "Áudios — Módulo 1", kind: "lesson", order: 1 },
   { key: "album-2", title: "Áudios — Módulo 2", kind: "lesson", order: 2 },
@@ -50,7 +67,7 @@ async function main() {
   let totalTracks = 0;
   for (const a of ALBUMS) {
     const dir = path.join(PUBLIC, "audio", a.key);
-    const files = listSorted(dir, ".mp3");
+    const files = manifest?.audio?.[a.key] ?? listSorted(dir, ".mp3");
     if (files.length === 0) {
       console.warn(`  ⚠ Sem faixas em ${a.key} (${dir})`);
       continue;
@@ -78,7 +95,7 @@ async function main() {
   let totalPages = 0;
   for (const c of COLLECTIONS) {
     const dir = path.join(PUBLIC, "pages", c.key);
-    const files = listSorted(dir, ".png");
+    const files = manifest?.pages?.[c.key] ?? listSorted(dir, ".png");
     if (files.length === 0) {
       console.warn(`  ⚠ Sem páginas em ${c.key} (${dir})`);
       continue;

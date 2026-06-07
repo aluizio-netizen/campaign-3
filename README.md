@@ -134,6 +134,11 @@ Isso cria a biblioteca (álbuns/faixas e coleções/páginas) e o curso
 **Campaign 3**. Os alunos já podem ouvir os áudios e folhear o livro em
 **Material do curso** no app.
 
+> O import usa `prisma/media-manifest.json` (versionado, só com a **lista de
+> nomes** dos arquivos), então funciona no Render mesmo sem a mídia pesada no
+> repositório. Se você adicionar/remover áudios ou páginas em `public/media`,
+> regenere com `npm run media:manifest` e commit.
+
 ### Montar as unidades (admin)
 
 Entre como admin e vá em **Admin → Unidades**:
