@@ -1,0 +1,14 @@
+# Normaliza fins de linha: LF no repositório (evita ruído CRLF no Windows e
+# problemas no build Linux do Render).
+* text=auto eol=lf
+
+# Scripts específicos de plataforma
+*.ps1 text eol=crlf
+*.mjs text eol=lf
+
+# Binários (não normalizar)
+*.png binary
+*.jpg binary
+*.mp3 binary
+*.zip binary
+*.db binary
