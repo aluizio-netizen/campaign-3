@@ -19,6 +19,14 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Informe sua senha."),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Informe sua senha atual."),
+  newPassword: z
+    .string()
+    .min(6, "A nova senha deve ter pelo menos 6 caracteres.")
+    .max(72, "Senha muito longa."),
+});
+
 export const aiMessageSchema = z.object({
   conversationId: z.string().optional(),
   mode: z.string().default("free"),

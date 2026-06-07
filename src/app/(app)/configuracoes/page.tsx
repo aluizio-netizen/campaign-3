@@ -1,4 +1,4 @@
-import { Bot, CreditCard, Mail, ShieldCheck } from "lucide-react";
+import { Bot, CreditCard, Mail, ShieldCheck, KeyRound } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import {
   Card,
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AccessBadge } from "@/components/shared/access-badge";
 import { ProfileForm } from "@/components/app/profile-form";
+import { ChangePasswordForm } from "@/components/app/change-password-form";
 import { requireUser } from "@/lib/queries";
 import { isAiConfigured } from "@/lib/ai/ai-provider";
 
@@ -50,6 +51,22 @@ export default async function SettingsPage() {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Segurança */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+              <CardTitle>Segurança</CardTitle>
+            </div>
+            <CardDescription>
+              Troque sua senha de acesso. Use uma senha forte.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChangePasswordForm />
           </CardContent>
         </Card>
 
