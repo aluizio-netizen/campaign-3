@@ -30,8 +30,9 @@ yarn-error.log*
 *.db
 *.db-journal
 
-# mídia do curso (pesada — usar object storage em produção)
-/public/media/
+# mídia do curso — VERSIONADA (Opção A: servida pelo próprio Render).
+# Para tirar o peso do repositório no futuro, mova para um bucket (R2/S3/B2),
+# defina NEXT_PUBLIC_MEDIA_BASE_URL e volte a ignorar /public/media/.
 
 # material-fonte (scans/zip/áudios originais) — não versionar
 /Campaign_3/
