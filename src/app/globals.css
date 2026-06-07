@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Tokens de tema (paleta premium provisória).
+ * Inspiração discreta: azul profundo + dourado, fundo claro sofisticado.
+ * Para trocar a identidade visual, edite estas variáveis.
+ */
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 215 28% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+
+    /* Azul profundo (cor principal) */
+    --primary: 215 60% 23%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Verde-petróleo discreto (secundária) */
+    --secondary: 190 35% 30%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Dourado discreto (detalhe/accent) */
+    --accent: 38 52% 50%;
+    --accent-foreground: 215 28% 17%;
+
+    --muted: 215 20% 94%;
+    --muted-foreground: 215 16% 42%;
+
+    --success: 152 45% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 80% 48%;
+    --warning-foreground: 0 0% 100%;
+    --danger: 0 60% 48%;
+    --danger-foreground: 0 0% 100%;
+
+    --border: 215 20% 88%;
+    --input: 215 20% 86%;
+    --ring: 215 60% 35%;
+
+    --radius: 0.85rem;
+
+    /* Tipografia (stacks de sistema — sem dependência de rede no build) */
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
+      "Times New Roman", serif;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .gradient-hero {
+    background:
+      radial-gradient(60% 60% at 85% 0%, hsl(38 52% 50% / 0.12), transparent 60%),
+      radial-gradient(50% 50% at 0% 100%, hsl(190 35% 30% / 0.1), transparent 60%),
+      linear-gradient(180deg, hsl(215 60% 23%), hsl(215 55% 18%));
+  }
+  .card-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}

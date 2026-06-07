@@ -1,0 +1,368 @@
+// ───────────────────────────────────────────────────────────────────────────
+// Missão Inglês — Schema Prisma
+//
+// PROVIDER DUAL (SQLite local / PostgreSQL no Render):
+//   A linha `provider` abaixo é ajustada automaticamente pelo script
+//   `scripts/set-db-provider.mjs` conforme a variável de ambiente
+//   DATABASE_PROVIDER (padrão "sqlite"). No Render, defina
+//   DATABASE_PROVIDER="postgresql" — o build cuida do resto.
+//   NÃO é preciso editar este arquivo à mão.
+//
+// O schema evita `enum` e atributos específicos de Postgres (@db.*) de propósito,
+// para permanecer compatível com os dois bancos. Campos "tipo enum" usam String
+// + constantes em src/lib/constants.ts.
+// ───────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // gerenciado por scripts/set-db-provider.mjs (DATABASE_PROVIDER)
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── Usuários ──────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("STUDENT") // STUDENT | ADMIN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Gamificação / estudo
+  streakCount  Int       @default(0)
+  lastStudyAt  DateTime?
+
+  // Estrutura preparada para pagamento futuro (todos liberados por ora)
+  plan               String  @default("FREE")    // FREE | PREMIUM (placeholder)
+  subscriptionStatus String  @default("ACTIVE")  // ACTIVE | INACTIVE | TRIAL
+  paymentProvider    String?                     // stripe | mercadopago | hotmart | kiwify
+  accessLevel        String  @default("FULL")    // FULL | LIMITED
+  accessBlocked      Boolean @default(false)     // admin pode bloquear manualmente
+
+  progress        UserProgress[]
+  quizAttempts    QuizAttempt[]
+  pronunciations  PronunciationAttempt[]
+  conversations   AiConversation[]
+  certificates    Certificate[]
+  studyPlans      StudyPlan[]
+  flashcardReviews FlashcardReview[]
+  adminLogs       AdminLog[] @relation("AdminLogActor")
+}
+
+// ─────────────────────────────── Catálogo ──────────────────────────────────
+
+model Course {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  language    String   @default("en") // idioma ensinado
+  estimatedHours Int    @default(20)
+  createdAt   DateTime @default(now())
+
+  levels Level[]
+  units  Unit[]
+}
+
+model Level {
+  id          String  @id @default(cuid())
+  courseId    String
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  slug        String  @unique
+  code        String  // A1 | A2 | B1
+  title       String
+  description String
+  order       Int
+
+  lessons Lesson[]
+}
+
+model Lesson {
+  id          String  @id @default(cuid())
+  levelId     String
+  level       Level   @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  slug        String  @unique
+  title       String
+  order       Int
+  objective   String
+  durationMin Int     @default(15)
+  summary     String
+
+  content       LessonContent?
+  vocabulary    VocabularyItem[]
+  flashcards    Flashcard[]
+  quiz          Quiz?
+  progress      UserProgress[]
+  pronunciations PronunciationAttempt[]
+}
+
+// Conteúdo longo da aula (seções pedagógicas). Campos estruturados em Json.
+model LessonContent {
+  id        String @id @default(cuid())
+  lessonId  String @unique
+  lesson    Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  warmup           String // aquecimento (markdown simples)
+  grammar          String // gramática essencial em PT-BR (markdown)
+  comparison       String // comparação com o português
+  falseFriends     String @default("[]") // JSON: [{ en, pt, note }]
+  dialogue         String // JSON: [{ speaker, en, pt }]
+  phrases          String // JSON: [{ en, pt, tip }]
+  guidedExercise   String // exercício guiado (markdown)
+  writingExercise  String // prática de escrita
+  speakingExercise String // prática de fala
+  listeningExercise String // exercício de escuta
+  mission          String // missão final
+  checklist        String // JSON: string[]
+}
+
+model VocabularyItem {
+  id            String @id @default(cuid())
+  lessonId      String
+  lesson        Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  term          String // inglês
+  translation   String // português
+  example       String // exemplo em inglês
+  pronunciation String // dica de pronúncia (aproximação PT-BR)
+  category      String
+  order         Int    @default(0)
+}
+
+model Flashcard {
+  id              String @id @default(cuid())
+  lessonId        String
+  lesson          Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  front           String // termo em inglês
+  back            String // tradução em português
+  example         String // exemplo em inglês
+  pronunciationTip String
+  category        String
+  order           Int    @default(0)
+
+  reviews FlashcardReview[]
+}
+
+model FlashcardReview {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcardId String
+  flashcard   Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  difficulty  String   // EASY | MEDIUM | HARD
+  correctCount Int     @default(0)
+  reviewedAt  DateTime @default(now())
+
+  @@unique([userId, flashcardId])
+}
+
+// ─────────────────────────────── Quizzes ───────────────────────────────────
+
+model Quiz {
+  id        String @id @default(cuid())
+  lessonId  String @unique
+  lesson    Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title     String
+  passScore Int    @default(70) // % mínimo para aprovar
+
+  questions Question[]
+  attempts  QuizAttempt[]
+}
+
+model Question {
+  id            String @id @default(cuid())
+  quizId        String
+  quiz          Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  order         Int
+  // MULTIPLE_CHOICE | FILL_BLANK | TRANSLATE_PT_EN | TRANSLATE_EN_PT |
+  // FIND_ERROR | WORD_ORDER | FREE_TEXT
+  type          String
+  prompt        String
+  explanation   String
+  correctAnswer String? // para tipos textuais (não múltipla escolha)
+
+  options AnswerOption[]
+}
+
+model AnswerOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean  @default(false)
+  order      Int      @default(0)
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  score     Int      // % de acerto
+  correct   Int
+  total     Int
+  passed    Boolean
+  answers   String   // JSON: respostas do aluno para revisão
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────── Progresso ─────────────────────────────────
+
+model UserProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  status      String   @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED
+  lessonRead  Boolean  @default(false)
+  quizPassed  Boolean  @default(false)
+  pronunciationDone Boolean @default(false)
+  completedAt DateTime?
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+// ─────────────────────────────── Pronúncia ─────────────────────────────────
+
+model PronunciationAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  String?
+  lesson    Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  phrase    String
+  score     Int      // nota simulada 0-100
+  feedback  String
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────── Professor IA ──────────────────────────────
+
+model AiConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode      String   @default("free") // free | correction | travel | pronunciation | review | study_plan
+  title     String   @default("Nova conversa")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages AiMessage[]
+}
+
+model AiMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String   // user | assistant | system
+  content        String
+  createdAt      DateTime @default(now())
+}
+
+// ─────────────────────────────── Certificado ───────────────────────────────
+
+model Certificate {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code         String   @unique
+  courseTitle  String
+  studentName  String
+  hours        Int
+  score        Int
+  issuedAt     DateTime @default(now())
+}
+
+// ─────────────────────────────── Plano de estudo (IA) ──────────────────────
+
+model StudyPlan {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String   // JSON: estrutura do plano gerado
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────── Admin ─────────────────────────────────────
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     User     @relation("AdminLogActor", fields: [actorId], references: [id], onDelete: Cascade)
+  action    String
+  target    String?
+  createdAt DateTime @default(now())
+}
+
+// ─────────────── Material real do curso (Campaign 3) ───────────────────────
+// Unidade autorada pelo admin. O TEXTO é fornecido pelo administrador
+// (detentor dos direitos); a plataforma só hospeda mídia e oferece o editor.
+
+model Unit {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  slug        String   @unique
+  order       Int
+  title       String
+  summary     String   @default("")
+  objective   String   @default("")
+  body        String   @default("") // texto autorado (markdown)
+  vocab       String   @default("[]") // JSON: [{term,translation,example,pronunciation,category}]
+  durationMin Int      @default(20)
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tracks AudioTrack[]
+  pages  BookPage[]
+}
+
+// Biblioteca de áudio (arquivos do usuário hospedados em /public/media/audio)
+model AudioAlbum {
+  id     String  @id @default(cuid())
+  key    String  @unique
+  title  String
+  kind   String  @default("lesson") // lesson | exercise
+  order  Int
+  tracks AudioTrack[]
+}
+
+model AudioTrack {
+  id      String  @id @default(cuid())
+  albumId String
+  album   AudioAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  order   Int
+  title   String
+  src     String  // caminho público, ex.: /media/audio/album-1/track-01.mp3
+  unitId  String?
+  unit    Unit?   @relation(fields: [unitId], references: [id], onDelete: SetNull)
+}
+
+// Biblioteca de páginas escaneadas (imagens do usuário em /public/media/pages)
+model BookCollection {
+  id    String @id @default(cuid())
+  key   String @unique
+  title String
+  kind  String @default("book") // book | exercise
+  order Int
+  pages BookPage[]
+}
+
+model BookPage {
+  id           String @id @default(cuid())
+  collectionId String
+  collection   BookCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  order        Int
+  src          String // caminho público, ex.: /media/pages/book-a/page-001.png
+  unitId       String?
+  unit         Unit?  @relation(fields: [unitId], references: [id], onDelete: SetNull)
+}

@@ -1,0 +1,45 @@
+# Render Blueprint — Missão Inglês
+# Para usar: conecte o repositório no Render e selecione "Blueprint".
+# O provider do Prisma é ajustado automaticamente pela env DATABASE_PROVIDER
+# (definida como "postgresql" abaixo) — não é preciso editar o schema.
+
+databases:
+  - name: missao-ingles-db
+    databaseName: missao_ingles
+    plan: free
+
+services:
+  - type: web
+    name: missao-ingles
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run db:provider && npx prisma db push && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_PROVIDER
+        value: postgresql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: missao-ingles-db
+          property: connectionString
+      - key: NEXT_PUBLIC_MEDIA_BASE_URL
+        sync: false # URL do bucket R2/S3/CDN onde você subiu public/media
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        sync: false # defina com a URL pública do serviço (ex.: https://missao-ingles.onrender.com)
+      - key: AI_PROVIDER
+        value: demo
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_MODEL
+        sync: false
+      - key: ADMIN_EMAIL
+        value: admin@missaoingles.com
+      - key: ADMIN_PASSWORD
+        sync: false # defina uma senha forte
+      - key: DEMO_STUDENT_EMAIL
+        value: aluno@missaoingles.com
+      - key: DEMO_STUDENT_PASSWORD
+        sync: false

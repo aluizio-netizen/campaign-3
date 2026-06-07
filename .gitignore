@@ -1,0 +1,46 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env*.local
+
+# database (SQLite local)
+/prisma/dev.db
+/prisma/dev.db-journal
+*.db
+*.db-journal
+
+# mídia do curso (pesada — usar object storage em produção)
+/public/media/
+
+# material-fonte (scans/zip/áudios originais) — não versionar
+/Campaign_3/
+/Campaign_3_Exc/
+
+# typescript
+*.tsbuildinfo
+
+# os / editor
+Thumbs.db
+.idea
+.vscode
