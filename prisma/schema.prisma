@@ -363,6 +363,7 @@ model BookPage {
   collection   BookCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   order        Int
   src          String // caminho público, ex.: /media/pages/book-a/page-001.png
+  text         String @default("") // texto OCR da página (vazio = exibir só o scan)
   unitId       String?
   unit         Unit?  @relation(fields: [unitId], references: [id], onDelete: SetNull)
 }
