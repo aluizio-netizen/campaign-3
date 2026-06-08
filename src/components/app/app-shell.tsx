@@ -31,7 +31,7 @@ interface NavItem {
 
 const baseNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/material", label: "Material do curso", icon: Library },
+  { href: "/material", label: "Unidades", icon: Library },
   { href: "/curso", label: "Aulas guiadas", icon: BookOpen },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
   { href: "/professor-ia", label: "Professor IA", icon: Bot },

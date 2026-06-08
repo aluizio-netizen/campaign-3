@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Target, Headphones, BookOpen, BookMarked } from "lucide-react";
+import { ArrowLeft, Target, Headphones, BookOpen, BookMarked, Dumbbell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RichText } from "@/components/app/rich-text";
 import { VocabularyTable, type VocabItem } from "@/components/app/lesson-blocks";
@@ -20,7 +20,7 @@ export default async function UnitPage({
   const unit = await db.unit.findUnique({
     where: { slug: params.slug },
     include: {
-      tracks: { orderBy: { order: "asc" } },
+      tracks: { include: { album: true }, orderBy: { order: "asc" } },
       pages: { orderBy: { order: "asc" } },
     },
   });
@@ -28,6 +28,10 @@ export default async function UnitPage({
   if (!unit || (!unit.published && user.role !== "ADMIN")) notFound();
 
   const vocab = parseJson<VocabItem[]>(unit.vocab, []);
+
+  // Separa áudios de aula (kind "lesson") e de exercício (kind "exercise").
+  const classTracks = unit.tracks.filter((t) => t.album.kind !== "exercise");
+  const exerciseTracks = unit.tracks.filter((t) => t.album.kind === "exercise");
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -75,12 +79,21 @@ export default async function UnitPage({
           </section>
         )}
 
-        {unit.tracks.length > 0 && (
+        {classTracks.length > 0 && (
           <section>
             <h2 className="mb-2 flex items-center gap-2 font-display text-lg font-semibold">
-              <Headphones className="h-4 w-4 text-primary" /> Áudios da unidade
+              <Headphones className="h-4 w-4 text-primary" /> Áudios da aula
             </h2>
-            <AudioPlaylist tracks={unit.tracks} />
+            <AudioPlaylist tracks={classTracks} />
+          </section>
+        )}
+
+        {exerciseTracks.length > 0 && (
+          <section>
+            <h2 className="mb-2 flex items-center gap-2 font-display text-lg font-semibold">
+              <Dumbbell className="h-4 w-4 text-accent" /> Áudios de exercício
+            </h2>
+            <AudioPlaylist tracks={exerciseTracks} />
           </section>
         )}
 

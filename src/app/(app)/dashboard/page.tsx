@@ -48,9 +48,9 @@ export default async function DashboardPage() {
             <Library className="h-6 w-6" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-display text-lg font-semibold">Material do curso (Campaign 3)</p>
+            <p className="font-display text-lg font-semibold">Unidades do curso (Campaign 3)</p>
             <p className="text-sm text-white/80">
-              Áudios e livro do curso, mais as unidades estruturadas.
+              As 12 unidades com páginas do livro e áudios — comece por aqui.
             </p>
           </div>
           <ArrowRight className="h-5 w-5 shrink-0" />

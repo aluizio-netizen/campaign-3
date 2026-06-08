@@ -29,8 +29,8 @@ export default async function MaterialPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
-        title="Material do curso"
-        description="Áudios e livro do Campaign 3. As unidades estruturadas são montadas pela equipe."
+        title="Unidades do curso"
+        description="As 12 unidades do Campaign 3, com as páginas do livro e os áudios. Abaixo, a biblioteca completa de áudios e do livro."
       />
 
       {/* Unidades publicadas */}
