@@ -13,7 +13,7 @@ services:
     name: missao-ingles
     runtime: node
     plan: free
-    buildCommand: npm install && npm run db:provider && npx prisma db push && npm run build
+    buildCommand: npm install && npm run db:provider && npx prisma db push && npm run db:import-media && npm run build
     startCommand: npm run start
     healthCheckPath: /
     envVars:
