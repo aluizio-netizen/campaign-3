@@ -2,8 +2,9 @@
  * Importa a mídia real do curso (áudios + páginas escaneadas) já extraída em
  * public/media para o banco, criando a biblioteca e o curso "Campaign 3".
  *
- * Os ARQUIVOS são do usuário (hospedados localmente). Esta importação só
- * registra caminhos/ordem — não lê nem reproduz o conteúdo textual do material.
+ * Os ARQUIVOS são do usuário (digitalização do próprio exemplar). A importação
+ * registra caminhos/ordem das imagens e, quando presente em prisma/book-text.json,
+ * o texto OCR por página — material privado, servido somente atrás de login.
  *
  * Rode com: npm run db:import-media
  */
@@ -30,6 +31,20 @@ function loadManifest(): MediaManifest | null {
   }
 }
 const manifest = loadManifest();
+
+// Texto OCR por página (gerado por scripts/build-book-text.mjs). Versionado
+// apenas em repositório privado e servido atrás de login. Chave -> texto[].
+type BookText = Record<string, string[]>;
+function loadBookText(): BookText {
+  const p = path.join(process.cwd(), "prisma", "book-text.json");
+  if (!fs.existsSync(p)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(p, "utf8")) as BookText;
+  } catch {
+    return {};
+  }
+}
+const bookText = loadBookText();
 
 const ALBUMS = [
   { key: "album-1", title: "Áudios — Módulo 1", kind: "lesson", order: 1 },
@@ -100,6 +115,7 @@ async function main() {
       console.warn(`  ⚠ Sem páginas em ${c.key} (${dir})`);
       continue;
     }
+    const texts = bookText[c.key] ?? [];
     await db.bookCollection.create({
       data: {
         key: c.key,
@@ -110,12 +126,14 @@ async function main() {
           create: files.map((f, i) => ({
             order: i + 1,
             src: `/media/pages/${c.key}/${f}`,
+            text: texts[i] ?? "",
           })),
         },
       },
     });
     totalPages += files.length;
-    console.log(`  ✔ ${c.title}: ${files.length} páginas`);
+    const withText = texts.filter((t) => t && t.length > 0).length;
+    console.log(`  ✔ ${c.title}: ${files.length} páginas (${withText} com texto)`);
   }
 
   // ── Curso real (Campaign 3) ──────────────────────────────────────────────
