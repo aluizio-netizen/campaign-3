@@ -38,6 +38,10 @@ yarn-error.log*
 /Campaign_3/
 /Campaign_3_Exc/
 
+# python (scripts de geração de documentos)
+__pycache__/
+*.pyc
+
 # typescript
 *.tsbuildinfo
 
