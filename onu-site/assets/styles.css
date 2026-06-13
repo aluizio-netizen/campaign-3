@@ -1,0 +1,135 @@
+/* ============================================================
+   ONU / Model UN — Aluizio Educação
+   Site de trabalho do delegado. Paleta diplomática: navy + dourado.
+   ============================================================ */
+:root{
+  --navy:#1B2A4A; --navy2:#22335A; --blue:#2E5AAC; --blue-soft:#E9F0FB;
+  --gold:#C9A227; --gold-soft:#FBF4DD;
+  --ink:#2A2F3A; --muted:#5C6678; --line:#E2E7F0; --bg:#F5F7FB;
+  --card:#FFFFFF; --ok:#1E8E5A; --radius:14px;
+  --shadow:0 1px 2px rgba(16,24,40,.05), 0 10px 30px rgba(16,24,40,.08);
+  --display:Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3{font-family:var(--display);color:var(--navy);line-height:1.2;margin:0 0 .4em}
+.container{max-width:980px;margin:0 auto;padding:0 20px}
+
+/* ---------- Topbar ---------- */
+.topbar{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.topbar .container{display:flex;align-items:center;gap:16px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1.15rem;color:#fff}
+.brand .mark{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--gold);color:var(--navy);font-weight:800;font-family:var(--sans)}
+.brand b{color:var(--gold)}
+.nav-toggle{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;display:none}
+.nav{margin-left:auto;display:flex;flex-wrap:wrap;gap:4px}
+.nav a{color:#dfe6f2;padding:7px 10px;border-radius:8px;font-size:.86rem;font-weight:600}
+.nav a:hover,.nav a.active{background:rgba(255,255,255,.12);color:#fff;text-decoration:none}
+
+/* ---------- Hero ---------- */
+.hero{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:54px 0 48px}
+.hero h1{color:#fff;font-size:2.2rem;margin-bottom:.2em}
+.hero .lead{color:#dbe4f4;font-size:1.1rem;max-width:680px}
+.hero .pills{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}
+.pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:7px 13px;border-radius:999px;font-size:.85rem;font-weight:600}
+.hero .gold-line{height:4px;width:90px;background:var(--gold);border-radius:3px;margin-top:24px}
+
+/* ---------- Sections ---------- */
+section.block{padding:42px 0;border-bottom:1px solid var(--line)}
+section.block:nth-child(even){background:#fff}
+.eyebrow{display:inline-block;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--blue);background:var(--blue-soft);padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.section-title{font-size:1.6rem}
+.section-sub{color:var(--muted);max-width:720px;margin-top:-2px}
+
+/* ---------- Cards / grid ---------- */
+.grid{display:grid;gap:16px}
+.grid.cols-2{grid-template-columns:repeat(2,1fr)}
+.grid.cols-3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.card h3{font-size:1.1rem;margin-bottom:.3em}
+.card .tag{font-size:.72rem;font-weight:800;color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
+
+/* ---------- Lessons accordion ---------- */
+.lesson{background:#fff;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.lesson > summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;gap:14px;font-weight:700;color:var(--navy)}
+.lesson > summary::-webkit-details-marker{display:none}
+.lesson .num{display:grid;place-items:center;min-width:38px;height:38px;border-radius:10px;background:var(--navy);color:var(--gold);font-family:var(--display);font-weight:700}
+.lesson .dur{margin-left:auto;font-size:.78rem;font-weight:700;color:var(--navy);background:var(--gold-soft);border:1px solid #EBD9A0;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.lesson[open] > summary{background:var(--blue-soft)}
+.lesson .body{padding:4px 20px 20px}
+.lesson .obj{background:var(--blue-soft);border-radius:10px;padding:10px 14px;margin:8px 0 14px;font-size:.95rem}
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{display:flex;gap:14px;padding:8px 0;border-top:1px dashed var(--line)}
+.timeline .t{min-width:96px;font-weight:700;color:var(--blue);font-size:.85rem}
+.callout{border-left:4px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:8px;margin-top:12px;font-size:.92rem}
+.callout.blue{border-color:var(--blue);background:var(--blue-soft)}
+
+/* ---------- Tables ---------- */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:.92rem}
+thead th{background:var(--navy);color:#fff;text-align:left;padding:11px 14px;font-weight:700}
+tbody td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:#FAFBFE}
+.cheat thead th{background:var(--blue)}
+
+/* ---------- Tools / forms ---------- */
+.tool{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.field{margin:12px 0}
+.field label{display:block;font-weight:700;color:var(--navy);font-size:.9rem;margin-bottom:6px}
+.field .hint{font-weight:400;color:var(--muted);font-size:.82rem}
+textarea,input[type=text]{width:100%;font-family:var(--sans);font-size:.95rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFDFF;resize:vertical}
+textarea:focus,input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(46,90,172,.12)}
+.savehint{font-size:.78rem;color:var(--ok);font-weight:600;opacity:0;transition:opacity .3s}
+.savehint.show{opacity:1}
+
+.steps{counter-reset:step;list-style:none;padding:0;margin:0}
+.steps li{position:relative;padding:10px 0 10px 46px;border-top:1px solid var(--line)}
+.steps li:before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
+
+.checklist{list-style:none;padding:0;margin:0}
+.checklist li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.checklist input{margin-top:3px;width:18px;height:18px;accent-color:var(--blue)}
+.checklist li.done span{color:var(--muted);text-decoration:line-through}
+
+select.rubric{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff}
+
+/* ---------- Buttons / toolbar ---------- */
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:var(--sans)}
+.btn.primary{background:var(--blue);color:#fff}
+.btn.primary:hover{background:#264c92}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy)}
+.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.gold:hover{background:#b8911f}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+
+/* ---------- Example badge ---------- */
+.example-banner{background:var(--gold-soft);border:1px solid #EBD9A0;border-radius:var(--radius);padding:14px 18px;margin-bottom:18px}
+.example-banner b{color:#8a6d12}
+
+/* ---------- Footer ---------- */
+footer{background:var(--navy);color:#cdd6e6;padding:30px 0;font-size:.88rem}
+footer .container{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+footer b{color:#fff}
+
+/* ---------- Responsive ---------- */
+@media (max-width:760px){
+  .grid.cols-2,.grid.cols-3{grid-template-columns:1fr}
+  .nav{display:none;position:absolute;top:60px;left:0;right:0;background:var(--navy);flex-direction:column;padding:10px 16px;gap:2px;box-shadow:0 12px 24px rgba(0,0,0,.3)}
+  .nav.open{display:flex}
+  .nav-toggle{display:block}
+  .hero h1{font-size:1.7rem}
+}
+
+/* ---------- Print ---------- */
+@media print{
+  .topbar,.nav,.nav-toggle,.toolbar,.hero .pills,.example-banner .btn{display:none!important}
+  .hero{background:#fff;color:#000;padding:10px 0}
+  .hero h1,.hero .lead{color:#000}
+  body{background:#fff}
+  section.block{break-inside:avoid;border:none;padding:14px 0}
+  .card,.tool,.lesson,.table-wrap{box-shadow:none}
+}

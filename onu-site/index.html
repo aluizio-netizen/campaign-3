@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONU & Model UN — Preparação do Delegado | Aluizio Educação</title>
+<meta name="description" content="Plataforma de trabalho para simulações Model UN: estruturas da ONU, redação de resoluções, negociação e obtenção de fundos. Por Aluizio Educação.">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="#inicio">
+      <span class="mark">AE</span>
+      <span>Aluizio<b>·</b>ONU</span>
+    </a>
+    <button class="nav-toggle" aria-label="Menu" onclick="document.getElementById('nav').classList.toggle('open')">☰ Menu</button>
+    <nav class="nav" id="nav">
+      <a href="#aulas">Curso</a>
+      <a href="#glossario">Glossário</a>
+      <a href="#orgaos">Órgãos</a>
+      <a href="#procedimento">Procedimento</a>
+      <a href="#documentos">Documentos</a>
+      <a href="#financiamento">Fundos</a>
+      <a href="#blocos">Blocos</a>
+      <a href="#checklist">Checklist</a>
+      <a href="#exemplo">Exemplo</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero" id="inicio">
+  <div class="container">
+    <h1>A ONU na prática, para Model UN</h1>
+    <p class="lead">Domine as estruturas das Nações Unidas e aprenda a usá-las para resolver
+      problemas das simulações — negociar, redigir resoluções e <b>obter fundos</b> para suas
+      propostas. Preencha os modelos aqui; seu trabalho fica salvo no seu navegador.</p>
+    <div class="pills">
+      <span class="pill">10 horas · 5 encontros</span>
+      <span class="pill">Modelos preenchíveis</span>
+      <span class="pill">Salva automaticamente</span>
+      <span class="pill">Exporta e imprime</span>
+    </div>
+    <div class="gold-line"></div>
+  </div>
+</section>
+
+<!-- Aulas -->
+<section class="block" id="aulas">
+  <div class="container">
+    <span class="eyebrow">Curso</span>
+    <h2 class="section-title">Planejamento aula por aula</h2>
+    <p class="section-sub">Da estrutura à ação: cada aula transforma um conceito da ONU em uma ferramenta usável na mesa.</p>
+    <div id="lessons" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<!-- Glossário -->
+<section class="block" id="glossario">
+  <div class="container">
+    <span class="eyebrow">Referência</span>
+    <h2 class="section-title">Glossário essencial</h2>
+    <p class="section-sub">Os termos que mais aparecem no comitê. Use a busca.</p>
+    <div class="field" style="max-width:360px;margin-top:14px">
+      <input type="text" id="glossSearch" placeholder="Buscar termo…" oninput="filterGlossary(this.value)">
+    </div>
+    <div class="table-wrap"><table><thead><tr><th style="width:24%">Termo</th><th>O que é</th></tr></thead><tbody id="glossBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Órgãos -->
+<section class="block" id="orgaos">
+  <div class="container">
+    <span class="eyebrow">Referência</span>
+    <h2 class="section-title">Qual órgão para qual problema?</h2>
+    <p class="section-sub">Escolha o comitê competente conforme o tipo de problema.</p>
+    <div class="table-wrap" style="margin-top:14px"><table><thead><tr><th style="width:48%">Tipo de problema</th><th>Órgão / comitê indicado</th></tr></thead><tbody id="organsBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Procedimento -->
+<section class="block" id="procedimento">
+  <div class="container">
+    <span class="eyebrow">Procedimento</span>
+    <h2 class="section-title">Moções e pontos — cheat sheet</h2>
+    <p class="section-sub">Saiba qual moção usar e quando.</p>
+    <div class="table-wrap" style="margin-top:14px"><table class="cheat"><thead><tr><th style="width:34%">Moção / ponto</th><th>Quando usar</th></tr></thead><tbody id="motionsBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Documentos -->
+<section class="block" id="documentos">
+  <div class="container">
+    <span class="eyebrow">Mãos à obra</span>
+    <h2 class="section-title">Documentos do delegado</h2>
+    <p class="section-sub">Preencha seu Position Paper e sua Draft Resolution. Tudo salva automaticamente.</p>
+
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <h3>Position Paper</h3>
+        <div class="field"><label>País / delegação</label><input type="text" data-save="pp_pais" placeholder="Ex.: República Federativa do Brasil"></div>
+        <div class="field"><label>A) Contexto do tema <span class="hint">— por que importa</span></label><textarea data-save="pp_contexto" rows="3"></textarea></div>
+        <div class="field"><label>B) Posição do país <span class="hint">— o que defende e por quê</span></label><textarea data-save="pp_posicao" rows="3"></textarea></div>
+        <div class="field"><label>C) Propostas de solução</label><textarea data-save="pp_propostas" rows="3"></textarea></div>
+        <div class="field"><label>D) Alianças e negociação</label><textarea data-save="pp_aliancas" rows="2"></textarea></div>
+        <div class="toolbar">
+          <button class="btn primary" onclick="exportTool('position','Position Paper',['pp_pais','pp_contexto','pp_posicao','pp_propostas','pp_aliancas'])">⬇ Exportar</button>
+          <button class="btn ghost" onclick="window.print()">🖨 Imprimir</button>
+        </div>
+      </div>
+
+      <div class="tool">
+        <h3>Draft Resolution</h3>
+        <div class="field"><label>Comitê / Tema / Patrocinadores</label><input type="text" data-save="dr_cabecalho"></div>
+        <div class="field"><label>Cláusulas preambulares <span class="hint">— use verbos como “Reafirmando”, “Profundamente preocupado(a) com”</span></label><textarea data-save="dr_pre" rows="4"></textarea></div>
+        <div class="field"><label>Cláusulas operativas <span class="hint">— ações numeradas: “Decide…”, “Solicita…”</span></label><textarea data-save="dr_op" rows="5"></textarea></div>
+        <div class="callout">Cláusula de financiamento (modelo): <em>“Solicita a criação de um fundo fiduciário voluntário, administrado por [agência], destinado a [objetivo], financiado por contribuições de Estados-membros e parceiros, com prestação de contas semestral ao [órgão].”</em></div>
+        <div class="toolbar">
+          <button class="btn primary" onclick="exportTool('resolution','Draft Resolution',['dr_cabecalho','dr_pre','dr_op'])">⬇ Exportar</button>
+          <button class="btn ghost" onclick="window.print()">🖨 Imprimir</button>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">Banco de verbos</h3>
+    <div class="table-wrap"><table><thead><tr><th style="width:50%">Verbos preambulares</th><th>Verbos operativos</th></tr></thead><tbody id="verbsBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Financiamento -->
+<section class="block" id="financiamento">
+  <div class="container">
+    <span class="eyebrow">Tema central</span>
+    <h2 class="section-title">Como obter fundos</h2>
+    <p class="section-sub">O passo a passo para financiar uma iniciativa em comitê.</p>
+    <ol class="steps" id="fundingSteps" style="margin-top:16px"></ol>
+    <div class="tool" style="margin-top:18px">
+      <div class="field"><label>Minha estratégia de financiamento</label><textarea data-save="fin_estrategia" rows="3"></textarea></div>
+      <div class="field"><label>Fonte escolhida <span class="hint">— orçamento regular, voluntária, trust fund, pooled fund…</span></label><input type="text" data-save="fin_fonte"></div>
+      <div class="field"><label>Doadores / parceiros a abordar</label><textarea data-save="fin_doadores" rows="2"></textarea></div>
+      <div class="toolbar"><button class="btn primary" onclick="exportTool('financiamento','Estrategia de Financiamento',['fin_estrategia','fin_fonte','fin_doadores'])">⬇ Exportar</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- Blocos + Discurso -->
+<section class="block" id="blocos">
+  <div class="container">
+    <span class="eyebrow">Estratégia</span>
+    <h2 class="section-title">Mapa de blocos e discurso de abertura</h2>
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <h3>Mapa de blocos</h3>
+        <div class="field"><label>Aliados prováveis e seus interesses</label><textarea data-save="blocos_aliados" rows="4"></textarea></div>
+        <div class="field"><label>Oposição e pontos de atrito</label><textarea data-save="blocos_oposicao" rows="3"></textarea></div>
+      </div>
+      <div class="tool">
+        <h3>Discurso de abertura <span class="tag">45–60 s</span></h3>
+        <p style="font-size:.9rem;color:var(--muted);margin-top:0">Saudação à mesa → posição em 1 frase → 1–2 propostas → chamado à cooperação.</p>
+        <div class="field"><label>Meu discurso</label><textarea data-save="discurso" rows="6"></textarea></div>
+        <div class="toolbar"><button class="btn ghost" onclick="window.print()">🖨 Imprimir</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Checklist + Rubrica -->
+<section class="block" id="checklist">
+  <div class="container">
+    <span class="eyebrow">Antes e depois</span>
+    <h2 class="section-title">Checklist e autoavaliação</h2>
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <h3>Checklist pré-simulação</h3>
+        <ul class="checklist" id="checklistBody"></ul>
+      </div>
+      <div class="tool">
+        <h3>Rubrica de autoavaliação</h3>
+        <p style="font-size:.9rem;color:var(--muted);margin-top:0">Dê nota de 1 a 5 após cada simulação.</p>
+        <div class="table-wrap"><table><thead><tr><th>Critério</th><th style="width:90px">Nota</th></tr></thead><tbody id="rubricBody"></tbody></table></div>
+      </div>
+    </div>
+    <div class="toolbar"><button class="btn gold" onclick="resetAll()">↺ Limpar tudo</button></div>
+  </div>
+</section>
+
+<!-- Exemplo resolvido -->
+<section class="block" id="exemplo">
+  <div class="container">
+    <span class="eyebrow">Gabarito</span>
+    <h2 class="section-title">Exemplo resolvido</h2>
+    <div class="example-banner">
+      <b>Caso:</b> Crise humanitária no Chifre da África — seca severa e deslocamento em massa.
+      Veja abaixo como um delegado preencheria os documentos. Clique para carregar nos formulários e usar como ponto de partida.
+      <div class="toolbar"><button class="btn gold" onclick="loadExample()">⬇ Carregar exemplo nos formulários</button></div>
+    </div>
+    <div id="exampleBody" class="grid" style="gap:14px"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <span>© <span id="year"></span> <b>Aluizio Educação</b> · ONU & Model UN</span>
+    <span>[e-mail] · [WhatsApp] · onu.aluizio.education</span>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+</body>
+</html>
