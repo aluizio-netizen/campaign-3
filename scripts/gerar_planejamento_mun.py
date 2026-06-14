@@ -190,7 +190,6 @@ def add_title_block(doc):
     line = doc.add_table(rows=1, cols=1)
     no_borders(line); set_width(line, 6.5, [1.0])
     shade(line.rows[0].cells[0], GOLD)
-    line.rows[0].cells[0].height = Pt(3)
     cell_text(line.rows[0].cells[0], "", size=2)
 
 def add_meta_strip(doc):
