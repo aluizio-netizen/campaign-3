@@ -1,9 +1,17 @@
 # Publica o subsite estático onu-site/ (ONU & Model UN — Aluizio Pires Educação)
-# num projeto Netlify dedicado ao subdomínio onu.aluizio.education.
-# É um site estático puro: não há etapa de build.
+# no subdomínio onu.aluizio.education.
+#
+# IMPORTANTE: "base = onu-site" faz o Netlify rodar a partir dessa pasta, que NÃO
+# contém package.json. Assim ele NÃO detecta nem tenta buildar o app Next.js da
+# raiz do repositório (causa comum de "o deploy começa e dá erro"). É um site
+# estático puro, sem etapa de build.
 [build]
-  publish = "onu-site"
-  command = ""
+  base = "onu-site"
+  publish = "."
+
+[build.environment]
+  # impede que qualquer plugin de framework (ex.: Next.js) tente buildar
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
 # Cabeçalhos de segurança básicos
 [[headers]]
