@@ -1,0 +1,16 @@
+# Static site (English) for unitednations.aluizio.education — Aluizio Pires Education.
+# This file is read when the Netlify site's BASE DIRECTORY is set to "un-site",
+# so Netlify runs from a folder with no package.json and does NOT try to build
+# the Next.js app at the repo root. Pure static site, no build step.
+[build]
+  publish = "."
+
+[build.environment]
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
