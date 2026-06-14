@@ -27,6 +27,11 @@ h1,h2,h3{font-family:var(--display);color:var(--navy);line-height:1.2;margin:0 0
 .brand .brandtext{white-space:nowrap}
 .brand b{color:var(--gold)}
 @media (max-width:420px){.brand .brandtext{display:none}}
+/* co-branding BeBlue */
+.cobrand-divider{width:1px;height:26px;background:rgba(255,255,255,.25);flex:0 0 auto}
+.beblue-chip{display:inline-flex;align-items:center;background:#fff;border-radius:8px;padding:5px 9px;box-shadow:0 1px 3px rgba(16,24,40,.18);flex:0 0 auto}
+.beblue-chip img{height:20px;width:auto;display:block}
+@media (max-width:640px){.cobrand-divider{display:none}.beblue-chip img{height:16px}}
 .nav-toggle{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;display:none}
 .nav{margin-left:auto;display:flex;flex-wrap:wrap;gap:4px}
 .nav a{color:#dfe6f2;padding:7px 10px;border-radius:8px;font-size:.86rem;font-weight:600}
@@ -34,7 +39,12 @@ h1,h2,h3{font-family:var(--display);color:var(--navy);line-height:1.2;margin:0 0
 
 /* ---------- Hero ---------- */
 .hero{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:54px 0 48px}
-.hero-logo{height:88px;width:auto;display:block;margin-bottom:20px}
+.hero-logo{height:88px;width:auto;display:block;margin-bottom:12px}
+.hero-partner{display:flex;align-items:center;gap:12px;margin:0 0 20px}
+.hero-partner .partner-label{color:#c7d0e0;font-size:.8rem;letter-spacing:.05em;text-transform:uppercase}
+.beblue-chip.lg{padding:8px 14px}
+.beblue-chip.lg img{height:34px}
+@media (max-width:640px){.beblue-chip.lg img{height:28px}}
 .hero h1{color:#fff;font-size:2.2rem;margin-bottom:.2em}
 .hero .lead{color:#dbe4f4;font-size:1.1rem;max-width:680px}
 .hero .pills{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}
