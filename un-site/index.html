@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>United Nations & Model UN — Delegate Preparation | Aluizio Pires Education</title>
+<meta name="description" content="A workspace for Model UN: the structure of the United Nations, drafting resolutions, negotiation and securing funding. By Aluizio Pires Education.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="#home">
+      <img class="mark" src="assets/mark-white.png" alt="Aluizio Pires Education">
+      <span class="brandtext">Aluizio Pires <b>· UN</b></span>
+    </a>
+    <button class="nav-toggle" aria-label="Menu" onclick="document.getElementById('nav').classList.toggle('open')">☰ Menu</button>
+    <nav class="nav" id="nav">
+      <a href="#course">Course</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#bodies">Bodies</a>
+      <a href="#procedure">Procedure</a>
+      <a href="#documents">Documents</a>
+      <a href="#funding">Funding</a>
+      <a href="#blocs">Blocs</a>
+      <a href="#checklist">Checklist</a>
+      <a href="#example">Example</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero" id="home">
+  <div class="container">
+    <img class="hero-logo" src="assets/logo-white.png" alt="Aluizio Pires Education">
+    <h1>The UN in practice, for Model UN</h1>
+    <p class="lead">Master the structures of the United Nations and learn to use them to solve
+      the problems that come up in simulations — negotiate, draft resolutions and <b>secure
+      funding</b> for your proposals. Fill in the templates here; your work is saved in your browser.</p>
+    <div class="pills">
+      <span class="pill">10 hours · 5 sessions</span>
+      <span class="pill">Fillable templates</span>
+      <span class="pill">Auto-saves</span>
+      <span class="pill">Export & print</span>
+    </div>
+    <div class="gold-line"></div>
+  </div>
+</section>
+
+<!-- Course -->
+<section class="block" id="course">
+  <div class="container">
+    <span class="eyebrow">Course</span>
+    <h2 class="section-title">Session-by-session plan</h2>
+    <p class="section-sub">From structure to action: each session turns a UN concept into a tool you can use at the table.</p>
+    <div id="lessons" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<!-- Glossary -->
+<section class="block" id="glossary">
+  <div class="container">
+    <span class="eyebrow">Reference</span>
+    <h2 class="section-title">Essential glossary</h2>
+    <p class="section-sub">The terms you'll hear most in committee. Use the search.</p>
+    <div class="field" style="max-width:360px;margin-top:14px">
+      <input type="text" id="glossSearch" placeholder="Search a term…" oninput="filterGlossary(this.value)">
+    </div>
+    <div class="table-wrap"><table><thead><tr><th style="width:24%">Term</th><th>What it is</th></tr></thead><tbody id="glossBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Bodies -->
+<section class="block" id="bodies">
+  <div class="container">
+    <span class="eyebrow">Reference</span>
+    <h2 class="section-title">Which body for which problem?</h2>
+    <p class="section-sub">Pick the right committee based on the type of problem.</p>
+    <div class="table-wrap" style="margin-top:14px"><table><thead><tr><th style="width:48%">Type of problem</th><th>Recommended body / committee</th></tr></thead><tbody id="organsBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Procedure -->
+<section class="block" id="procedure">
+  <div class="container">
+    <span class="eyebrow">Procedure</span>
+    <h2 class="section-title">Motions and points — cheat sheet</h2>
+    <p class="section-sub">Know which motion to use and when.</p>
+    <div class="table-wrap" style="margin-top:14px"><table class="cheat"><thead><tr><th style="width:34%">Motion / point</th><th>When to use it</th></tr></thead><tbody id="motionsBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Documents -->
+<section class="block" id="documents">
+  <div class="container">
+    <span class="eyebrow">Hands-on</span>
+    <h2 class="section-title">A delegate's documents</h2>
+    <p class="section-sub">Fill in your Position Paper and your Draft Resolution. Everything saves automatically.</p>
+
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <h3>Position Paper</h3>
+        <div class="field"><label>Country / delegation</label><input type="text" data-save="pp_pais" placeholder="e.g., Federative Republic of Brazil"></div>
+        <div class="field"><label>A) Context of the topic <span class="hint">— why it matters</span></label><textarea data-save="pp_contexto" rows="3"></textarea></div>
+        <div class="field"><label>B) Country's position <span class="hint">— what it defends and why</span></label><textarea data-save="pp_posicao" rows="3"></textarea></div>
+        <div class="field"><label>C) Proposed solutions</label><textarea data-save="pp_propostas" rows="3"></textarea></div>
+        <div class="field"><label>D) Alliances and negotiation</label><textarea data-save="pp_aliancas" rows="2"></textarea></div>
+        <div class="toolbar">
+          <button class="btn primary" onclick="exportTool('position','Position Paper',['pp_pais','pp_contexto','pp_posicao','pp_propostas','pp_aliancas'])">⬇ Export</button>
+          <button class="btn ghost" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+
+      <div class="tool">
+        <h3>Draft Resolution</h3>
+        <div class="field"><label>Committee / Topic / Sponsors</label><input type="text" data-save="dr_cabecalho"></div>
+        <div class="field"><label>Preambular clauses <span class="hint">— use verbs like “Reaffirming”, “Deeply concerned by”</span></label><textarea data-save="dr_pre" rows="4"></textarea></div>
+        <div class="field"><label>Operative clauses <span class="hint">— numbered actions: “Decides…”, “Requests…”</span></label><textarea data-save="dr_op" rows="5"></textarea></div>
+        <div class="callout">Funding clause (template): <em>“Requests the establishment of a voluntary trust fund, administered by [agency], dedicated to [objective], financed by contributions from Member States and partners, with semi-annual reporting to the [body].”</em></div>
+        <div class="toolbar">
+          <button class="btn primary" onclick="exportTool('resolution','Draft Resolution',['dr_cabecalho','dr_pre','dr_op'])">⬇ Export</button>
+          <button class="btn ghost" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">Verb bank</h3>
+    <div class="table-wrap"><table><thead><tr><th style="width:50%">Preambular verbs</th><th>Operative verbs</th></tr></thead><tbody id="verbsBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Funding -->
+<section class="block" id="funding">
+  <div class="container">
+    <span class="eyebrow">Core skill</span>
+    <h2 class="section-title">How to secure funding</h2>
+    <p class="section-sub">The step-by-step for financing an initiative in committee.</p>
+    <ol class="steps" id="fundingSteps" style="margin-top:16px"></ol>
+    <div class="tool" style="margin-top:18px">
+      <div class="field"><label>My funding strategy</label><textarea data-save="fin_estrategia" rows="3"></textarea></div>
+      <div class="field"><label>Chosen source <span class="hint">— regular budget, voluntary, trust fund, pooled fund…</span></label><input type="text" data-save="fin_fonte"></div>
+      <div class="field"><label>Donors / partners to approach</label><textarea data-save="fin_doadores" rows="2"></textarea></div>
+      <div class="toolbar"><button class="btn primary" onclick="exportTool('funding','Funding Strategy',['fin_estrategia','fin_fonte','fin_doadores'])">⬇ Export</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- Blocs + Opening speech -->
+<section class="block" id="blocs">
+  <div class="container">
+    <span class="eyebrow">Strategy</span>
+    <h2 class="section-title">Bloc map and opening speech</h2>
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <h3>Bloc map</h3>
+        <div class="field"><label>Likely allies and their interests</label><textarea data-save="blocos_aliados" rows="4"></textarea></div>
+        <div class="field"><label>Opposition and friction points</label><textarea data-save="blocos_oposicao" rows="3"></textarea></div>
+      </div>
+      <div class="tool">
+        <h3>Opening speech <span class="tag">45–60 s</span></h3>
+        <p style="font-size:.9rem;color:var(--muted);margin-top:0">Structure: greet the dais → position in one sentence → 1–2 proposals → call to cooperation.</p>
+        <div class="field"><label>My opening speech</label><textarea data-save="discurso" rows="6"></textarea></div>
+        <div class="toolbar"><button class="btn ghost" onclick="window.print()">🖨 Print</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Checklist + Rubric -->
+<section class="block" id="checklist">
+  <div class="container">
+    <span class="eyebrow">Before & after</span>
+    <h2 class="section-title">Checklist and self-assessment</h2>
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <h3>Pre-simulation checklist</h3>
+        <ul class="checklist" id="checklistBody"></ul>
+      </div>
+      <div class="tool">
+        <h3>Self-assessment rubric</h3>
+        <p style="font-size:.9rem;color:var(--muted);margin-top:0">Score 1 to 5 after each simulation.</p>
+        <div class="table-wrap"><table><thead><tr><th>Criterion</th><th style="width:90px">Score</th></tr></thead><tbody id="rubricBody"></tbody></table></div>
+      </div>
+    </div>
+    <div class="toolbar"><button class="btn gold" onclick="resetAll()">↺ Clear everything</button></div>
+  </div>
+</section>
+
+<!-- Worked example -->
+<section class="block" id="example">
+  <div class="container">
+    <span class="eyebrow">Worked example</span>
+    <h2 class="section-title">A solved case</h2>
+    <div class="example-banner">
+      <b>Case:</b> Humanitarian crisis in the Horn of Africa — severe drought and mass displacement.
+      See how a delegate would fill in the documents. Click to load it into the forms and use it as a starting point.
+      <div class="toolbar"><button class="btn gold" onclick="loadExample()">⬇ Load example into the forms</button></div>
+    </div>
+    <div id="exampleBody" class="grid" style="gap:14px"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <span>© <span id="year"></span> <b>Aluizio Pires · Education</b> · United Nations & Model UN</span>
+    <span>[email] · [WhatsApp] · unitednations.aluizio.education</span>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+</body>
+</html>
