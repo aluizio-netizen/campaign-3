@@ -1,0 +1,14 @@
+# Publica o subsite estático onu-site/ (ONU & Model UN — Aluizio Pires Educação)
+# num projeto Netlify dedicado ao subdomínio onu.aluizio.education.
+# É um site estático puro: não há etapa de build.
+[build]
+  publish = "onu-site"
+  command = ""
+
+# Cabeçalhos de segurança básicos
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
