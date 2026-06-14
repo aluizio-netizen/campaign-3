@@ -11,7 +11,7 @@ Se um caminho de logo for passado e o arquivo existir, ele é embutido no
 cabeçalho; caso contrário, um wordmark textual "Aluizio Educação" é usado
 como espaço reservado (o .docx é editável e a logo pode ser trocada).
 """
-import sys
+import os, sys
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches, Emu
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -128,6 +128,37 @@ def cell_text(cell, text, size=10.5, color=GRAY, bold=False, align=None,
     r = p.add_run(text)
     runfmt(r, size, color, bold, italic, font)
     return p
+
+# ----------------------------------------------------------------------------
+# Cabeçalho de marca (papel-timbrado) — compartilhado pelos três documentos
+DEFAULT_LOGO = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "..", "brand", "aluizio-logo-black.png")
+
+def brand_header(doc, label, logo_path=None):
+    """Papel-timbrado: logo da Aluizio Pires Educação centralizada + rótulo dourado.
+    Se a logo não existir, cai para um wordmark textual."""
+    if logo_path is None:
+        logo_path = DEFAULT_LOGO
+    t = doc.add_table(rows=1, cols=1)
+    no_borders(t); set_width(t, 6.5, [1.0])
+    c = t.rows[0].cells[0]
+    set_cell_margins(c, 30, 40, 0, 0)
+    c.text = ""
+    p = c.paragraphs[0]; p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    para_spacing(p, 0, 0, 1.0)
+    ok = False
+    if logo_path and os.path.exists(logo_path):
+        try:
+            p.add_run().add_picture(logo_path, height=Inches(0.86)); ok = True
+        except Exception:
+            ok = False
+    if not ok:
+        r = p.add_run("Aluizio Pires"); runfmt(r, 22, NAVY, bold=True, font=DISPLAY)
+        r2 = p.add_run("  Educação"); runfmt(r2, 22, GOLD, bold=True, font=DISPLAY)
+    p2 = c.add_paragraph(); p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    para_spacing(p2, 6, 0, 1.0)
+    r = p2.add_run(label.upper()); runfmt(r, 8.5, GOLD, bold=True)
+    sp = doc.add_paragraph(); sp.paragraph_format.space_after = Pt(2)
 
 # ----------------------------------------------------------------------------
 # Blocos de alto nível
@@ -320,7 +351,7 @@ def add_footer(doc):
     footer.is_linked_to_previous = False
     p = footer.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = p.add_run("Aluizio Educação  ·  [e-mail]  ·  [telefone/WhatsApp]  ·  [site]   —   página ")
+    r = p.add_run("Aluizio Pires · Educação  ·  [e-mail]  ·  [telefone/WhatsApp]  ·  [site]   —   página ")
     runfmt(r, 8, "9AA3B2")
     # campo de número de página
     fldStart = OxmlElement('w:fldSimple'); fldStart.set(qn('w:instr'), 'PAGE')
@@ -447,7 +478,7 @@ def build(logo_path=None, out="docs/cursos/Planejamento_MUN_AluizioEducacao.docx
     normal.font.name = FONT; normal.font.size = Pt(10.5)
     normal.font.color.rgb = RGBColor.from_string(GRAY)
 
-    add_logo_header(doc, logo_path)
+    brand_header(doc, "Plano de curso · 10 horas · 5 encontros", logo_path)
     add_title_block(doc)
     add_meta_strip(doc)
 

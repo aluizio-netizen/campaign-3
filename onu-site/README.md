@@ -54,8 +54,10 @@ defina **a pasta `onu-site/` como diretório de publicação** (publish director
 
 ## Personalização
 
-- **Logo/marca:** o cabeçalho usa o monograma “AE”. Para usar a logo oficial,
-  troque o `<span class="mark">` em `index.html` por `<img src="assets/logo.png" ...>`.
+- **Logo/marca:** a logo da Aluizio Pires Educação já está aplicada — emblema na
+  barra (`assets/mark-white.png`), logo completa no topo (`assets/logo-white.png`)
+  e favicon (`assets/favicon.png`). Para substituir pela arte oficial, troque esses
+  arquivos em `assets/` (foram gerados por `scripts/gerar_logo_aluizio.py`).
 - **Cores:** ajuste as variáveis em `assets/styles.css` (`:root`).
 - **Conteúdo:** todo o texto (aulas, glossário, exemplo etc.) está em estruturas de
   dados no topo de `assets/app.js` — fácil de editar.

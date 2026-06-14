@@ -20,35 +20,8 @@ from gerar_planejamento_mun import (
     NAVY, BLUE, GOLD, LIGHT, LIGHT2, GRAY, WHITE, FONT, DISPLAY,
     shade, set_cell_margins, vcenter, table_borders, no_borders, set_width,
     runfmt, para_spacing, cell_text, body, bullet, callout, spacer, section_bar,
+    brand_header,
 )
-
-
-def header(doc, logo_path=None):
-    # cabeçalho de marca, com etiqueta "Proposta comercial"
-    t = doc.add_table(rows=1, cols=2)
-    no_borders(t); set_width(t, 6.5, [0.62, 0.38])
-    left, right = t.rows[0].cells
-    shade(left, NAVY); shade(right, NAVY)
-    set_cell_margins(left, 140, 140, 200, 120)
-    set_cell_margins(right, 140, 140, 120, 200)
-    vcenter(left); vcenter(right)
-    left.text = ""
-    p = left.paragraphs[0]; para_spacing(p, 0, 0, 1.0)
-    if logo_path:
-        try:
-            p.add_run().add_picture(logo_path, height=Inches(0.55)); logo_path = "ok"
-        except Exception:
-            logo_path = None
-    if not logo_path:
-        r = p.add_run("Aluizio"); runfmt(r, 22, WHITE, bold=True, font=DISPLAY)
-        r2 = p.add_run("  Educação"); runfmt(r2, 22, GOLD, bold=True, font=DISPLAY)
-        p2 = left.add_paragraph(); para_spacing(p2, 2, 0, 1.0)
-        r3 = p2.add_run("Mentoria & preparação acadêmica"); runfmt(r3, 9, "C7D0E0", italic=True)
-    right.text = ""
-    pr = right.paragraphs[0]; pr.alignment = WD_ALIGN_PARAGRAPH.RIGHT; para_spacing(pr, 0, 0, 1.0)
-    r = pr.add_run("PROPOSTA COMERCIAL"); runfmt(r, 10, GOLD, bold=True)
-    pr2 = right.add_paragraph(); pr2.alignment = WD_ALIGN_PARAGRAPH.RIGHT; para_spacing(pr2, 2, 0, 1.0)
-    r = pr2.add_run("Mentoria · 10 horas"); runfmt(r, 9, "C7D0E0")
 
 
 def title_block(doc):
@@ -141,7 +114,7 @@ def build(logo_path=None, out="docs/cursos/Proposta_Comercial_MUN_AluizioEducaca
     normal.font.name = FONT; normal.font.size = Pt(10.5)
     normal.font.color.rgb = RGBColor.from_string(GRAY)
 
-    header(doc, logo_path)
+    brand_header(doc, "Proposta comercial · Mentoria 10 horas", logo_path)
     title_block(doc)
     info_block(doc)
 

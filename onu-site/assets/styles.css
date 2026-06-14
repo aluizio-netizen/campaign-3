@@ -22,9 +22,11 @@ h1,h2,h3{font-family:var(--display);color:var(--navy);line-height:1.2;margin:0 0
 /* ---------- Topbar ---------- */
 .topbar{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;box-shadow:0 2px 12px rgba(0,0,0,.15)}
 .topbar .container{display:flex;align-items:center;gap:16px;height:60px}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1.15rem;color:#fff}
-.brand .mark{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--gold);color:var(--navy);font-weight:800;font-family:var(--sans)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1.12rem;color:#fff}
+.brand .mark{height:30px;width:auto;display:block}
+.brand .brandtext{white-space:nowrap}
 .brand b{color:var(--gold)}
+@media (max-width:420px){.brand .brandtext{display:none}}
 .nav-toggle{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;display:none}
 .nav{margin-left:auto;display:flex;flex-wrap:wrap;gap:4px}
 .nav a{color:#dfe6f2;padding:7px 10px;border-radius:8px;font-size:.86rem;font-weight:600}
@@ -32,6 +34,7 @@ h1,h2,h3{font-family:var(--display);color:var(--navy);line-height:1.2;margin:0 0
 
 /* ---------- Hero ---------- */
 .hero{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:54px 0 48px}
+.hero-logo{height:88px;width:auto;display:block;margin-bottom:20px}
 .hero h1{color:#fff;font-size:2.2rem;margin-bottom:.2em}
 .hero .lead{color:#dbe4f4;font-size:1.1rem;max-width:680px}
 .hero .pills{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}
