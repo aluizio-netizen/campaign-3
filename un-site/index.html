@@ -26,10 +26,14 @@
       <a href="#bodies">Bodies</a>
       <a href="#procedure">Procedure</a>
       <a href="#documents">Documents</a>
+      <a href="#unsc">UNSC</a>
+      <a href="#crisis">Crisis</a>
       <a href="#funding">Funding</a>
       <a href="#blocs">Blocs</a>
       <a href="#checklist">Checklist</a>
       <a href="#example">Example</a>
+      <a href="#tutoring">Tutoring</a>
+      <a href="#register" class="nav-cta">Register</a>
     </nav>
   </div>
 </header>
@@ -55,6 +59,16 @@
     <div class="gold-line"></div>
   </div>
 </section>
+
+<!-- Training notice (BeBlueSchool) -->
+<div class="notice-strip">
+  <div class="container">
+    <p><span class="notice-tag">Training activity</span>
+      A Model UN training activity for students of <b>BeBlueSchool — Escola de Idiomas</b>.
+      Registration is currently <b>free, for evaluation purposes</b>.
+      <a href="#register">Register here →</a></p>
+  </div>
+</div>
 
 <!-- Course -->
 <section class="block" id="course">
@@ -138,6 +152,89 @@
   </div>
 </section>
 
+<!-- UN Security Council -->
+<section class="block" id="unsc">
+  <div class="container">
+    <span class="eyebrow">Committee in focus</span>
+    <h2 class="section-title">United Nations Security Council (UNSC)</h2>
+    <p class="section-sub">The only UN body whose decisions are binding on every Member State. This is where peace and security are negotiated — and where the wording of your resolution has to be exact.</p>
+
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <h3>How the Council works</h3>
+        <div class="table-wrap"><table><tbody id="unscFactsBody"></tbody></table></div>
+      </div>
+      <div class="tool">
+        <h3>What the Council can do</h3>
+        <div class="table-wrap"><table><thead><tr><th style="width:38%">Tool</th><th>What it means</th></tr></thead><tbody id="unscPowersBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="callout blue" style="margin-top:16px"><b>Chapter VI vs Chapter VII.</b> Under <b>Chapter VI</b> the Council <em>recommends</em> peaceful settlement (negotiation, mediation, the ICJ). Under <b>Chapter VII</b> it can <em>act</em> — imposing sanctions (Art. 41) or authorizing the use of force (Art. 42). The trigger is a finding that the situation is a <em>“threat to international peace and security.”</em></div>
+
+    <h3 style="margin-top:26px">Drafting a Security Council resolution</h3>
+    <p class="section-sub">UNSC resolutions are firmer and binding. Use strong operative verbs, and when authorizing enforcement open the operative section with <em>“Acting under Chapter VII of the Charter of the United Nations.”</em></p>
+    <div class="tool" style="margin-top:14px">
+      <div class="field"><label>Header <span class="hint">— “The Security Council,” + situation + sponsors</span></label><input type="text" data-save="unsc_header" placeholder="The Security Council, on the situation in [region] — Sponsors: …"></div>
+      <div class="field"><label>Preambular clauses <span class="hint">— “Recalling its resolution …”, “Reaffirming”, “Expressing grave concern at”, “Determining that …”</span></label><textarea data-save="unsc_pre" rows="4"></textarea></div>
+      <div class="field"><label>Operative clauses <span class="hint">— “Demands”, “Decides”, “Authorizes”, “Imposes” — numbered</span></label><textarea data-save="unsc_op" rows="6"></textarea></div>
+      <div class="callout">Enforcement template: <em>“Acting under Chapter VII of the Charter, <b>Authorizes</b> Member States … to take all necessary measures to [objective], and <b>Decides</b> to review the measures within [period].”</em></div>
+      <div class="toolbar">
+        <button class="btn primary" onclick="exportTool('unsc-resolution','Security Council Resolution',['unsc_header','unsc_pre','unsc_op'])">⬇ Export</button>
+        <button class="btn ghost" onclick="window.print()">🖨 Print</button>
+        <button class="btn gold" onclick="loadUnscExample()">⬇ Load sample resolution</button>
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">Council verb bank</h3>
+    <div class="table-wrap"><table><thead><tr><th style="width:50%">Preambular verbs</th><th>Operative verbs (binding tone)</th></tr></thead><tbody id="unscVerbsBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Crisis committees -->
+<section class="block" id="crisis">
+  <div class="container">
+    <span class="eyebrow">Committee in focus</span>
+    <h2 class="section-title">Crisis committees</h2>
+    <p class="section-sub">Smaller, faster and constantly evolving. Instead of one long resolution you respond to live updates with <b>directives</b> — and you wield real powers through your character's portfolio.</p>
+
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <h3>Crisis vs a General Assembly committee</h3>
+        <div class="table-wrap"><table><thead><tr><th>General Assembly</th><th>Crisis committee</th></tr></thead><tbody id="crisisDiffBody"></tbody></table></div>
+      </div>
+      <div class="tool">
+        <h3>Your tools in crisis</h3>
+        <div class="table-wrap"><table><thead><tr><th style="width:38%">Tool</th><th>What it does</th></tr></thead><tbody id="crisisToolsBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:16px"><b>Crisis notes.</b> A private note to the backroom (the “crisis staff”) lets you act in secret — gather intelligence, move your assets or advance your storyline. Public directives shape the room; private notes shape the world behind it.</div>
+
+    <h3 style="margin-top:26px">Write a directive</h3>
+    <p class="section-sub">A directive is short and action-first: who does what, with which resources, by when.</p>
+    <div class="tool" style="margin-top:14px">
+      <div class="field"><label>Type</label>
+        <select class="rubric pick" data-save="crisis_type">
+          <option value="Committee directive">Committee directive — voted by the room</option>
+          <option value="Personal / private directive">Personal / private directive — your portfolio powers</option>
+          <option value="Press release / communiqué">Press release / communiqué — public statement</option>
+        </select>
+      </div>
+      <div class="field"><label>Title</label><input type="text" data-save="crisis_title" placeholder="e.g., Operation Safe Harbour"></div>
+      <div class="field"><label>Actions <span class="hint">— numbered and concrete: deploy, secure, negotiate, announce…</span></label><textarea data-save="crisis_actions" rows="4"></textarea></div>
+      <div class="field"><label>Resources / actors used <span class="hint">— troops, budget, agencies, contacts your character controls</span></label><textarea data-save="crisis_resources" rows="2"></textarea></div>
+      <div class="field"><label>Rationale & expected outcome</label><textarea data-save="crisis_rationale" rows="2"></textarea></div>
+      <div class="toolbar">
+        <button class="btn primary" onclick="exportTool('crisis-directive','Crisis Directive',['crisis_type','crisis_title','crisis_actions','crisis_resources','crisis_rationale'])">⬇ Export</button>
+        <button class="btn ghost" onclick="window.print()">🖨 Print</button>
+      </div>
+    </div>
+
+    <div class="grid cols-3" style="margin-top:22px" id="crisisTips"></div>
+  </div>
+</section>
+
 <!-- Funding -->
 <section class="block" id="funding">
   <div class="container">
@@ -209,9 +306,110 @@
   </div>
 </section>
 
+<!-- Online tutoring (on demand) -->
+<section class="block" id="tutoring">
+  <div class="container">
+    <span class="eyebrow">On demand</span>
+    <h2 class="section-title">Online tutoring</h2>
+    <p class="section-sub">Need a hand before a simulation? Book a one-to-one online session and we'll work through exactly what you bring — a position paper, a resolution, your opening speech or a crisis strategy.</p>
+
+    <div class="grid cols-3" style="margin-top:18px">
+      <div class="card"><span class="tag">How it works</span><h3>You ask, we schedule</h3><p style="font-size:.92rem">Send a request with your topic and a couple of time options. Sessions run online over video.</p></div>
+      <div class="card"><span class="tag">Focused</span><h3>Bring your work</h3><p style="font-size:.92rem">We review the document you're stuck on and rehearse live — feedback you can use the same week.</p></div>
+      <div class="card"><span class="tag">Flexible</span><h3>As often as you need</h3><p style="font-size:.92rem">Book a single session or come back before each committee. On-demand, at your pace.</p></div>
+    </div>
+
+    <div class="callout blue" style="margin-top:16px">
+      <b>Free, for evaluation purposes.</b> During the evaluation period, online tutoring is offered free of charge to students of BeBlueSchool — Escola de Idiomas.
+    </div>
+
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <form name="tutoring" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="tutoringForm" action="#tutoring">
+          <input type="hidden" name="form-name" value="tutoring">
+          <p class="hp"><label>Leave this empty: <input name="bot-field"></label></p>
+          <div class="field"><label>Full name <span class="hint">— required</span></label><input type="text" name="name" required placeholder="Your full name"></div>
+          <div class="field"><label>Email <span class="hint">— required</span></label><input type="email" name="email" required placeholder="you@example.com"></div>
+          <div class="field"><label>What do you want to work on?</label>
+            <select class="rubric pick" name="focus">
+              <option>Position paper</option>
+              <option>Draft resolution</option>
+              <option>Security Council resolution</option>
+              <option>Crisis directives & strategy</option>
+              <option>Opening speech & public speaking</option>
+              <option>Rules of procedure</option>
+              <option>Other (tell us below)</option>
+            </select>
+          </div>
+          <div class="field"><label>Preferred days / times</label><input type="text" name="availability" placeholder="e.g., Tue or Thu after 6pm"></div>
+          <div class="field"><label>Notes <span class="hint">— what's the committee, what are you stuck on?</span></label><textarea name="notes" rows="3"></textarea></div>
+          <label class="consent"><input type="checkbox" name="consent" required> I understand online tutoring is currently a <b>free training and evaluation activity</b> of BeBlueSchool — Escola de Idiomas.</label>
+          <div class="toolbar"><button class="btn primary" type="submit">Request a session</button></div>
+        </form>
+        <div id="tutoringDone" class="register-done" hidden>
+          <h3>✓ Request received</h3>
+          <p>Thanks — we'll reach out to confirm a time. Online tutoring is currently <b>free, for evaluation purposes</b>, for students of BeBlueSchool — Escola de Idiomas.</p>
+        </div>
+      </div>
+      <div class="tool">
+        <h3>Come prepared</h3>
+        <ul class="checklist plain">
+          <li><span>Have your committee, country/character and topic to hand.</span></li>
+          <li><span>Export or paste the document you want feedback on (use the ⬇ Export buttons).</span></li>
+          <li><span>Note the one thing you're most stuck on — we'll start there.</span></li>
+          <li><span>A quiet spot and a working mic make speaking practice count.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Registration -->
+<section class="block" id="register">
+  <div class="container">
+    <span class="eyebrow">Enrolment</span>
+    <h2 class="section-title">Register for the training</h2>
+    <p class="section-sub">This Model UN workspace is a <b>training activity for students of BeBlueSchool — Escola de Idiomas</b>. Sign up below to take part.</p>
+
+    <div class="callout blue" style="margin-top:8px">
+      <b>Free, for evaluation purposes.</b> Registration is currently free of charge while the programme is being evaluated. By signing up you acknowledge that this is a training and evaluation activity of BeBlueSchool — Escola de Idiomas, and that access conditions may change after the evaluation period.
+    </div>
+
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="tool">
+        <form name="register" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="registerForm" action="#register">
+          <input type="hidden" name="form-name" value="register">
+          <p class="hp"><label>Leave this empty: <input name="bot-field"></label></p>
+          <div class="field"><label>Full name <span class="hint">— required</span></label><input type="text" name="name" required placeholder="Your full name"></div>
+          <div class="field"><label>Email <span class="hint">— required</span></label><input type="email" name="email" required placeholder="you@example.com"></div>
+          <div class="field"><label>Class / BeBlue level</label><input type="text" name="class_level" placeholder="e.g., B2 — Tuesday evening"></div>
+          <div class="field"><label>WhatsApp / phone</label><input type="text" name="phone" placeholder="+55 …"></div>
+          <label class="consent"><input type="checkbox" name="consent" required> I understand this is a <b>free training and evaluation activity</b> of BeBlueSchool — Escola de Idiomas.</label>
+          <div class="toolbar"><button class="btn primary" type="submit">Submit registration</button></div>
+        </form>
+        <div id="registerDone" class="register-done" hidden>
+          <h3>✓ You're registered</h3>
+          <p>Thank you — your registration was received. Remember: this is a <b>free training and evaluation activity</b> of BeBlueSchool — Escola de Idiomas. We'll be in touch with the details.</p>
+        </div>
+      </div>
+      <div class="tool">
+        <h3>What you get</h3>
+        <ul class="checklist plain">
+          <li><span>A five-session Model UN course with fillable, auto-saving templates.</span></li>
+          <li><span>Security Council and crisis-committee workshops, in English.</span></li>
+          <li><span>Guided practice writing position papers, resolutions and directives.</span></li>
+          <li><span>A self-assessment rubric and a worked example to learn from.</span></li>
+        </ul>
+        <p style="font-size:.86rem;color:var(--muted);margin-top:8px">Your form-work stays in your browser; only the details above are sent when you register.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="container">
     <span>© <span id="year"></span> <b>Aluizio Pires · Education</b> · United Nations & Model UN</span>
+    <span>A training activity for students of <b>BeBlueSchool — Escola de Idiomas</b></span>
     <span>[email] · [WhatsApp] · unitednations.aluizio.education</span>
   </div>
 </footer>

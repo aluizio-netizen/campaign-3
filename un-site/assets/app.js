@@ -153,6 +153,56 @@ const EXAMPLE = {
   discurso:"Madam Chair, distinguished delegates: Brazil is deeply concerned by the hunger spreading across the Horn of Africa. We call for a humanitarian fund managed by the WFP and agricultural cooperation through the FAO. We invite every delegation to turn solidarity into concrete resources. Thank you.",
 };
 
+/* ---- UN Security Council ---- */
+const UNSC_FACTS = [
+  ["Members","15 — five permanent (China, France, Russia, the United Kingdom, the United States) plus ten elected for two-year terms (the E10)."],
+  ["To pass","9 of 15 votes in favour — and no veto cast by any permanent member."],
+  ["The veto","Held only by the P5, and only on substantive (non-procedural) matters."],
+  ["Force of decisions","Binding on all Member States under Article 25 of the Charter."],
+  ["Presidency","Rotates monthly, in the English alphabetical order of member names."],
+];
+const UNSC_POWERS = [
+  ["Pacific settlement (Ch. VI)","Recommends negotiation, mediation, arbitration or referral to the ICJ."],
+  ["Sanctions (Art. 41)","Arms embargoes, asset freezes, travel bans, trade limits — measures short of force."],
+  ["Use of force (Art. 42)","Authorizes “all necessary measures”, including military action, when other steps fail."],
+  ["Peacekeeping","Creates and mandates peace operations — mission, size and rules of engagement."],
+  ["Referrals & tribunals","Refers situations to the ICC or establishes special tribunals."],
+];
+const UNSC_VERBS = [
+  ["Recalling its resolution …","Demands"],
+  ["Reaffirming its primary responsibility for peace and security","Decides"],
+  ["Expressing grave concern at","Authorizes"],
+  ["Determining that the situation constitutes a threat to international peace","Imposes"],
+  ["Condemning in the strongest terms","Calls upon, Urges"],
+  ["Acting under Chapter VII of the Charter","Decides to remain seized of the matter"],
+];
+const UNSC_EXAMPLE = {
+  unsc_header:"The Security Council, on the protection of civilians in Region X — Sponsors: France, Ghana, Republic of Korea",
+  unsc_pre:"Recalling its previous resolutions on the situation in Region X;\nReaffirming its primary responsibility for the maintenance of international peace and security;\nExpressing grave concern at the deteriorating humanitarian situation and at attacks against civilians;\nDetermining that the situation in Region X constitutes a threat to international peace and security;",
+  unsc_op:"Acting under Chapter VII of the Charter of the United Nations,\n1. Demands the immediate cessation of hostilities by all parties;\n2. Authorizes Member States, in cooperation with the United Nations, to take all necessary measures to protect civilians and ensure humanitarian access;\n3. Decides to impose an arms embargo on all non-State armed groups operating in Region X;\n4. Requests the Secretary-General to report on implementation within 60 days;\n5. Decides to remain seized of the matter.",
+};
+
+/* ---- Crisis committees ---- */
+const CRISIS_DIFF = [
+  ["Large room, long debate","Small room, fast pace"],
+  ["One topic, one resolution","An evolving scenario, many directives"],
+  ["You represent a country","You hold a character's portfolio powers"],
+  ["Updates are rare","Crisis updates arrive constantly"],
+  ["Public, formal speeches","Public moves plus private crisis notes"],
+];
+const CRISIS_TOOLS = [
+  ["Committee directive","A collective action voted by the room — like a short, immediate mini-resolution."],
+  ["Personal / private directive","An action you take alone using your character's powers, sent secretly to the crisis staff."],
+  ["Crisis note","A private message to the backroom to gather intel, move assets or advance your arc."],
+  ["Press release / communiqué","A public statement that shapes the narrative and pressures other actors."],
+  ["Portfolio powers","The real resources your character controls — troops, budget, media, contacts."],
+];
+const CRISIS_TIPS = [
+  ["Be fast, be specific","A directive that names who, what and when beats an eloquent speech. Crisis rewards decisions."],
+  ["Stay in character","Use only the powers your portfolio plausibly has — overreach gets struck down by the crisis staff."],
+  ["Build an arc","Chain your private notes into a storyline; small early moves set up big payoffs later."],
+];
+
 /* ----------------------------- RENDER ----------------------------- */
 function el(tag, cls, html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
 
@@ -217,6 +267,43 @@ function renderExample(){
   items.forEach(it=> root.appendChild(el("div","card",`<span class="tag">Example</span><h3>${it[0]}</h3><p style="font-size:.92rem">${it[1]}</p>`)));
 }
 
+function renderCrisisTips(){
+  const root=document.getElementById("crisisTips");
+  if(!root) return;
+  CRISIS_TIPS.forEach(t=> root.appendChild(el("div","card",`<span class="tag">Tip</span><h3>${t[0]}</h3><p style="font-size:.92rem">${t[1]}</p>`)));
+}
+function loadUnscExample(){
+  const s=loadState();
+  Object.keys(UNSC_EXAMPLE).forEach(k=>{
+    s[k]=UNSC_EXAMPLE[k];
+    const n=document.querySelector(`[data-save="${k}"]`); if(n) n.value=UNSC_EXAMPLE[k];
+  });
+  saveState(s); flashSaved();
+  document.getElementById("unsc").scrollIntoView();
+}
+
+/* ----------------------------- NETLIFY FORMS ----------------------------- */
+/* Static site: submissions are captured by Netlify Forms (panel) once deployed.
+   We POST via fetch so the student stays on the page and sees a confirmation. */
+function bindNetlifyForm(formId, doneId){
+  const form=document.getElementById(formId);
+  if(!form) return;
+  form.addEventListener("submit",e=>{
+    e.preventDefault();
+    const btn=form.querySelector('button[type="submit"]');
+    if(btn){ btn.disabled=true; btn.textContent="Sending…"; }
+    const body=new URLSearchParams(new FormData(form)).toString();
+    fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body})
+      .then(r=>{ if(!r.ok) throw new Error("net");
+        form.hidden=true;
+        const done=document.getElementById(doneId);
+        if(done){ done.hidden=false; done.scrollIntoView({behavior:"smooth",block:"center"}); }
+      })
+      .catch(()=>{ if(btn){ btn.disabled=false; btn.textContent="Try again"; }
+        alert("We couldn't send your form right now. Please check your connection and try again."); });
+  });
+}
+
 /* ----------------------------- PERSISTENCE ----------------------------- */
 const KEY="aluizio_un_mun_en_v1";
 function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){ return {}; } }
@@ -254,7 +341,9 @@ function exportTool(slug, title, keys){
   let txt=title.toUpperCase()+"\n"+"=".repeat(title.length)+"\n\n";
   const labels={pp_pais:"Country",pp_contexto:"Context",pp_posicao:"Position",pp_propostas:"Proposals",pp_aliancas:"Alliances",
     dr_cabecalho:"Header",dr_pre:"Preambular clauses",dr_op:"Operative clauses",
-    fin_estrategia:"Strategy",fin_fonte:"Source",fin_doadores:"Donors"};
+    fin_estrategia:"Strategy",fin_fonte:"Source",fin_doadores:"Donors",
+    unsc_header:"Header",unsc_pre:"Preambular clauses",unsc_op:"Operative clauses",
+    crisis_type:"Type",crisis_title:"Title",crisis_actions:"Actions",crisis_resources:"Resources / actors",crisis_rationale:"Rationale & expected outcome"};
   keys.forEach(k=>{ txt += (labels[k]||k)+":\n"+((s[k]||"—"))+"\n\n"; });
   const blob=new Blob([txt],{type:"text/plain;charset=utf-8"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
@@ -291,12 +380,16 @@ function setupScrollSpy(){
 }
 
 /* ---- expose handlers used in inline attributes (onclick/oninput) ---- */
-Object.assign(window,{ filterGlossary, exportTool, loadExample, resetAll });
+Object.assign(window,{ filterGlossary, exportTool, loadExample, resetAll, loadUnscExample });
 
 /* ----------------------------- INIT ----------------------------- */
 document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("year").textContent=new Date().getFullYear();
   renderLessons(); renderGlossary(); rows("organsBody",ORGANS); rows("motionsBody",MOTIONS);
   rows("verbsBody",VERBS); renderFunding(); renderChecklist(); renderRubric(); renderExample();
+  rows("unscFactsBody",UNSC_FACTS); rows("unscPowersBody",UNSC_POWERS); rows("unscVerbsBody",UNSC_VERBS);
+  rows("crisisDiffBody",CRISIS_DIFF); rows("crisisToolsBody",CRISIS_TOOLS); renderCrisisTips();
   bindPersistence(); setupScrollSpy();
+  bindNetlifyForm("registerForm","registerDone");
+  bindNetlifyForm("tutoringForm","tutoringDone");
 });
