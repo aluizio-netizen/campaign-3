@@ -71,6 +71,7 @@
       <a href="#aulas">Curso</a>
       <a href="#glossario">Glossário</a>
       <a href="#orgaos">Órgãos</a>
+      <a href="#casos">Situações</a>
       <a href="#procedimento">Procedimento</a>
       <a href="#documentos">Documentos</a>
       <a href="#comites">Comitês</a>
@@ -132,6 +133,30 @@
     <h2 class="section-title">Qual órgão para qual problema?</h2>
     <p class="section-sub">Escolha o comitê competente conforme o tipo de problema.</p>
     <div class="table-wrap" style="margin-top:14px"><table><thead><tr><th style="width:48%">Tipo de problema</th><th>Órgão / comitê indicado</th></tr></thead><tbody id="organsBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- Situações para resolver -->
+<section class="block" id="casos">
+  <div class="container">
+    <span class="eyebrow">Pratique</span>
+    <h2 class="section-title">Situações para resolver</h2>
+    <p class="section-sub">Casos hipotéticos: leia a situação e escolha o órgão ou comitê competente. O feedback explica por quê e como agir.</p>
+    <style>
+      #casos .caso{background:#121a2c;border:1px solid #24344f;border-radius:10px;padding:20px 22px;margin-top:16px}
+      #casos .caso-num{font-size:.72rem;letter-spacing:.12em;color:#c9a24a;text-transform:uppercase}
+      #casos .caso h3{margin:.3rem 0 .5rem;font-size:1.12rem}
+      #casos .caso-sit{color:#9fb0c8;margin:.2rem 0 .7rem}
+      #casos .caso-q{font-weight:600;margin:.2rem 0 .7rem}
+      #casos .caso-opts{display:flex;flex-direction:column;gap:8px}
+      #casos .caso-opt{text-align:left;padding:10px 13px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;cursor:pointer;font-size:.93rem;transition:.12s}
+      #casos .caso-opt:hover:not(.revealed){border-color:#c9a24a}
+      #casos .caso-opt.ok{background:#16361f;border-color:#2a6b45;color:#bdf0cd}
+      #casos .caso-opt.no{background:#3a1d20;border-color:#6b2a2a;color:#f1b0a6}
+      #casos .caso-opt.revealed{cursor:default}
+      #casos .caso-fb{margin-top:12px;padding:11px 13px;border-radius:8px;background:#0e1c2e;border-left:3px solid #c9a24a;color:#dfe8f5;font-size:.92rem;line-height:1.55}
+    </style>
+    <div id="casosBody"></div>
   </div>
 </section>
 
