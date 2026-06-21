@@ -180,6 +180,29 @@ function renderRanking() {
     rows.map((r, i) => "<tr><td>" + (i + 1) + "</td><td>" + he(r.email) + "</td><td><b>" + r.ok + "</b></td><td>" + r.mc + "</td><td>" + r.ab + "</td></tr>").join("") + "</tbody></table>";
 }
 
+/* ---------------- PROFESSOR: carregar exemplos V/F ---------------- */
+const VF_EXEMPLOS = [
+  ["vf_ex1", "Poder de veto", "Apenas os cinco membros permanentes do Conselho de Segurança (China, EUA, França, Reino Unido e Rússia) têm poder de veto.", true],
+  ["vf_ex2", "Resoluções da Assembleia Geral", "As resoluções da Assembleia Geral são juridicamente vinculantes para todos os Estados-membros.", false],
+  ["vf_ex3", "Competência da CIJ", "A Corte Internacional de Justiça (CIJ) julga indivíduos por crimes de guerra.", false],
+  ["vf_ex4", "Position paper (DPO)", "O position paper (DPO) apresenta a posição do país sobre o tema antes do debate.", true],
+  ["vf_ex5", "Caucus moderado", "Num caucus moderado, os delegados circulam livremente pela sala e negociam sem ordem de oradores.", false],
+  ["vf_ex6", "PNUMA", "O PNUMA é o órgão da ONU responsável pela agenda ambiental global.", true],
+  ["vf_ex7", "Cláusulas da resolução", "As cláusulas preambulares determinam ações, e as operativas dão o contexto.", false],
+  ["vf_ex8", "Uso da força", "O ECOSOC pode autorizar o uso da força para resolver uma crise.", false],
+];
+document.addEventListener("click", async e => {
+  if (e.target.id !== "prof-load-vf") return;
+  if (!confirm("Carregar (ou atualizar) 8 crises Verdadeiro/Falso de exemplo?")) return;
+  let now = Date.now();
+  try {
+    for (const [k, titulo, enunciado, v] of VF_EXEMPLOS) {
+      await set(ref(db, "crises/" + k), { tipo: "vf", titulo, enunciado, ativa: true, criadaEm: now++, opcoes: [{ texto: "Verdadeiro", correta: v }, { texto: "Falso", correta: !v }] });
+    }
+    alert("8 crises V/F carregadas! Veja na lista 'Crises criadas'.");
+  } catch (err) { alert("Erro: " + (err.code || err.message)); }
+});
+
 /* ---------------- PROFESSOR: exportar CSV ---------------- */
 document.addEventListener("click", e => {
   if (e.target.id !== "prof-export") return;

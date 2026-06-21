@@ -208,7 +208,10 @@
     <p class="section-sub">Crie crises, acompanhe respostas e ranking, controle o acesso e exporte tudo.</p>
     <div class="prof-bar">
       <label class="prof-switch"><input type="checkbox" id="prof-invite-toggle"> Cadastro só por convite (aprovar cada aluno)</label>
-      <button class="btn ghost" id="prof-export">⬇ Exportar respostas (CSV)</button>
+      <span style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost" id="prof-load-vf">➕ Carregar 8 exemplos V/F</button>
+        <button class="btn ghost" id="prof-export">⬇ Exportar respostas (CSV)</button>
+      </span>
     </div>
     <div id="prof-pendentes"></div>
     <form id="prof-form" class="tool" style="margin-top:14px">
