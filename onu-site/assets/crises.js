@@ -180,27 +180,55 @@ function renderRanking() {
     rows.map((r, i) => "<tr><td>" + (i + 1) + "</td><td>" + he(r.email) + "</td><td><b>" + r.ok + "</b></td><td>" + r.mc + "</td><td>" + r.ab + "</td></tr>").join("") + "</tbody></table>";
 }
 
-/* ---------------- PROFESSOR: carregar exemplos V/F ---------------- */
-const VF_EXEMPLOS = [
-  ["vf_ex1", "Poder de veto", "Apenas os cinco membros permanentes do Conselho de Segurança (China, EUA, França, Reino Unido e Rússia) têm poder de veto.", true],
-  ["vf_ex2", "Resoluções da Assembleia Geral", "As resoluções da Assembleia Geral são juridicamente vinculantes para todos os Estados-membros.", false],
-  ["vf_ex3", "Competência da CIJ", "A Corte Internacional de Justiça (CIJ) julga indivíduos por crimes de guerra.", false],
-  ["vf_ex4", "Position paper (DPO)", "O position paper (DPO) apresenta a posição do país sobre o tema antes do debate.", true],
-  ["vf_ex5", "Caucus moderado", "Num caucus moderado, os delegados circulam livremente pela sala e negociam sem ordem de oradores.", false],
-  ["vf_ex6", "PNUMA", "O PNUMA é o órgão da ONU responsável pela agenda ambiental global.", true],
-  ["vf_ex7", "Cláusulas da resolução", "As cláusulas preambulares determinam ações, e as operativas dão o contexto.", false],
-  ["vf_ex8", "Uso da força", "O ECOSOC pode autorizar o uso da força para resolver uma crise.", false],
+/* ---------------- PROFESSOR: bancos de exemplo ---------------- */
+const vf = v => [{ texto: "Verdadeiro", correta: v }, { texto: "Falso", correta: !v }];
+const mc = (arr, i) => arr.map((t, j) => ({ texto: t, correta: j === i }));
+
+const BANCO_VF = [
+  ["vf_ex1", "Poder de veto", "Apenas os cinco membros permanentes do Conselho de Segurança (China, EUA, França, Reino Unido e Rússia) têm poder de veto.", vf(true)],
+  ["vf_ex2", "Resoluções da Assembleia Geral", "As resoluções da Assembleia Geral são juridicamente vinculantes para todos os Estados-membros.", vf(false)],
+  ["vf_ex3", "Competência da CIJ", "A Corte Internacional de Justiça (CIJ) julga indivíduos por crimes de guerra.", vf(false)],
+  ["vf_ex4", "Position paper (DPO)", "O position paper (DPO) apresenta a posição do país sobre o tema antes do debate.", vf(true)],
+  ["vf_ex5", "Caucus moderado", "Num caucus moderado, os delegados circulam livremente pela sala e negociam sem ordem de oradores.", vf(false)],
+  ["vf_ex6", "PNUMA", "O PNUMA é o órgão da ONU responsável pela agenda ambiental global.", vf(true)],
+  ["vf_ex7", "Cláusulas da resolução", "As cláusulas preambulares determinam ações, e as operativas dão o contexto.", vf(false)],
+  ["vf_ex8", "Uso da força", "O ECOSOC pode autorizar o uso da força para resolver uma crise.", vf(false)],
 ];
-document.addEventListener("click", async e => {
-  if (e.target.id !== "prof-load-vf") return;
-  if (!confirm("Carregar (ou atualizar) 8 crises Verdadeiro/Falso de exemplo?")) return;
+const BANCO_ORGAO = [
+  ["org_ex1", "Invasão e ameaça à paz", "O país A invade militarmente o país B, com risco de escalada regional. Qual órgão pode agir com medidas obrigatórias?", mc(["Conselho de Segurança (CSNU)", "Assembleia Geral", "ECOSOC", "Corte Internacional de Justiça"], 0)],
+  ["org_ex2", "Corrida armamentista", "Vários Estados anunciam novos arsenais e negociam um tratado de controle de armas. Qual comitê conduz o debate?", mc(["Conselho de Segurança", "DISEC (1ª Comissão)", "ECOFIN", "PNUMA"], 1)],
+  ["org_ex3", "Dívida insustentável", "Um país em desenvolvimento propõe um mecanismo de reestruturação da dívida soberana. Qual comitê é competente?", mc(["ECOSOC", "ECOFIN (2ª Comissão)", "Conselho de Segurança", "DISEC"], 1)],
+  ["org_ex4", "Surto sanitário e social", "Uma região enfrenta epidemia somada a trabalho infantil. Qual órgão coordena a resposta econômico-social?", mc(["Conselho de Segurança", "ECOSOC", "UNCLOS", "Corte Internacional de Justiça"], 1)],
+  ["org_ex5", "Poluição transfronteiriça", "Um derramamento químico cruza a fronteira de três países. Qual programa lidera a agenda ambiental?", mc(["ECOFIN", "PNUMA", "Conselho de Segurança", "DISEC"], 1)],
+  ["org_ex6", "Disputa marítima", "Dois Estados disputam a delimitação de suas Zonas Econômicas Exclusivas. Qual marco jurídico rege a questão?", mc(["Assembleia Geral", "PNUMA", "UNCLOS (Direito do Mar)", "ECOFIN"], 2)],
+  ["org_ex7", "Controvérsia jurídica", "Dois países discordam sobre um tratado de fronteira e aceitam decisão vinculante. Para qual órgão a disputa vai?", mc(["Conselho de Segurança", "ECOSOC", "Corte Internacional de Justiça (CIJ)", "DISEC"], 2)],
+  ["org_ex8", "Crise de refugiados", "Um conflito desloca milhares de civis para países vizinhos. Qual agência é central na resposta humanitária?", mc(["Conselho de Segurança", "ACNUR (Refugiados)", "ECOFIN", "UNCLOS"], 1)],
+];
+const BANCO_MOCAO = [
+  ["moc_ex1", "Negociar em grupos", "As delegações querem negociar livremente em grupos menores, circulando pela sala, antes de qualquer votação. Qual moção propor?", mc(["Caucus moderado", "Caucus não-moderado (livre)", "Encerrar o debate", "Ponto de ordem"], 1)],
+  ["moc_ex2", "Debater um subtema", "O comitê quer discutir um subtema específico com falas cronometradas, uma de cada vez. Qual moção?", mc(["Caucus moderado", "Caucus não-moderado (livre)", "Ponto de privilégio", "Encerrar o debate"], 0)],
+  ["moc_ex3", "Erro de procedimento", "O presidente cometeu um erro nas regras de procedimento. Como o delegado intervém?", mc(["Ponto de privilégio pessoal", "Ponto de ordem", "Encerrar o debate", "Caucus moderado"], 1)],
+  ["moc_ex4", "Não consigo ouvir", "Você não conseguiu ouvir o orador por causa de ruído/áudio. O que levanta?", mc(["Ponto de ordem", "Ponto de privilégio pessoal", "Dúvida parlamentar", "Caucus livre"], 1)],
+  ["moc_ex5", "Hora de votar", "O debate se esgotou e é hora de votar as resoluções. Qual moção?", mc(["Caucus moderado", "Moção para encerrar o debate", "Caucus livre", "Ponto de ordem"], 1)],
+  ["moc_ex6", "Apresentar a resolução", "Há um draft resolution pronto para ser apresentado ao comitê. Qual moção?", mc(["Encerrar o debate", "Moção para introduzir o draft resolution", "Caucus moderado", "Ponto de ordem"], 1)],
+  ["moc_ex7", "Pausa para o intervalo", "É preciso pausar os trabalhos para o intervalo. Qual moção?", mc(["Encerrar o debate", "Moção para suspender a sessão", "Caucus livre", "Ponto de privilégio"], 1)],
+  ["moc_ex8", "Dúvida sobre as regras", "Você tem uma dúvida sobre o procedimento/regras do comitê. O que usa?", mc(["Ponto de ordem", "Dúvida parlamentar (consulta sobre as regras)", "Ponto de privilégio", "Moção para votar"], 1)],
+];
+
+async function carregarBanco(label, tipo, items) {
+  if (!confirm("Carregar (ou atualizar) " + items.length + " crises de '" + label + "'?")) return;
   let now = Date.now();
   try {
-    for (const [k, titulo, enunciado, v] of VF_EXEMPLOS) {
-      await set(ref(db, "crises/" + k), { tipo: "vf", titulo, enunciado, ativa: true, criadaEm: now++, opcoes: [{ texto: "Verdadeiro", correta: v }, { texto: "Falso", correta: !v }] });
+    for (const [k, titulo, enunciado, opcoes] of items) {
+      await set(ref(db, "crises/" + k), { tipo, titulo, enunciado, ativa: true, criadaEm: now++, opcoes });
     }
-    alert("8 crises V/F carregadas! Veja na lista 'Crises criadas'.");
+    alert(items.length + " crises de '" + label + "' carregadas! Veja na lista 'Crises criadas'.");
   } catch (err) { alert("Erro: " + (err.code || err.message)); }
+}
+document.addEventListener("click", e => {
+  if (e.target.id === "prof-load-vf") carregarBanco("Verdadeiro/Falso", "vf", BANCO_VF);
+  else if (e.target.id === "prof-load-orgao") carregarBanco("Qual órgão?", "orgao", BANCO_ORGAO);
+  else if (e.target.id === "prof-load-mocao") carregarBanco("Qual moção?", "mocao", BANCO_MOCAO);
 });
 
 /* ---------------- PROFESSOR: exportar CSV ---------------- */
