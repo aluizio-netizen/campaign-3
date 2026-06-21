@@ -57,7 +57,7 @@
     </div>
   </div>
 </div>
-<div id="site">
+<div id="pending"><div class="gate-card"><img src="assets/logo-white.png" alt="" class="gate-logo"><h2>Aguardando aprovação</h2><p class="gate-sub">Sua conta foi criada. O professor precisa aprovar seu acesso ao ambiente de simulação. Quando ele aprovar, esta tela libera sozinha.</p><a href="#" onclick="location.reload();return false" style="color:#c9a24a">Recarregar</a></div></div><div id="site">
 
 <!-- Topbar -->
 <header class="topbar">
@@ -190,6 +190,11 @@
       .prof-tab{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
       .prof-tab th,.prof-tab td{border:1px solid #24344f;padding:7px 9px;text-align:left;vertical-align:top}
       .prof-tab td{white-space:pre-wrap}
+      .prof-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:8px 0}
+      .prof-switch{display:flex;align-items:center;gap:8px;font-size:.9rem;color:#cfdcec;cursor:pointer}
+      #pending{position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;background:radial-gradient(900px 500px at 50% -10%,rgba(201,162,74,.10),transparent 60%),#0c1322;padding:20px}
+      body.pending.authed #pending{display:flex}
+      body.pending #site{display:none}
     </style>
     <div id="crises-aluno"></div>
   </div>
@@ -200,12 +205,19 @@
   <div class="container">
     <span class="eyebrow">Somente professor</span>
     <h2 class="section-title">Painel do professor</h2>
-    <p class="section-sub">Crie crises e acompanhe as respostas dos alunos em tempo real.</p>
-    <form id="prof-form" class="tool">
+    <p class="section-sub">Crie crises, acompanhe respostas e ranking, controle o acesso e exporte tudo.</p>
+    <div class="prof-bar">
+      <label class="prof-switch"><input type="checkbox" id="prof-invite-toggle"> Cadastro só por convite (aprovar cada aluno)</label>
+      <button class="btn ghost" id="prof-export">⬇ Exportar respostas (CSV)</button>
+    </div>
+    <div id="prof-pendentes"></div>
+    <form id="prof-form" class="tool" style="margin-top:14px">
       <div class="field"><label>Tipo de crise</label>
         <select id="prof-tipo">
           <option value="orgao">Escolher o órgão/comitê competente</option>
           <option value="mocao">Qual moção usar</option>
+          <option value="mc">Múltipla escolha (geral)</option>
+          <option value="vf">Verdadeiro ou Falso</option>
           <option value="aberta">Resposta aberta / monte a resolução</option>
         </select>
       </div>
@@ -218,8 +230,15 @@
         <div class="prof-opt-row"><input type="radio" name="prof-correta" value="2"><input type="text" class="prof-opt" placeholder="Opção 3"></div>
         <div class="prof-opt-row"><input type="radio" name="prof-correta" value="3"><input type="text" class="prof-opt" placeholder="Opção 4"></div>
       </div>
+      <div id="prof-vf" style="display:none">
+        <label>Resposta correta</label>
+        <div class="prof-opt-row"><input type="radio" name="prof-vf" value="v" checked> <span>Verdadeiro</span></div>
+        <div class="prof-opt-row"><input type="radio" name="prof-vf" value="f"> <span>Falso</span></div>
+      </div>
       <div class="toolbar"><button type="submit" class="btn primary">Criar crise</button></div>
     </form>
+    <h3 style="margin-top:24px">Ranking de acertos</h3>
+    <div id="prof-ranking"></div>
     <h3 style="margin-top:24px">Crises criadas &amp; respostas</h3>
     <div id="prof-lista"></div>
   </div>

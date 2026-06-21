@@ -1,5 +1,5 @@
-// Crises do professor — lado do aluno + painel do professor (Firebase RTDB).
-// Reaproveita o app Firebase já inicializado pelo módulo inline do index.html.
+// Crises do professor — alunos + painel (Firebase RTDB).
+// Recursos: tipos (órgão/moção/MC geral/V-F/aberta), ranking, convite/aprovação, export CSV.
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getDatabase, ref, get, set, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
@@ -7,45 +7,59 @@ const auth = getAuth();
 const db = getDatabase();
 const TEACHER_EMAIL = "aluizio@aluizio.education";
 
-let IS_TEACHER = false, INIT = false, DATA = {};
+let IS_TEACHER = false, INIT = false, DATA = {}, INVITE_ONLY = false, MY_AUTH = false, RESP = {};
 const he = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const tipoTag = t => t === "orgao" ? "órgão competente" : (t === "mocao" ? "qual moção" : "resposta aberta");
+const TAG = { orgao: "órgão competente", mocao: "qual moção", mc: "múltipla escolha", vf: "verdadeiro/falso", aberta: "resposta aberta" };
+const tipoTag = t => TAG[t] || t;
 
 onAuthStateChanged(auth, user => {
   if (!user) return;
   IS_TEACHER = (user.email || "").toLowerCase() === TEACHER_EMAIL;
   document.body.classList.toggle("teacher", IS_TEACHER);
   if (INIT) return; INIT = true;
-  onValue(ref(db, "crises"), snap => {
-    DATA = snap.val() || {};
-    renderAluno();
-    if (IS_TEACHER) renderProfList();
-  });
-  if (IS_TEACHER) setupForm();
+  onValue(ref(db, "config/inviteOnly"), s => { INVITE_ONLY = s.val() === true; applyAccess(); if (IS_TEACHER) renderInvite(); });
+  onValue(ref(db, "autorizados/" + user.uid), s => { MY_AUTH = s.val() === true; applyAccess(); });
+  onValue(ref(db, "crises"), s => { DATA = s.val() || {}; renderAluno(); if (IS_TEACHER) renderProfList(); });
+  if (IS_TEACHER) {
+    setupForm();
+    onValue(ref(db, "pendentes"), s => renderPendentes(s.val() || {}));
+    onValue(ref(db, "respostas"), s => { RESP = s.val() || {}; renderRanking(); });
+  }
 });
 
+function applyAccess() {
+  if (IS_TEACHER) { document.body.classList.remove("pending"); return; }
+  const blocked = INVITE_ONLY && !MY_AUTH;
+  document.body.classList.toggle("pending", blocked);
+  if (blocked && auth.currentUser) {
+    set(ref(db, "pendentes/" + auth.currentUser.uid), { email: auth.currentUser.email, ts: Date.now() }).catch(() => {});
+  }
+}
+
+/* ---------------- ALUNO ---------------- */
 const ativas = () => Object.entries(DATA).filter(([, c]) => c && c.ativa).sort((a, b) => (a[1].criadaEm || 0) - (b[1].criadaEm || 0));
 
 async function renderAluno() {
   const root = document.getElementById("crises-aluno"); if (!root) return;
   const list = ativas();
-  if (!list.length) { root.innerHTML = '<p class="section-sub">Nenhuma crise ativa agora. Volte mais tarde.</p>'; return; }
   const uid = auth.currentUser && auth.currentUser.uid;
+  let ok = 0, mc = 0;
   const parts = [];
   for (const [id, c] of list) {
     let mine = null;
     if (uid) { try { mine = (await get(ref(db, "respostas/" + id + "/" + uid))).val(); } catch (e) {} }
+    if (mine && c.opcoes) { mc++; if (mine.correto) ok++; }
     parts.push(cardAluno(id, c, mine));
   }
-  root.innerHTML = parts.join("");
+  const score = mc ? '<p class="section-sub">Sua pontuação: <b>' + ok + "/" + mc + "</b> nas de múltipla escolha.</p>" : "";
+  root.innerHTML = list.length ? (score + parts.join("")) : '<p class="section-sub">Nenhuma crise ativa agora. Volte mais tarde.</p>';
 }
 
 function cardAluno(id, c, mine) {
   let body = "";
-  if (c.tipo === "aberta") {
+  if (!c.opcoes) {
     if (mine) body = '<div class="caso-fb">Resposta enviada ✓ — o professor vai avaliar.</div><div class="crise-mine">' + he(mine.texto) + "</div>";
-    else body = '<textarea class="crise-ta" data-cid="' + id + '" rows="5" placeholder="Escreva sua resposta..."></textarea>' +
-      '<div class="toolbar"><button class="btn primary crise-send" data-cid="' + id + '">Enviar</button></div>';
+    else body = '<textarea class="crise-ta" data-cid="' + id + '" rows="5" placeholder="Escreva sua resposta..."></textarea><div class="toolbar"><button class="btn primary crise-send" data-cid="' + id + '">Enviar</button></div>';
   } else {
     const opts = (c.opcoes || []).map((o, i) => {
       let cls = "caso-opt";
@@ -55,8 +69,7 @@ function cardAluno(id, c, mine) {
     body = '<div class="caso-opts">' + opts + "</div>";
     if (mine) body += '<div class="caso-fb">' + (mine.correto ? "<b>Correto.</b>" : "<b>Não exatamente.</b> A resposta certa está destacada.") + "</div>";
   }
-  return '<div class="caso"><div class="caso-num">CRISE · ' + tipoTag(c.tipo) + '</div><h3>' + he(c.titulo) + "</h3>" +
-    '<p class="caso-sit">' + he(c.enunciado) + "</p>" + body + "</div>";
+  return '<div class="caso"><div class="caso-num">CRISE · ' + tipoTag(c.tipo) + '</div><h3>' + he(c.titulo) + "</h3><p class=\"caso-sit\">" + he(c.enunciado) + "</p>" + body + "</div>";
 }
 
 document.addEventListener("click", async e => {
@@ -70,9 +83,7 @@ document.addEventListener("click", async e => {
   }
   const send = e.target.closest("#crises-aluno .crise-send");
   if (send) {
-    const id = send.dataset.cid;
-    const ta = document.querySelector('.crise-ta[data-cid="' + id + '"]');
-    const txt = ((ta && ta.value) || "").trim();
+    const id = send.dataset.cid, ta = document.querySelector('.crise-ta[data-cid="' + id + '"]'), txt = ((ta && ta.value) || "").trim();
     if (!txt) { alert("Escreva sua resposta antes de enviar."); return; }
     try { await set(ref(db, "respostas/" + id + "/" + auth.currentUser.uid), { email: auth.currentUser.email, texto: txt, enviadaEm: Date.now() }); }
     catch (err) { alert("Nao consegui salvar: " + (err.code || err.message)); }
@@ -80,12 +91,11 @@ document.addEventListener("click", async e => {
   }
 });
 
-/* -------- Painel do professor -------- */
+/* ---------------- PROFESSOR: criar crise ---------------- */
 function setupForm() {
   const f = document.getElementById("prof-form"); if (!f || f.dataset.ready) return; f.dataset.ready = "1";
-  const tipoSel = document.getElementById("prof-tipo");
-  const optsWrap = document.getElementById("prof-opts");
-  const toggle = () => { optsWrap.style.display = tipoSel.value === "aberta" ? "none" : "block"; };
+  const tipoSel = document.getElementById("prof-tipo"), opts = document.getElementById("prof-opts"), vf = document.getElementById("prof-vf");
+  const toggle = () => { const t = tipoSel.value; opts.style.display = (t === "aberta" || t === "vf") ? "none" : "block"; vf.style.display = (t === "vf") ? "block" : "none"; };
   tipoSel.addEventListener("change", toggle); toggle();
   f.addEventListener("submit", async e => {
     e.preventDefault();
@@ -94,16 +104,15 @@ function setupForm() {
     const enunciado = document.getElementById("prof-enunciado").value.trim();
     if (!titulo || !enunciado) { alert("Preencha titulo e enunciado."); return; }
     const crise = { tipo, titulo, enunciado, ativa: true, criadaEm: Date.now() };
-    if (tipo !== "aberta") {
-      const opcoes = [];
-      const corretaIdx = document.querySelector('input[name="prof-correta"]:checked');
-      const ci = corretaIdx ? +corretaIdx.value : -1;
-      document.querySelectorAll(".prof-opt").forEach((inp, i) => {
-        const t = inp.value.trim(); if (t) opcoes.push({ texto: t, correta: i === ci });
-      });
-      if (opcoes.length < 2) { alert("De pelo menos 2 opcoes."); return; }
-      if (!opcoes.some(o => o.correta)) { alert("Marque a opcao correta (o circulo a esquerda)."); return; }
-      crise.opcoes = opcoes;
+    if (tipo === "vf") {
+      const v = document.querySelector('input[name="prof-vf"]:checked');
+      crise.opcoes = [{ texto: "Verdadeiro", correta: !!(v && v.value === "v") }, { texto: "Falso", correta: !!(v && v.value === "f") }];
+    } else if (tipo !== "aberta") {
+      const ci = document.querySelector('input[name="prof-correta"]:checked'); const cidx = ci ? +ci.value : -1;
+      const op = []; document.querySelectorAll(".prof-opt").forEach((inp, i) => { const t = inp.value.trim(); if (t) op.push({ texto: t, correta: i === cidx }); });
+      if (op.length < 2) { alert("De pelo menos 2 opcoes."); return; }
+      if (!op.some(o => o.correta)) { alert("Marque a opcao correta."); return; }
+      crise.opcoes = op;
     }
     try { await push(ref(db, "crises"), crise); f.reset(); toggle(); }
     catch (err) { alert("Erro ao criar: " + (err.code || err.message)); }
@@ -116,8 +125,7 @@ function renderProfList() {
   if (!list.length) { root.innerHTML = '<p class="section-sub">Nenhuma crise criada ainda.</p>'; return; }
   root.innerHTML = list.map(([id, c]) =>
     '<div class="prof-item"><div class="prof-head"><b>' + he(c.titulo) + '</b> <span class="tag">' + tipoTag(c.tipo) + "</span>" +
-    (c.ativa ? "" : ' <span class="tag tag-off">inativa</span>') + "</div>" +
-    '<div class="toolbar">' +
+    (c.ativa ? "" : ' <span class="tag tag-off">inativa</span>') + "</div><div class=\"toolbar\">" +
     '<button class="btn ghost prof-resp" data-cid="' + id + '">Ver respostas</button>' +
     '<button class="btn ghost prof-toggle" data-cid="' + id + '">' + (c.ativa ? "Desativar" : "Ativar") + "</button>" +
     '<button class="btn ghost prof-del" data-cid="' + id + '">Excluir</button>' +
@@ -125,22 +133,70 @@ function renderProfList() {
 }
 
 document.addEventListener("click", async e => {
-  const tog = e.target.closest(".prof-toggle");
-  if (tog) { const id = tog.dataset.cid; try { await set(ref(db, "crises/" + id + "/ativa"), !DATA[id].ativa); } catch (err) { alert(err.message); } return; }
-  const del = e.target.closest(".prof-del");
-  if (del) { const id = del.dataset.cid; if (confirm("Excluir esta crise e suas respostas?")) { await remove(ref(db, "crises/" + id)); await remove(ref(db, "respostas/" + id)); } return; }
+  const tog = e.target.closest(".prof-toggle"); if (tog) { const id = tog.dataset.cid; try { await set(ref(db, "crises/" + id + "/ativa"), !DATA[id].ativa); } catch (err) { alert(err.message); } return; }
+  const del = e.target.closest(".prof-del"); if (del) { const id = del.dataset.cid; if (confirm("Excluir esta crise e suas respostas?")) { await remove(ref(db, "crises/" + id)); await remove(ref(db, "respostas/" + id)); } return; }
   const rb = e.target.closest(".prof-resp");
   if (rb) {
     const id = rb.dataset.cid, box = document.getElementById("resp-" + id);
     if (!box.hidden) { box.hidden = true; return; }
     box.hidden = false; box.innerHTML = "carregando…";
-    onValue(ref(db, "respostas/" + id), snap => {
-      const r = snap.val() || {}, rows = Object.values(r);
+    onValue(ref(db, "respostas/" + id), s => {
+      const r = s.val() || {}, rows = Object.values(r);
       if (!rows.length) { box.innerHTML = '<p class="section-sub">Ninguem respondeu ainda.</p>'; return; }
       box.innerHTML = '<table class="prof-tab"><thead><tr><th>Aluno</th><th>Resposta</th></tr></thead><tbody>' +
-        rows.map(x => "<tr><td>" + he(x.email) + "</td><td>" +
-          (x.texto != null ? he(x.texto) : (x.correto ? "✔ acertou" : "✗ errou") + " (opção " + (x.escolhaIdx + 1) + ")") +
-          "</td></tr>").join("") + "</tbody></table>";
+        rows.map(x => "<tr><td>" + he(x.email) + "</td><td>" + (x.texto != null ? he(x.texto) : (x.correto ? "✔ acertou" : "✗ errou") + " (opção " + (x.escolhaIdx + 1) + ")") + "</td></tr>").join("") + "</tbody></table>";
     });
   }
+});
+
+/* ---------------- PROFESSOR: convite / aprovação ---------------- */
+function renderInvite() { const t = document.getElementById("prof-invite-toggle"); if (t) t.checked = INVITE_ONLY; }
+document.addEventListener("change", e => { if (e.target.id === "prof-invite-toggle") set(ref(db, "config/inviteOnly"), e.target.checked).catch(err => alert(err.message)); });
+function renderPendentes(p) {
+  const root = document.getElementById("prof-pendentes"); if (!root) return;
+  const list = Object.entries(p);
+  if (!list.length) { root.innerHTML = ""; return; }
+  root.innerHTML = '<div class="prof-item"><b>Aguardando aprovação (' + list.length + "):</b>" +
+    list.map(([uid, v]) => '<div class="prof-head" style="margin-top:8px">' + he(v.email || uid) +
+      ' <button class="btn primary prof-aprovar" data-uid="' + uid + '" style="margin-left:8px">Aprovar</button>' +
+      ' <button class="btn ghost prof-negar" data-uid="' + uid + '">Remover</button></div>').join("") + "</div>";
+}
+document.addEventListener("click", async e => {
+  const ap = e.target.closest(".prof-aprovar"); if (ap) { const uid = ap.dataset.uid; await set(ref(db, "autorizados/" + uid), true); await remove(ref(db, "pendentes/" + uid)); return; }
+  const ng = e.target.closest(".prof-negar"); if (ng) { const uid = ng.dataset.uid; await remove(ref(db, "pendentes/" + uid)); return; }
+});
+
+/* ---------------- PROFESSOR: ranking ---------------- */
+function renderRanking() {
+  const root = document.getElementById("prof-ranking"); if (!root) return;
+  const agg = {};
+  Object.values(RESP).forEach(byUid => Object.values(byUid || {}).forEach(r => {
+    const k = r.email || "?"; agg[k] = agg[k] || { ok: 0, mc: 0, ab: 0 };
+    if (r.texto != null) agg[k].ab++; else { agg[k].mc++; if (r.correto) agg[k].ok++; }
+  }));
+  const rows = Object.entries(agg).map(([email, a]) => ({ email, ...a })).sort((a, b) => b.ok - a.ok || b.mc - a.mc);
+  if (!rows.length) { root.innerHTML = '<p class="section-sub">Sem respostas ainda.</p>'; return; }
+  root.innerHTML = '<table class="prof-tab"><thead><tr><th>#</th><th>Aluno</th><th>Acertos</th><th>MC respondidas</th><th>Abertas</th></tr></thead><tbody>' +
+    rows.map((r, i) => "<tr><td>" + (i + 1) + "</td><td>" + he(r.email) + "</td><td><b>" + r.ok + "</b></td><td>" + r.mc + "</td><td>" + r.ab + "</td></tr>").join("") + "</tbody></table>";
+}
+
+/* ---------------- PROFESSOR: exportar CSV ---------------- */
+document.addEventListener("click", e => {
+  if (e.target.id !== "prof-export") return;
+  const rows = [["Crise", "Tipo", "Aluno", "Resposta", "Correto", "Enviada em"]];
+  Object.entries(RESP).forEach(([cid, byUid]) => {
+    const c = DATA[cid] || {};
+    Object.values(byUid || {}).forEach(r => {
+      let resposta, correto = "";
+      if (r.texto != null) resposta = r.texto;
+      else { const op = (c.opcoes || [])[r.escolhaIdx]; resposta = op ? op.texto : "opção " + (r.escolhaIdx + 1); correto = r.correto ? "sim" : "nao"; }
+      const dt = r.enviadaEm ? new Date(r.enviadaEm).toLocaleString("pt-BR") : "";
+      rows.push([c.titulo || cid, tipoTag(c.tipo), r.email || "", resposta, correto, dt]);
+    });
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = "respostas-onu.csv"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
 });
