@@ -72,6 +72,8 @@
       <a href="#glossario">Glossário</a>
       <a href="#orgaos">Órgãos</a>
       <a href="#casos">Situações</a>
+      <a href="#crises">Crises</a>
+      <a href="#painel-prof" class="nav-prof">Painel</a>
       <a href="#procedimento">Procedimento</a>
       <a href="#documentos">Documentos</a>
       <a href="#comites">Comitês</a>
@@ -157,6 +159,69 @@
       #casos .caso-fb{margin-top:12px;padding:11px 13px;border-radius:8px;background:#0e1c2e;border-left:3px solid #c9a24a;color:#dfe8f5;font-size:.92rem;line-height:1.55}
     </style>
     <div id="casosBody"></div>
+  </div>
+</section>
+
+<!-- Crises do professor (aluno) -->
+<section class="block" id="crises">
+  <div class="container">
+    <span class="eyebrow">Simulação dirigida</span>
+    <h2 class="section-title">Crises do professor</h2>
+    <p class="section-sub">Resolva as crises propostas pelo professor. Múltipla escolha corrige na hora; respostas abertas o professor avalia.</p>
+    <style>
+      #painel-prof{display:none} body.teacher #painel-prof{display:block}
+      .nav-prof{display:none} body.teacher .nav-prof{display:inline-block}
+      #crises-aluno .caso{background:#121a2c;border:1px solid #24344f;border-radius:10px;padding:20px 22px;margin-top:16px}
+      #crises-aluno .caso-num{font-size:.72rem;letter-spacing:.12em;color:#c9a24a;text-transform:uppercase}
+      #crises-aluno .caso h3{margin:.3rem 0 .5rem;font-size:1.12rem}
+      #crises-aluno .caso-sit{color:#9fb0c8;margin:.2rem 0 .7rem}
+      #crises-aluno .caso-opts{display:flex;flex-direction:column;gap:8px}
+      #crises-aluno .caso-opt{text-align:left;padding:10px 13px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;cursor:pointer;font-size:.93rem}
+      #crises-aluno .caso-opt:hover:not([disabled]){border-color:#c9a24a}
+      #crises-aluno .caso-opt.ok{background:#16361f;border-color:#2a6b45;color:#bdf0cd}
+      #crises-aluno .caso-opt.no{background:#3a1d20;border-color:#6b2a2a;color:#f1b0a6}
+      #crises-aluno .caso-fb{margin-top:12px;padding:11px 13px;border-radius:8px;background:#0e1c2e;border-left:3px solid #c9a24a;color:#dfe8f5;font-size:.92rem;line-height:1.5}
+      #crises-aluno .crise-mine{white-space:pre-wrap;margin-top:8px;padding:11px 13px;border-radius:8px;background:#0e1c2e;color:#cfdcec;font-size:.9rem}
+      #crises-aluno .crise-ta,#prof-form textarea,#prof-form input[type=text],#prof-form select{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.93rem;margin-top:4px}
+      #prof-form .field{margin-bottom:10px} #prof-form label{font-size:.85rem;color:#9fb0c8}
+      .prof-opt-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+      .prof-item{background:#121a2c;border:1px solid #24344f;border-radius:10px;padding:14px 16px;margin-top:12px}
+      .prof-head{margin-bottom:6px} .tag-off{background:#6b2a2a !important}
+      .prof-tab{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
+      .prof-tab th,.prof-tab td{border:1px solid #24344f;padding:7px 9px;text-align:left;vertical-align:top}
+      .prof-tab td{white-space:pre-wrap}
+    </style>
+    <div id="crises-aluno"></div>
+  </div>
+</section>
+
+<!-- Painel do professor -->
+<section class="block" id="painel-prof">
+  <div class="container">
+    <span class="eyebrow">Somente professor</span>
+    <h2 class="section-title">Painel do professor</h2>
+    <p class="section-sub">Crie crises e acompanhe as respostas dos alunos em tempo real.</p>
+    <form id="prof-form" class="tool">
+      <div class="field"><label>Tipo de crise</label>
+        <select id="prof-tipo">
+          <option value="orgao">Escolher o órgão/comitê competente</option>
+          <option value="mocao">Qual moção usar</option>
+          <option value="aberta">Resposta aberta / monte a resolução</option>
+        </select>
+      </div>
+      <div class="field"><label>Título</label><input type="text" id="prof-titulo" placeholder="Ex.: Bloqueio naval"></div>
+      <div class="field"><label>Enunciado / situação</label><textarea id="prof-enunciado" rows="3" placeholder="Descreva a crise..."></textarea></div>
+      <div id="prof-opts">
+        <label>Opções (marque a correta no círculo à esquerda)</label>
+        <div class="prof-opt-row"><input type="radio" name="prof-correta" value="0"><input type="text" class="prof-opt" placeholder="Opção 1"></div>
+        <div class="prof-opt-row"><input type="radio" name="prof-correta" value="1"><input type="text" class="prof-opt" placeholder="Opção 2"></div>
+        <div class="prof-opt-row"><input type="radio" name="prof-correta" value="2"><input type="text" class="prof-opt" placeholder="Opção 3"></div>
+        <div class="prof-opt-row"><input type="radio" name="prof-correta" value="3"><input type="text" class="prof-opt" placeholder="Opção 4"></div>
+      </div>
+      <div class="toolbar"><button type="submit" class="btn primary">Criar crise</button></div>
+    </form>
+    <h3 style="margin-top:24px">Crises criadas &amp; respostas</h3>
+    <div id="prof-lista"></div>
   </div>
 </section>
 
@@ -468,5 +533,6 @@ document.addEventListener('click', e=>{
 </script>
 
 <script src="assets/app.js"></script>
+<script type="module" src="assets/crises.js"></script>
 </body>
 </html>
