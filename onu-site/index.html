@@ -15,7 +15,24 @@
 <meta property="og:locale" content="pt_BR">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1B2A4A">
+<link rel="canonical" href="https://onu.aluizio.education/">
 <link rel="icon" type="image/png" href="assets/favicon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ONU & Model UN — Preparação do Delegado",
+  "url": "https://onu.aluizio.education/",
+  "inLanguage": "pt-BR",
+  "description": "Plataforma de preparação para simulações Model UN: curso, glossário, documentos do delegado, crises ao vivo e checklist.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Aluizio Pires Educação",
+    "url": "https://aluizio.education/",
+    "logo": "https://onu.aluizio.education/assets/logo-black.png"
+  }
+}
+</script>
 <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
@@ -581,7 +598,13 @@ form.addEventListener('submit', async e=>{
   const email = document.getElementById('gate-email').value.trim();
   const pass  = document.getElementById('gate-pass').value;
   try {
-    if (mode === 'signup') { await createUserWithEmailAndPassword(auth, email, pass); }
+    if (mode === 'signup') {
+      await createUserWithEmailAndPassword(auth, email, pass);
+      // Google Ads: conversão "Criar conta — onu.aluizio.education"
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', { send_to: 'AW-18276483241/tXF8CMLer8ocEKmB9IpE' });
+      }
+    }
     else { await signInWithEmailAndPassword(auth, email, pass); }
   } catch (err) { showAlert(tr(err.code)); submit.disabled = false; }
 });
