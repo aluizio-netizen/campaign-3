@@ -11,13 +11,31 @@
 <body>
 
 <style>
-  #gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(1200px 600px at 50% -10%,rgba(201,162,74,.10),transparent 60%),#0c1322;padding:20px}
-  body.authed #gate{display:none}
-  body:not(.authed) #site{display:none}
-  .gate-card{width:100%;max-width:380px;background:#121a2c;border:1px solid #24344f;border-radius:12px;
+  /* Portão de acesso agora é um MODAL: o site é público; só a área do delegado exige login. */
+  #gate{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+    background:rgba(8,12,22,.78);padding:20px}
+  body.gate-open #gate{display:flex}
+  /* Seções e links exclusivos de quem tem conta */
+  body:not(.authed) section.members{display:none}
+  body:not(.authed) .nav a.members{display:none}
+  body:not(.authed) #onu-userbar{display:none}
+  body.authed .nav-login{display:none}
+  body.authed .public-cta{display:none}
+  /* Conta criada mas ainda não aprovada: esconde a área do delegado e mostra o aviso */
+  body.pending.authed section.members{display:none}
+  body.pending.authed .nav a.members{display:none}
+  #pending-banner{display:none;background:#FBF4DD;border-bottom:1px solid #E6D9A8;color:#6B5A1E;
+    padding:10px 0;font-size:.92rem;text-align:center}
+  body.pending.authed #pending-banner{display:block}
+  .nav-login{background:#C9A227;color:#1B2A4A!important;font-weight:800}
+  .nav-login:hover{background:#e6c97a!important;color:#1B2A4A!important}
+  .hero-cta{margin-top:26px;display:flex;flex-wrap:wrap;gap:12px}
+  .gate-card{position:relative;width:100%;max-width:380px;background:#121a2c;border:1px solid #24344f;border-radius:12px;
     padding:34px 30px;box-shadow:0 20px 60px rgba(0,0,0,.45);text-align:center;color:#e8eef7;
     font-family:-apple-system,Segoe UI,system-ui,sans-serif}
+  .gate-close{position:absolute;top:10px;right:14px;background:none;border:none;color:#9fb0c8;
+    font-size:1.4rem;line-height:1;cursor:pointer;padding:4px}
+  .gate-close:hover{color:#fff}
   .gate-logo{height:46px;margin-bottom:14px;object-fit:contain}
   .gate-card h2{font-family:Georgia,serif;margin:0 0 6px;font-size:1.4rem;color:#f3ecd9}
   .gate-sub{color:#9fb0c8;font-size:.9rem;margin:0 0 18px;line-height:1.5}
@@ -39,8 +57,9 @@
 </style>
 
 <!-- Portão de acesso (Firebase Auth) -->
-<div id="gate" aria-hidden="false">
+<div id="gate" aria-hidden="true">
   <div class="gate-card">
+    <button type="button" class="gate-close" aria-label="Fechar" onclick="window.__onuCloseGate&&window.__onuCloseGate()">×</button>
     <img src="assets/logo-white.png" alt="Aluizio Pires Educação" class="gate-logo">
     <h2 id="gate-title">Área do delegado</h2>
     <p class="gate-sub" id="gate-sub">Entre com sua conta para acessar os materiais. Novo por aqui? Crie uma conta.</p>
@@ -57,7 +76,9 @@
     </div>
   </div>
 </div>
-<div id="pending"><div class="gate-card"><img src="assets/logo-white.png" alt="" class="gate-logo"><h2>Aguardando aprovação</h2><p class="gate-sub">Sua conta foi criada. O professor precisa aprovar seu acesso ao ambiente de simulação. Quando ele aprovar, esta tela libera sozinha.</p><a href="#" onclick="location.reload();return false" style="color:#c9a24a">Recarregar</a></div></div><div id="site">
+<div id="site">
+
+<div id="pending-banner">✅ Conta criada! O professor precisa aprovar seu acesso à área do delegado — quando ele aprovar, esta página libera sozinha. <a href="#" onclick="location.reload();return false">Recarregar</a></div>
 
 <!-- Topbar -->
 <header class="topbar">
@@ -68,21 +89,23 @@
     </a>
     <button class="nav-toggle" aria-label="Menu" onclick="document.getElementById('nav').classList.toggle('open')">☰ Menu</button>
     <nav class="nav" id="nav">
-      <a href="#aulas">Curso</a>
+      <a href="#aulas" class="members">Curso</a>
       <a href="#glossario">Glossário</a>
       <a href="#orgaos">Órgãos</a>
-      <a href="#casos">Situações</a>
-      <a href="#crises">Crises</a>
+      <a href="#casos" class="members">Situações</a>
+      <a href="#crises" class="members">Crises</a>
       <a href="#painel-prof" class="nav-prof">Painel</a>
       <a href="#procedimento">Procedimento</a>
-      <a href="#documentos">Documentos</a>
-      <a href="#comites">Comitês</a>
-      <a href="#oficiais">Oficiais</a>
+      <a href="#documentos" class="members">Documentos</a>
+      <a href="#comites" class="members">Comitês</a>
+      <a href="#oficiais" class="members">Oficiais</a>
+      <a href="#financiamento" class="members">Fundos</a>
+      <a href="#blocos" class="members">Blocos</a>
+      <a href="#checklist" class="members">Checklist</a>
+      <a href="#exemplo" class="members">Exemplo</a>
+      <a href="#plataforma" class="public-cta">Área do delegado</a>
+      <a href="#" class="nav-login" onclick="window.__onuOpenGate&&window.__onuOpenGate('login');return false">Entrar</a>
       <span id="onu-userbar"><span class="who"></span><a onclick="window.__onuLogout&&window.__onuLogout()">Sair</a></span>
-      <a href="#financiamento">Fundos</a>
-      <a href="#blocos">Blocos</a>
-      <a href="#checklist">Checklist</a>
-      <a href="#exemplo">Exemplo</a>
     </nav>
   </div>
 </header>
@@ -101,12 +124,37 @@
       <span class="pill">Salva automaticamente</span>
       <span class="pill">Exporta e imprime</span>
     </div>
+    <div class="hero-cta public-cta">
+      <button class="btn gold" onclick="window.__onuOpenGate&&window.__onuOpenGate('signup')">Criar conta grátis</button>
+      <button class="btn ghost" onclick="window.__onuOpenGate&&window.__onuOpenGate('login')">Já tenho conta</button>
+    </div>
     <div class="gold-line"></div>
   </div>
 </section>
 
+<!-- Vitrine pública da área do delegado -->
+<section class="block public-cta" id="plataforma">
+  <div class="container">
+    <span class="eyebrow">Área do delegado</span>
+    <h2 class="section-title">O que você destrava ao criar sua conta</h2>
+    <p class="section-sub">Conta gratuita. Depois de criar, o professor aprova seu acesso ao ambiente de simulação da turma.</p>
+    <div class="grid cols-3" style="margin-top:18px">
+      <div class="card"><span class="tag">Curso</span><h3>Plano aula por aula</h3><p>5 encontros (10h) que transformam cada conceito da ONU em ferramenta usável na mesa do comitê.</p></div>
+      <div class="card"><span class="tag">Documentos</span><h3>Position Paper &amp; Draft Resolution</h3><p>Editores guiados com salvamento automático, banco de verbos operativos, exportação e impressão.</p></div>
+      <div class="card"><span class="tag">Ao vivo</span><h3>Crises do professor</h3><p>O professor lança crises durante a simulação; você responde da sua tela e acompanha o ranking da turma.</p></div>
+      <div class="card"><span class="tag">Prática</span><h3>Situações para resolver</h3><p>Casos interativos: escolha o órgão certo, a moção certa e o caminho de ação — com correção na hora.</p></div>
+      <div class="card"><span class="tag">Guias</span><h3>Comitês &amp; documentos oficiais</h3><p>Guias dos principais comitês e downloads de documentos oficiais da ONU para citar com precisão.</p></div>
+      <div class="card"><span class="tag">Preparação</span><h3>Fundos, blocos e checklist</h3><p>Passo a passo para obter recursos, mapa de alianças, roteiro do discurso de abertura e autoavaliação.</p></div>
+    </div>
+    <div class="hero-cta" style="margin-top:22px">
+      <button class="btn gold" onclick="window.__onuOpenGate&&window.__onuOpenGate('signup')">Criar conta grátis</button>
+      <button class="btn ghost" onclick="window.__onuOpenGate&&window.__onuOpenGate('login')">Já tenho conta — entrar</button>
+    </div>
+  </div>
+</section>
+
 <!-- Aulas -->
-<section class="block" id="aulas">
+<section class="block members" id="aulas">
   <div class="container">
     <span class="eyebrow">Curso</span>
     <h2 class="section-title">Planejamento aula por aula</h2>
@@ -139,7 +187,7 @@
 </section>
 
 <!-- Situações para resolver -->
-<section class="block" id="casos">
+<section class="block members" id="casos">
   <div class="container">
     <span class="eyebrow">Pratique</span>
     <h2 class="section-title">Situações para resolver</h2>
@@ -163,7 +211,7 @@
 </section>
 
 <!-- Crises do professor (aluno) -->
-<section class="block" id="crises">
+<section class="block members" id="crises">
   <div class="container">
     <span class="eyebrow">Simulação dirigida</span>
     <h2 class="section-title">Crises do professor</h2>
@@ -192,16 +240,13 @@
       .prof-tab td{white-space:pre-wrap}
       .prof-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:8px 0}
       .prof-switch{display:flex;align-items:center;gap:8px;font-size:.9rem;color:#cfdcec;cursor:pointer}
-      #pending{position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;background:radial-gradient(900px 500px at 50% -10%,rgba(201,162,74,.10),transparent 60%),#0c1322;padding:20px}
-      body.pending.authed #pending{display:flex}
-      body.pending #site{display:none}
     </style>
     <div id="crises-aluno"></div>
   </div>
 </section>
 
 <!-- Painel do professor -->
-<section class="block" id="painel-prof">
+<section class="block members" id="painel-prof">
   <div class="container">
     <span class="eyebrow">Somente professor</span>
     <h2 class="section-title">Painel do professor</h2>
@@ -260,7 +305,7 @@
 </section>
 
 <!-- Documentos -->
-<section class="block" id="documentos">
+<section class="block members" id="documentos">
   <div class="container">
     <span class="eyebrow">Mãos à obra</span>
     <h2 class="section-title">Documentos do delegado</h2>
@@ -299,7 +344,7 @@
 </section>
 
 <!-- Comitês -->
-<section class="block" id="comites">
+<section class="block members" id="comites">
   <div class="container">
     <span class="eyebrow">Comitês</span>
     <h2 class="section-title">Guias dos comitês</h2>
@@ -345,7 +390,7 @@
 </section>
 
 <!-- Documentos oficiais -->
-<section class="block" id="oficiais">
+<section class="block members" id="oficiais">
   <div class="container">
     <span class="eyebrow">Fontes primárias</span>
     <h2 class="section-title">Documentos oficiais da ONU</h2>
@@ -371,7 +416,7 @@
 </section>
 
 <!-- Financiamento -->
-<section class="block" id="financiamento">
+<section class="block members" id="financiamento">
   <div class="container">
     <span class="eyebrow">Tema central</span>
     <h2 class="section-title">Como obter fundos</h2>
@@ -387,7 +432,7 @@
 </section>
 
 <!-- Blocos + Discurso -->
-<section class="block" id="blocos">
+<section class="block members" id="blocos">
   <div class="container">
     <span class="eyebrow">Estratégia</span>
     <h2 class="section-title">Mapa de blocos e discurso de abertura</h2>
@@ -408,7 +453,7 @@
 </section>
 
 <!-- Checklist + Rubrica -->
-<section class="block" id="checklist">
+<section class="block members" id="checklist">
   <div class="container">
     <span class="eyebrow">Antes e depois</span>
     <h2 class="section-title">Checklist e autoavaliação</h2>
@@ -428,7 +473,7 @@
 </section>
 
 <!-- Exemplo resolvido -->
-<section class="block" id="exemplo">
+<section class="block members" id="exemplo">
   <div class="container">
     <span class="eyebrow">Gabarito</span>
     <h2 class="section-title">Exemplo resolvido</h2>
@@ -441,10 +486,20 @@
   </div>
 </section>
 
+<!-- Mentoria (cross-sell projectc.info) -->
+<section class="block" id="mentoria" style="background:linear-gradient(135deg,#1B2A4A,#22335A);padding:44px 0">
+  <div class="container" style="text-align:center">
+    <span class="eyebrow" style="background:rgba(201,162,39,.18);color:#e6c97a">Quer ir além?</span>
+    <h2 class="section-title" style="color:#fff">Mentoria para Gabinetes de Guerra e Comitês de Crise</h2>
+    <p class="section-sub" style="color:#dbe4f4;max-width:640px;margin:0 auto">Preparação individual com simulações práticas e feedback direto — para delegados que querem dominar os comitês mais disputados do Model UN.</p>
+    <div style="margin-top:20px"><a class="btn gold" href="https://projectc.info/#mentoria" style="text-decoration:none">Conhecer a mentoria →</a></div>
+  </div>
+</section>
+
 <footer>
   <div class="container">
     <span>© <span id="year"></span> <b>Aluizio Pires · Educação</b> · ONU & Model UN</span>
-    <span>[e-mail] · [WhatsApp] · onu.aluizio.education</span>
+    <span><a href="https://projectc.info/contato">contato</a> · <a href="https://projectc.info">projectc.info</a> · onu.aluizio.education</span>
   </div>
 </footer>
 
@@ -521,6 +576,7 @@ document.getElementById('gate-forgot').onclick = async e=>{
 onAuthStateChanged(auth, user=>{
   if (user) {
     document.body.classList.add('authed');
+    document.body.classList.remove('gate-open');
     const bar = document.getElementById('onu-userbar');
     if (bar) bar.querySelector('.who').textContent = user.email;
   } else {
@@ -530,6 +586,12 @@ onAuthStateChanged(auth, user=>{
 });
 
 window.__onuLogout = async ()=>{ await signOut(auth); };
+
+// Modal de acesso: o site é público; login só é pedido ao entrar na área do delegado.
+window.__onuOpenGate  = (m)=>{ setMode(m==='signup' ? 'signup' : 'login'); clearAlert(); document.body.classList.add('gate-open'); document.getElementById('gate-email').focus(); };
+window.__onuCloseGate = ()=>{ document.body.classList.remove('gate-open'); };
+gate.addEventListener('click', e=>{ if (e.target === gate) window.__onuCloseGate(); });
+document.addEventListener('keydown', e=>{ if (e.key === 'Escape') window.__onuCloseGate(); });
 
 // Download autenticado: lê o arquivo (base64) do Realtime DB (regras exigem login) e salva.
 window.onuDownload = async (btn)=>{
