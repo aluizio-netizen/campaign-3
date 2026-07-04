@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ONU & Model UN — Preparação do Delegado | Aluizio Educação</title>
 <meta name="description" content="Plataforma de trabalho para simulações Model UN: estruturas da ONU, redação de resoluções, negociação e obtenção de fundos. Por Aluizio Pires Educação.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://onu.aluizio.education/">
+<meta property="og:title" content="ONU & Model UN — Preparação do Delegado">
+<meta property="og:description" content="Curso, glossário, documentos do delegado, crises ao vivo e checklist — tudo para dominar simulações Model UN. Por Aluizio Pires Educação.">
+<meta property="og:image" content="https://onu.aluizio.education/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1B2A4A">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/styles.css">
 </head>
@@ -588,10 +598,24 @@ onAuthStateChanged(auth, user=>{
 window.__onuLogout = async ()=>{ await signOut(auth); };
 
 // Modal de acesso: o site é público; login só é pedido ao entrar na área do delegado.
-window.__onuOpenGate  = (m)=>{ setMode(m==='signup' ? 'signup' : 'login'); clearAlert(); document.body.classList.add('gate-open'); document.getElementById('gate-email').focus(); };
+window.__onuOpenGate  = (m)=>{ setMode(m==='signup' ? 'signup' : 'login'); clearAlert();
+  document.getElementById('nav').classList.remove('open'); // fecha o menu mobile
+  document.body.classList.add('gate-open'); document.getElementById('gate-email').focus(); };
 window.__onuCloseGate = ()=>{ document.body.classList.remove('gate-open'); };
 gate.addEventListener('click', e=>{ if (e.target === gate) window.__onuCloseGate(); });
 document.addEventListener('keydown', e=>{ if (e.key === 'Escape') window.__onuCloseGate(); });
+
+// Zebrado das seções considerando apenas as visíveis (seções .members ocultas não contam).
+window.__restripe = ()=>{
+  let i = 0;
+  document.querySelectorAll('section.block').forEach(s=>{
+    if (s.id === 'mentoria' || getComputedStyle(s).display === 'none') return;
+    s.classList.toggle('alt', i++ % 2 === 1);
+  });
+};
+window.__restripe();
+new MutationObserver(()=>window.__restripe())
+  .observe(document.body, { attributes:true, attributeFilter:['class'] });
 
 // Download autenticado: lê o arquivo (base64) do Realtime DB (regras exigem login) e salva.
 window.onuDownload = async (btn)=>{
