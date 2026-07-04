@@ -220,24 +220,36 @@ function renderExample(){
 /* ----------------------------- PERSISTÊNCIA ----------------------------- */
 const KEY="aluizio_onu_mun_v1";
 function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){ return {}; } }
-function saveState(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+function saveState(s){
+  try{ localStorage.setItem(KEY, JSON.stringify(s)); localStorage.setItem(KEY+"_ts", String(Date.now())); }catch(e){}
+  if(window.__cloudSave) window.__cloudSave(s);
+  updateProgress(s);
+}
 let _saveTimer;
 function flashSaved(){
   let h=document.getElementById("globalSaveHint");
   if(!h){ h=el("div","savehint","✓ salvo"); h.id="globalSaveHint";
     h.style.cssText="position:fixed;bottom:18px;right:18px;background:#1E8E5A;color:#fff;padding:8px 14px;border-radius:999px;z-index:99;font-size:.85rem;font-weight:700";
     document.body.appendChild(h);}
+  h.textContent = window.__cloudOk ? "✓ salvo na nuvem" : "✓ salvo";
   h.classList.add("show"); clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>h.classList.remove("show"),1100);
 }
-function bindPersistence(){
-  const state=loadState();
+/* Preenche todos os campos [data-save] a partir de um objeto de estado
+   (usado no carregamento local e na sincronização com a nuvem). */
+function applyState(state){
   document.querySelectorAll("[data-save]").forEach(node=>{
     const k=node.getAttribute("data-save");
-    if(k in state){
-      if(node.type==="checkbox"){ node.checked=!!state[k]; toggleDone(node); }
-      else node.value=state[k];
-    }
+    if(node.type==="checkbox"){ node.checked=!!state[k]; toggleDone(node); }
+    else node.value = state[k]!=null ? state[k] : "";
+  });
+  updateProgress(state);
+}
+function bindPersistence(){
+  const state=loadState();
+  applyState(state);
+  document.querySelectorAll("[data-save]").forEach(node=>{
+    const k=node.getAttribute("data-save");
     const ev = (node.tagName==="SELECT"||node.type==="checkbox") ? "change":"input";
     node.addEventListener(ev,()=>{
       const s=loadState();
@@ -248,6 +260,34 @@ function bindPersistence(){
   });
 }
 function toggleDone(cb){ const li=cb.closest("li"); if(li) li.classList.toggle("done", cb.checked); }
+
+/* ----------------------------- MEU PROGRESSO ----------------------------- */
+const PROGRESS_GROUPS = [
+  { nome:"Position Paper",  chaves:["pp_pais","pp_contexto","pp_posicao","pp_propostas","pp_aliancas"] },
+  { nome:"Draft Resolution",chaves:["dr_cabecalho","dr_pre","dr_op"] },
+  { nome:"Financiamento",   chaves:["fin_estrategia","fin_fonte","fin_doadores"] },
+  { nome:"Blocos & discurso",chaves:["blocos_aliados","blocos_oposicao","discurso"] },
+  { nome:"Checklist",       chaves:["chk_0","chk_1","chk_2","chk_3","chk_4","chk_5","chk_6"] },
+  { nome:"Autoavaliação",   chaves:["rub_0","rub_1","rub_2","rub_3","rub_4","rub_5"] },
+];
+function filled(v){ return v===true || (typeof v==="string" && v.trim()!==""); }
+function updateProgress(state){
+  const root=document.getElementById("progressoBody");
+  if(!root) return;
+  const s = state || loadState();
+  let done=0, total=0, cards="";
+  PROGRESS_GROUPS.forEach(g=>{
+    const ok = g.chaves.filter(k=>filled(s[k])).length;
+    done+=ok; total+=g.chaves.length;
+    const pct = Math.round(ok/g.chaves.length*100);
+    cards += `<div class="pitem"><div class="plabel"><span>${g.nome}</span><b>${ok}/${g.chaves.length}</b></div>`+
+             `<div class="pbar"><i style="width:${pct}%"></i></div></div>`;
+  });
+  const pctAll = Math.round(done/total*100);
+  root.innerHTML =
+    `<div class="pitem ptotal"><div class="plabel"><span>Preparação geral</span><b>${pctAll}%</b></div>`+
+    `<div class="pbar big"><i style="width:${pctAll}%"></i></div></div>${cards}`;
+}
 
 function exportTool(slug, title, keys){
   const s=loadState();
@@ -271,11 +311,12 @@ function loadExample(){
 }
 
 function resetAll(){
-  if(!confirm("Isso apaga todo o seu trabalho salvo neste navegador. Continuar?")) return;
+  if(!confirm("Isso apaga todo o seu trabalho salvo (neste navegador e na nuvem). Continuar?")) return;
   localStorage.removeItem(KEY);
   document.querySelectorAll("[data-save]").forEach(n=>{
     if(n.type==="checkbox"){ n.checked=false; toggleDone(n); } else n.value="";
   });
+  saveState({});
   flashSaved();
 }
 
@@ -346,7 +387,8 @@ function renderCasos(){
 
 /* ----------------------------- NAV ATIVA ----------------------------- */
 function setupScrollSpy(){
-  const links=[...document.querySelectorAll(".nav a")];
+  const links=[...document.querySelectorAll(".nav a")]
+    .filter(a=>{ const h=a.getAttribute("href"); return h && h.startsWith("#") && h.length>1; });
   const map={}; links.forEach(a=> map[a.getAttribute("href").slice(1)]=a);
   const obs=new IntersectionObserver(es=>{
     es.forEach(e=>{ if(e.isIntersecting){ links.forEach(l=>l.classList.remove("active")); if(map[e.target.id]) map[e.target.id].classList.add("active"); }});
@@ -357,6 +399,8 @@ function setupScrollSpy(){
 
 /* ---- expõe handlers usados em atributos inline (onclick/oninput) ---- */
 Object.assign(window,{ filterGlossary, exportTool, loadExample, resetAll });
+/* ---- ganchos para a sincronização com a nuvem (módulo Firebase no index) ---- */
+Object.assign(window,{ __applyState:applyState, __getState:loadState, __updateProgress:updateProgress });
 
 /* ----------------------------- INIT ----------------------------- */
 document.addEventListener("DOMContentLoaded",()=>{

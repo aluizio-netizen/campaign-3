@@ -113,6 +113,20 @@ select.rubric{border:1px solid var(--line);border-radius:8px;padding:6px 8px;bac
 .btn.gold:hover{background:#b8911f}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
 
+/* ---------- Meu progresso ---------- */
+.progress-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px}
+.pitem{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.pitem.ptotal{grid-column:1/-1;background:var(--navy)}
+.pitem.ptotal .plabel span,.pitem.ptotal .plabel b{color:#fff}
+.plabel{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.plabel span{font-weight:700;color:var(--navy);font-size:.92rem}
+.plabel b{color:var(--blue);font-size:.92rem}
+.pitem.ptotal .plabel b{color:var(--gold)}
+.pbar{height:10px;background:var(--line);border-radius:999px;overflow:hidden}
+.pbar.big{height:14px;background:rgba(255,255,255,.18)}
+.pbar > i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));border-radius:999px;transition:width .5s ease}
+@media (max-width:760px){.progress-grid{grid-template-columns:1fr}}
+
 /* ---------- Example badge ---------- */
 .example-banner{background:var(--gold-soft);border:1px solid #EBD9A0;border-radius:var(--radius);padding:14px 18px;margin-bottom:18px}
 .example-banner b{color:#8a6d12}

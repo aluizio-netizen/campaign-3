@@ -99,6 +99,7 @@
     </a>
     <button class="nav-toggle" aria-label="Menu" onclick="document.getElementById('nav').classList.toggle('open')">☰ Menu</button>
     <nav class="nav" id="nav">
+      <a href="#progresso" class="members">Progresso</a>
       <a href="#aulas" class="members">Curso</a>
       <a href="#glossario">Glossário</a>
       <a href="#orgaos">Órgãos</a>
@@ -160,6 +161,17 @@
       <button class="btn gold" onclick="window.__onuOpenGate&&window.__onuOpenGate('signup')">Criar conta grátis</button>
       <button class="btn ghost" onclick="window.__onuOpenGate&&window.__onuOpenGate('login')">Já tenho conta — entrar</button>
     </div>
+  </div>
+</section>
+
+<!-- Meu progresso (aluno logado) -->
+<section class="block members" id="progresso">
+  <div class="container">
+    <span class="eyebrow">Seu espaço</span>
+    <h2 class="section-title">Meu progresso</h2>
+    <p class="section-sub">Quanto da sua preparação já está pronta. Preencha os documentos, marque o checklist e a autoavaliação — as barras avançam sozinhas, e seu trabalho fica salvo na nuvem, disponível em qualquer aparelho.</p>
+    <div id="progressoBody" class="progress-grid" style="margin-top:18px"></div>
+    <p id="syncStatus" style="margin-top:12px;font-size:.85rem;color:var(--muted)"></p>
   </div>
 </section>
 
@@ -519,7 +531,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
          sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
 const app = initializeApp({
       apiKey: "AIzaSyArEIA1vJGcPPLJiPC-_lAvvM7jHf6zA2Y",
@@ -583,14 +595,62 @@ document.getElementById('gate-forgot').onclick = async e=>{
   } catch (err) { showAlert(tr(err.code)); }
 };
 
+/* ---------- Progresso na nuvem (progresso/<uid> no Realtime DB) ----------
+   Cada salvamento local também vai para a nuvem (com debounce). Ao logar,
+   compara timestamps: se a nuvem for mais recente, ela preenche os campos;
+   senão, o trabalho local sobe. Se a nuvem falhar, o localStorage segue como
+   fallback e o aviso mostra "salvo" (sem "na nuvem"). */
+let cloudTimer;
+window.__cloudOk = false;
+function setSync(msg, ok){
+  const el = document.getElementById('syncStatus');
+  if (el){ el.textContent = msg; el.style.color = ok ? '#1E8E5A' : '#b3261e'; }
+}
+window.__cloudSave = (state)=>{
+  const u = auth.currentUser; if (!u) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(()=>{
+    set(ref(db, 'progresso/' + u.uid), { data: state, ts: Date.now(), email: u.email })
+      .then(()=>{ window.__cloudOk = true;
+        setSync('☁ Sincronizado na nuvem às ' + new Date().toLocaleTimeString('pt-BR'), true); })
+      .catch(err=>{ window.__cloudOk = false;
+        setSync('⚠ Não foi possível salvar na nuvem (' + (err.code || err.message) + '). Seu trabalho segue salvo neste navegador.', false); });
+  }, 1200);
+};
+async function syncFromCloud(user){
+  try {
+    const snap = await get(ref(db, 'progresso/' + user.uid));
+    const localTs = parseInt(localStorage.getItem('aluizio_onu_mun_v1_ts') || '0', 10);
+    if (snap.exists() && (snap.val().ts || 0) > localTs && snap.val().data) {
+      // Nuvem mais recente: aplica nos campos e no localStorage
+      const cloud = snap.val();
+      localStorage.setItem('aluizio_onu_mun_v1', JSON.stringify(cloud.data));
+      localStorage.setItem('aluizio_onu_mun_v1_ts', String(cloud.ts));
+      if (window.__applyState) window.__applyState(cloud.data);
+      setSync('☁ Progresso carregado da nuvem (última edição em outro acesso).', true);
+    } else {
+      // Local mais recente (ou nuvem vazia): sobe o local
+      const local = window.__getState ? window.__getState() : null;
+      if (local && Object.keys(local).length) window.__cloudSave(local);
+      else setSync('☁ Nuvem conectada — seu progresso será salvo automaticamente.', true);
+    }
+    window.__cloudOk = true;
+  } catch (e) {
+    window.__cloudOk = false;
+    setSync('⚠ Não foi possível ler a nuvem (' + (e.code || e.message) + '). Usando o salvamento deste navegador.', false);
+  }
+}
+
 onAuthStateChanged(auth, user=>{
   if (user) {
     document.body.classList.add('authed');
     document.body.classList.remove('gate-open');
     const bar = document.getElementById('onu-userbar');
     if (bar) bar.querySelector('.who').textContent = user.email;
+    syncFromCloud(user);
   } else {
     document.body.classList.remove('authed');
+    window.__cloudOk = false;
     setMode('login');
   }
 });
