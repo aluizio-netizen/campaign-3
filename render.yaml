@@ -2,11 +2,10 @@
 # Para usar: conecte o repositório no Render e selecione "Blueprint".
 # O provider do Prisma é ajustado automaticamente pela env DATABASE_PROVIDER
 # (definida como "postgresql" abaixo) — não é preciso editar o schema.
-
-databases:
-  - name: missao-ingles-db
-    databaseName: missao_ingles
-    plan: free
+#
+# O banco é um Postgres externo (Supabase, schema "missao_ingles") porque o
+# Postgres free do Render expira em 30 dias. A DATABASE_URL é definida
+# manualmente no dashboard do Render (sync: false).
 
 services:
   - type: web
@@ -20,9 +19,7 @@ services:
       - key: DATABASE_PROVIDER
         value: postgresql
       - key: DATABASE_URL
-        fromDatabase:
-          name: missao-ingles-db
-          property: connectionString
+        sync: false # Postgres externo (Supabase) — definir no dashboard
       - key: NEXT_PUBLIC_MEDIA_BASE_URL
         sync: false # URL do bucket R2/S3/CDN onde você subiu public/media
       - key: NEXTAUTH_SECRET
