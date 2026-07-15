@@ -33,6 +33,18 @@
   }
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "Preparação do Delegado para Model UN",
+  "description": "Curso prático de preparação para simulações Model UN (ONU): estruturas das Nações Unidas, redação de resoluções, negociação e obtenção de fundos. 5 encontros, 10 horas.",
+  "url": "https://onu.aluizio.education/",
+  "inLanguage": "pt-BR",
+  "provider": { "@type": "Organization", "name": "Aluizio Pires Educação", "url": "https://aluizio.education/" },
+  "hasCourseInstance": { "@type": "CourseInstance", "courseMode": "online", "courseWorkload": "PT10H" }
+}
+</script>
 <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
@@ -84,7 +96,7 @@
 </style>
 
 <!-- Portão de acesso (Firebase Auth) -->
-<div id="gate" aria-hidden="true">
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" aria-hidden="true">
   <div class="gate-card">
     <button type="button" class="gate-close" aria-label="Fechar" onclick="window.__onuCloseGate&&window.__onuCloseGate()">×</button>
     <img src="assets/logo-white.png" alt="Aluizio Pires Educação" class="gate-logo">
@@ -177,6 +189,34 @@
     <div class="hero-cta" style="margin-top:22px">
       <button class="btn gold" onclick="window.__onuOpenGate&&window.__onuOpenGate('signup')">Criar conta grátis</button>
       <button class="btn ghost" onclick="window.__onuOpenGate&&window.__onuOpenGate('login')">Já tenho conta — entrar</button>
+    </div>
+  </div>
+</section>
+
+<!-- Quem ensina -->
+<section class="block" id="quem-ensina">
+  <style>
+    #quem-ensina .qe-grid{display:grid;gap:26px;grid-template-columns:minmax(0,2fr) minmax(0,1fr);margin-top:18px;align-items:start}
+    #quem-ensina .qe-grid p:first-child{margin-top:0}
+    #quem-ensina .wa{display:inline-block;background:#25d366;color:#05300f;border:none;text-decoration:none;font-weight:700}
+    #quem-ensina .wa:hover{background:#1ebe5d;color:#05300f}
+    @media(max-width:720px){#quem-ensina .qe-grid{grid-template-columns:1fr}}
+  </style>
+  <div class="container">
+    <span class="eyebrow">Quem ensina</span>
+    <h2 class="section-title">Cel. Aluizio Pires</h2>
+    <div class="qe-grid">
+      <div>
+        <p>Ex-Comandante do <b>Colégio Militar de Campo Grande</b> — de onde alunos seguiram para universidades como Harvard, Montreal e Salamanca — e <b>veterano de missões de paz da ONU</b> na <b>Costa do Marfim</b> e na <b>República Centro-Africana</b>. Aqui a ONU não é teoria de manual: é a vivência de quem atuou em campo, sob o mandato das Nações Unidas.</p>
+        <p><i>Advisor</i> da <b>AGIMUS</b> e mentor de simulações <b>Model UN</b>, <b>Gabinetes de Crise</b> e <b>Gabinetes de Guerra</b> — a estrutura da ONU aplicada à negociação, à liderança e à decisão sob pressão.</p>
+        <div class="hero-cta" style="margin-top:22px">
+          <a class="btn wa" href="https://wa.me/5561999569649?text=Ol%C3%A1%2C%20Cel.%20Aluizio%21%20Vim%20pelo%20site%20da%20plataforma%20do%20delegado%20%28ONU%29%20e%20gostaria%20de%20agendar%20uma%20aula%20experimental%20gratuita%20de%20Model%20UN." target="_blank" rel="noopener" onclick="if(window.gtag)gtag('event','conversion',{'send_to':'AW-18276483241/M0P_CMqbzdAcEKmB9IpE','value':1.0,'currency':'BRL'});">Aula experimental de Model UN — grátis, no WhatsApp</a>
+        </div>
+      </div>
+      <div class="card">
+        <span class="tag">Credenciais</span>
+        <p style="margin:.5rem 0 0;font-size:.95rem;line-height:1.7">• Missões de paz da ONU: Costa do Marfim e Rep. Centro-Africana<br>• Ex-Comandante do Colégio Militar de Campo Grande<br>• <i>Advisor</i> da AGIMUS<br>• Mentor de Model UN, Gabinetes de Crise e de Guerra</p>
+      </div>
     </div>
   </div>
 </section>
@@ -681,10 +721,16 @@ onAuthStateChanged(auth, user=>{
 window.__onuLogout = async ()=>{ await signOut(auth); };
 
 // Modal de acesso: o site é público; login só é pedido ao entrar na área do delegado.
+window.__onuGateReturn = null;
 window.__onuOpenGate  = (m)=>{ setMode(m==='signup' ? 'signup' : 'login'); clearAlert();
+  window.__onuGateReturn = document.activeElement;
   document.getElementById('nav').classList.remove('open'); // fecha o menu mobile
-  document.body.classList.add('gate-open'); document.getElementById('gate-email').focus(); };
-window.__onuCloseGate = ()=>{ document.body.classList.remove('gate-open'); };
+  document.body.classList.add('gate-open');
+  document.getElementById('gate').setAttribute('aria-hidden','false');
+  document.getElementById('gate-email').focus(); };
+window.__onuCloseGate = ()=>{ document.body.classList.remove('gate-open');
+  document.getElementById('gate').setAttribute('aria-hidden','true');
+  if (window.__onuGateReturn && window.__onuGateReturn.focus) window.__onuGateReturn.focus(); };
 gate.addEventListener('click', e=>{ if (e.target === gate) window.__onuCloseGate(); });
 document.addEventListener('keydown', e=>{ if (e.key === 'Escape') window.__onuCloseGate(); });
 
