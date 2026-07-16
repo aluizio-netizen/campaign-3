@@ -773,5 +773,12 @@ document.addEventListener('click', e=>{
 
 <script src="assets/app.js"></script>
 <script type="module" src="assets/crises.js"></script>
+<!-- Aviso por e-mail (Netlify Forms): disparado quando um delegado entra na fila de aprovação -->
+<form name="novo-delegado" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input type="email" name="email">
+  <input type="text" name="quando">
+  <input type="text" name="bot-field">
+</form>
+
 </body>
 </html>
