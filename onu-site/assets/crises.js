@@ -18,11 +18,12 @@ onAuthStateChanged(auth, user => {
   document.body.classList.toggle("teacher", IS_TEACHER);
   if (INIT) return; INIT = true;
   onValue(ref(db, "config/inviteOnly"), s => { INVITE_ONLY = s.val() === true; applyAccess(); if (IS_TEACHER) renderInvite(); });
-  onValue(ref(db, "autorizados/" + user.uid), s => { MY_AUTH = s.val() === true; applyAccess(); });
+  onValue(ref(db, "autorizados/" + user.uid), s => { MY_AUTH = !!s.val(); applyAccess(); });
   onValue(ref(db, "crises"), s => { DATA = s.val() || {}; renderAluno(); if (IS_TEACHER) renderProfList(); });
   if (IS_TEACHER) {
     setupForm();
     onValue(ref(db, "pendentes"), s => renderPendentes(s.val() || {}));
+    onValue(ref(db, "autorizados"), s => renderAprovados(s.val() || {}), () => renderAprovados(null));
     onValue(ref(db, "respostas"), s => { RESP = s.val() || {}; renderRanking(); });
   }
 });
@@ -155,15 +156,34 @@ document.addEventListener("change", e => { if (e.target.id === "prof-invite-togg
 function renderPendentes(p) {
   const root = document.getElementById("prof-pendentes"); if (!root) return;
   const list = Object.entries(p);
-  if (!list.length) { root.innerHTML = ""; return; }
+  if (!list.length) { root.innerHTML = '<div class="prof-item"><b>Aguardando aprovação (0)</b> <span class="tag">tudo em dia</span> — ninguém esperando no momento.</div>'; return; }
   root.innerHTML = '<div class="prof-item"><b>Aguardando aprovação (' + list.length + "):</b>" +
     list.map(([uid, v]) => '<div class="prof-head" style="margin-top:8px">' + he(v.email || uid) +
-      ' <button class="btn primary prof-aprovar" data-uid="' + uid + '" style="margin-left:8px">Aprovar</button>' +
+      ' <button class="btn primary prof-aprovar" data-uid="' + uid + '" data-email="' + he(v.email || "") + '" style="margin-left:8px">Aprovar</button>' +
       ' <button class="btn ghost prof-negar" data-uid="' + uid + '">Remover</button></div>').join("") + "</div>";
 }
+function renderAprovados(a) {
+  let root = document.getElementById("prof-aprovados");
+  if (!root) {
+    const anchor = document.getElementById("prof-pendentes");
+    if (!anchor) return;
+    root = document.createElement("div"); root.id = "prof-aprovados";
+    anchor.insertAdjacentElement("afterend", root);
+  }
+  if (a === null) { root.innerHTML = '<div class="prof-item"><b>Alunos aprovados:</b> sem permissão para listar (ajustar regras do banco).</div>'; return; }
+  const list = Object.entries(a).sort((x, y) => ((y[1] && y[1].aprovadoEm) || 0) - ((x[1] && x[1].aprovadoEm) || 0));
+  root.innerHTML = '<div class="prof-item"><b>Alunos aprovados (' + list.length + '):</b>' +
+    (list.length ? list.map(([uid, v]) => '<div class="prof-head" style="margin-top:8px">' +
+      he((v && v.email) ? v.email : "(aprovado antes desta atualização — sem e-mail registrado)") +
+      ((v && v.aprovadoEm) ? ' <span class="tag">desde ' + new Date(v.aprovadoEm).toLocaleDateString("pt-BR") + "</span>" : "") +
+      ' <button class="btn ghost prof-revogar" data-uid="' + uid + '" style="margin-left:8px">Revogar acesso</button></div>').join("")
+     : " nenhum ainda.") + "</div>";
+}
+
 document.addEventListener("click", async e => {
-  const ap = e.target.closest(".prof-aprovar"); if (ap) { const uid = ap.dataset.uid; await set(ref(db, "autorizados/" + uid), true); await remove(ref(db, "pendentes/" + uid)); return; }
+  const ap = e.target.closest(".prof-aprovar"); if (ap) { const uid = ap.dataset.uid; await set(ref(db, "autorizados/" + uid), { email: ap.dataset.email || "", aprovadoEm: Date.now() }); await remove(ref(db, "pendentes/" + uid)); return; }
   const ng = e.target.closest(".prof-negar"); if (ng) { const uid = ng.dataset.uid; await remove(ref(db, "pendentes/" + uid)); return; }
+  const rv = e.target.closest(".prof-revogar"); if (rv) { if (confirm("Revogar o acesso deste aluno? Ele voltará a depender de aprovação.")) { try { await remove(ref(db, "autorizados/" + rv.dataset.uid)); } catch (err) { alert(err.message); } } return; }
 });
 
 /* ---------------- PROFESSOR: ranking ---------------- */
