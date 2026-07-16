@@ -33,7 +33,15 @@ function applyAccess() {
   const blocked = INVITE_ONLY && !MY_AUTH;
   document.body.classList.toggle("pending", blocked);
   if (blocked && auth.currentUser) {
-    set(ref(db, "pendentes/" + auth.currentUser.uid), { email: auth.currentUser.email, ts: Date.now() }).catch(() => {});
+    const pRef = ref(db, "pendentes/" + auth.currentUser.uid);
+    get(pRef).then(s => {
+      if (s.exists()) return;
+      return set(pRef, { email: auth.currentUser.email, ts: Date.now() }).then(() => {
+        // Aviso por e-mail ao professor (Netlify Forms; form "novo-delegado" no index.html)
+        const body = new URLSearchParams({ "form-name": "novo-delegado", email: auth.currentUser.email, quando: new Date().toLocaleString("pt-BR") }).toString();
+        return fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body }).catch(() => {});
+      });
+    }).catch(() => {});
   }
 }
 
