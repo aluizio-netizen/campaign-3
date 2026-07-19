@@ -835,9 +835,14 @@ function initTeacher(){
 }
 
 /* ---------- auth state ---------- */
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   const verifyBar = document.getElementById('verify-banner');
   if (user) {
+    /* Professores: força um token novo para as regras verem email_verified
+       logo apos a verificacao (senao o token velho vale por ate 1 h). */
+    if (isTeacherEmail(user.email) && user.emailVerified) {
+      try { await user.getIdToken(true); } catch (_) {}
+    }
     document.body.classList.add('authed');
     document.body.classList.remove('gate-open');
     const who = document.querySelector('#un-userbar .who');
