@@ -311,13 +311,18 @@ function bindNetlifyForm(formId, doneId){
 /* ----------------------------- PERSISTENCE ----------------------------- */
 const KEY="aluizio_un_mun_en_v1";
 function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){ return {}; } }
-function saveState(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+function saveState(s){
+  try{ localStorage.setItem(KEY, JSON.stringify(s)); localStorage.setItem(KEY+"_ts", String(Date.now())); }catch(e){}
+  if(window.__cloudSave) window.__cloudSave(s);
+  updateProgress(s);
+}
 let _saveTimer;
 function flashSaved(){
   let h=document.getElementById("globalSaveHint");
   if(!h){ h=el("div","savehint","✓ saved"); h.id="globalSaveHint";
     h.style.cssText="position:fixed;bottom:18px;right:18px;background:#1E8E5A;color:#fff;padding:8px 14px;border-radius:999px;z-index:99;font-size:.85rem;font-weight:700";
     document.body.appendChild(h);}
+  h.textContent = window.__cloudOk ? "\u2713 saved to cloud" : "\u2713 saved";
   h.classList.add("show"); clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>h.classList.remove("show"),1100);
 }
@@ -339,6 +344,46 @@ function bindPersistence(){
   });
 }
 function toggleDone(cb){ const li=cb.closest("li"); if(li) li.classList.toggle("done", cb.checked); }
+
+/* Fill every [data-save] field from a state object (used by cloud sync). */
+function applyState(state){
+  document.querySelectorAll("[data-save]").forEach(node=>{
+    const k=node.getAttribute("data-save");
+    if(node.type==="checkbox"){ node.checked=!!state[k]; toggleDone(node); }
+    else node.value = state[k]!=null ? state[k] : "";
+  });
+  updateProgress(state);
+}
+
+/* ----------------------------- MY PROGRESS ----------------------------- */
+const PROGRESS_GROUPS = [
+  { name:"Position Paper",  keys:["pp_pais","pp_contexto","pp_posicao","pp_propostas","pp_aliancas"] },
+  { name:"Draft Resolution",keys:["dr_cabecalho","dr_pre","dr_op"] },
+  { name:"UNSC Resolution", keys:["unsc_header","unsc_pre","unsc_op"] },
+  { name:"Crisis Response", keys:["crisis_title","crisis_type","crisis_actions","crisis_resources","crisis_rationale"] },
+  { name:"Funding",         keys:["fin_estrategia","fin_fonte","fin_doadores"] },
+  { name:"Blocs & Speech",  keys:["blocos_aliados","blocos_oposicao","discurso"] },
+  { name:"Checklist",       keys:["chk_0","chk_1","chk_2","chk_3","chk_4","chk_5","chk_6"] },
+  { name:"Self-assessment", keys:["rub_0","rub_1","rub_2","rub_3","rub_4","rub_5"] },
+];
+function fieldFilled(v){ return v===true || (typeof v==="string" && v.trim()!==""); }
+function updateProgress(state){
+  const root=document.getElementById("progressBody");
+  if(!root) return;
+  const s = state || loadState();
+  let done=0, total=0, cards="";
+  PROGRESS_GROUPS.forEach(g=>{
+    const ok = g.keys.filter(k=>fieldFilled(s[k])).length;
+    done+=ok; total+=g.keys.length;
+    const pct = Math.round(ok/g.keys.length*100);
+    cards += `<div class="pitem"><div class="plabel"><span>${g.name}</span><b>${ok}/${g.keys.length}</b></div>`+
+             `<div class="pbar"><i style="width:${pct}%"></i></div></div>`;
+  });
+  const pctAll = total ? Math.round(done/total*100) : 0;
+  root.innerHTML =
+    `<div class="pitem ptotal"><div class="plabel"><span>Overall preparation</span><b>${pctAll}%</b></div>`+
+    `<div class="pbar big"><i style="width:${pctAll}%"></i></div></div>${cards}`;
+}
 
 function exportTool(slug, title, keys){
   const s=loadState();
@@ -384,7 +429,7 @@ function setupScrollSpy(){
 }
 
 /* ---- expose handlers used in inline attributes (onclick/oninput) ---- */
-Object.assign(window,{ filterGlossary, exportTool, loadExample, resetAll, loadUnscExample });
+Object.assign(window,{ filterGlossary, exportTool, loadExample, resetAll, loadUnscExample, __applyState:applyState, __getState:loadState, __updateProgress:updateProgress });
 
 /* ----------------------------- INIT ----------------------------- */
 document.addEventListener("DOMContentLoaded",()=>{
@@ -393,7 +438,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   rows("verbsBody",VERBS); renderFunding(); renderChecklist(); renderRubric(); renderExample();
   rows("unscFactsBody",UNSC_FACTS); rows("unscPowersBody",UNSC_POWERS); rows("unscVerbsBody",UNSC_VERBS);
   rows("crisisDiffBody",CRISIS_DIFF); rows("crisisToolsBody",CRISIS_TOOLS); renderCrisisTips();
-  bindPersistence(); setupScrollSpy();
+  bindPersistence(); setupScrollSpy(); updateProgress(loadState());
   bindNetlifyForm("registerForm","registerDone");
   bindNetlifyForm("tutoringForm","tutoringDone");
 });

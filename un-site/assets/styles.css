@@ -169,3 +169,16 @@ footer a:hover{color:var(--gold)}
   section.block{break-inside:avoid;border:none;padding:14px 0}
   .card,.tool,.lesson,.table-wrap{box-shadow:none}
 }
+
+/* --------- My progress (cloud) --------- */
+.progress-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.pitem{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.pitem.ptotal{grid-column:1/-1;background:var(--navy)}
+.pitem.ptotal .plabel span,.pitem.ptotal .plabel b{color:#fff}
+.plabel{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.plabel span{font-weight:700;color:var(--navy);font-size:.92rem}
+.plabel b{color:var(--blue);font-size:.92rem}
+.pitem.ptotal .plabel b{color:var(--gold)}
+.pbar{height:10px;background:var(--line);border-radius:999px;overflow:hidden}
+.pbar.big{height:14px;background:rgba(255,255,255,.18)}
+.pbar > i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));border-radius:999px;transition:width .5s ease}

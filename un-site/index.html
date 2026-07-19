@@ -10,6 +10,97 @@
 </head>
 <body>
 
+<style>
+  /* Delegate area: public site; work sections require a free account. */
+  #gate{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+    background:rgba(8,12,22,.78);padding:20px}
+  body.gate-open #gate{display:flex}
+  body:not(.authed) section.members{display:none}
+  body:not(.authed) .nav a.members{display:none}
+  body:not(.authed) #un-userbar{display:none}
+  body.authed .nav-login{display:none}
+  body.authed .public-cta{display:none}
+  body.pending.authed section.members{display:none}
+  body.pending.authed .nav a.members{display:none}
+  #pending-banner{display:none;background:#FBF4DD;border-bottom:1px solid #E6D9A8;color:#6B5A1E;
+    padding:10px 0;font-size:.92rem;text-align:center}
+  body.pending.authed #pending-banner{display:block}
+  #verify-banner{display:none;background:#FBE9DD;border-bottom:1px solid #E6C4A8;color:#6B3A1E;
+    padding:10px 0;font-size:.92rem;text-align:center}
+  #teacher-panel{display:none}
+  body.teacher #teacher-panel{display:block}
+  .nav-teacher{display:none}
+  body.teacher .nav-teacher{display:inline-block}
+  .nav-login{background:#C9A227;color:#1B2A4A!important;font-weight:800}
+  .nav-login:hover{background:#e6c97a!important;color:#1B2A4A!important}
+  #un-userbar{background:#0d1626;color:#9fb0c8;font-size:.85rem;text-align:right;padding:6px 18px}
+  #un-userbar a{color:#c9a24a;cursor:pointer}
+  .gate-card{position:relative;width:100%;max-width:380px;background:#121a2c;border:1px solid #24344f;border-radius:12px;
+    padding:34px 30px;box-shadow:0 20px 60px rgba(0,0,0,.45);text-align:center;color:#e8eef7;
+    font-family:-apple-system,Segoe UI,system-ui,sans-serif}
+  .gate-close{position:absolute;top:10px;right:14px;background:none;border:none;color:#9fb0c8;
+    font-size:1.4rem;line-height:1;cursor:pointer;padding:4px}
+  .gate-close:hover{color:#fff}
+  .gate-logo{height:46px;margin-bottom:14px;object-fit:contain}
+  .gate-card h2{font-family:Georgia,serif;margin:0 0 6px;font-size:1.4rem;color:#f3ecd9}
+  .gate-sub{color:#9fb0c8;font-size:.9rem;margin:0 0 18px;line-height:1.5}
+  .gate-card input{width:100%;box-sizing:border-box;margin:7px 0;padding:12px 13px;border-radius:8px;
+    border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.95rem}
+  .gate-card input:focus{outline:none;border-color:#c9a24a}
+  .gate-card .btn.primary{width:100%;margin-top:12px;background:#c9a24a;color:#0c1322;border:none;
+    padding:12px;border-radius:8px;font-weight:700;font-size:.95rem;cursor:pointer}
+  .gate-card .btn.primary:hover{background:#e6c97a}
+  .gate-card .btn.primary:disabled{opacity:.6;cursor:default}
+  .gate-links{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .gate-links a{color:#c9a24a;font-size:.85rem;text-decoration:none}
+  .gate-links a:hover{text-decoration:underline}
+  .gate-alert{display:none;margin:6px 0 4px;padding:9px 11px;border-radius:8px;font-size:.85rem;text-align:left}
+  .gate-alert.err{display:block;background:#3a1d20;color:#f1b0a6;border:1px solid #6b2a2a}
+  .gate-alert.ok{display:block;background:#1d3a28;color:#a6f1c0;border:1px solid #2a6b45}
+  .prof-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin-top:14px}
+  .prof-switch{display:flex;align-items:center;gap:8px;font-size:.92rem;font-weight:700}
+  .class-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);margin-top:10px;background:#fff}
+  table.class-table{width:100%;border-collapse:collapse;font-size:.88rem}
+  .class-table th,.class-table td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  .class-table th{background:var(--navy);color:#fff;white-space:nowrap}
+  .class-table tr.student{cursor:pointer}
+  .class-table tr.student:hover td{background:#F2E7C9}
+  .class-table tr.det td{background:#FBF7EF;padding:14px}
+  .class-table .cbar{height:8px;min-width:48px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:4px}
+  .class-table .cbar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--gold))}
+  .det-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .det-grid h4{margin:0 0 6px;color:var(--navy)}
+  .det-field{font-size:.84rem;margin-bottom:4px;line-height:1.45}
+  .det-empty{color:#b0a890;font-style:italic}
+  .queue-item{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+    background:#FBF4DD;border:1px solid #E6D9A8;border-radius:10px;padding:10px 14px;margin-top:8px}
+</style>
+
+<!-- Access gate (Firebase Auth) -->
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" aria-hidden="true">
+  <div class="gate-card">
+    <button type="button" class="gate-close" aria-label="Close" onclick="window.__unCloseGate&&window.__unCloseGate()">×</button>
+    <img src="assets/logo-white.png" alt="Aluizio Pires Education" class="gate-logo">
+    <h2 id="gate-title">Delegate area</h2>
+    <p class="gate-sub" id="gate-sub">Sign in to open your workspace. New here? Create a free account.</p>
+    <div class="gate-alert" id="gate-alert"></div>
+    <form id="gate-form" autocomplete="on">
+      <input type="email" id="gate-email" placeholder="your e-mail" autocomplete="email" required>
+      <input type="password" id="gate-pass" placeholder="password (min. 6 characters)" autocomplete="current-password" required minlength="6">
+      <button type="submit" class="btn primary" id="gate-submit">Sign in</button>
+    </form>
+    <div class="gate-links">
+      <a href="#" id="gate-to-signup">Create account</a>
+      <a href="#" id="gate-to-login" style="display:none">I already have an account</a>
+      <a href="#" id="gate-forgot">Forgot my password</a>
+    </div>
+  </div>
+</div>
+
+<div id="pending-banner">&#9989; Account created! A teacher needs to approve your access to the delegate area — this page unlocks by itself once approved. <a href="#" onclick="location.reload();return false">Reload</a></div>
+<div id="verify-banner">Teacher access: please verify your e-mail to unlock the teacher panel. Check your inbox, or <a href="#" id="resend-verify">resend the link</a>, then reload this page.</div>
+
 <!-- Topbar -->
 <header class="topbar">
   <div class="container">
@@ -21,22 +112,26 @@
     <span class="beblue-chip" title="BeBlue Personal English"><img src="assets/beblue-color.png" alt="BeBlue Personal English"></span>
     <button class="nav-toggle" aria-label="Menu" onclick="document.getElementById('nav').classList.toggle('open')">☰ Menu</button>
     <nav class="nav" id="nav">
-      <a href="#course">Course</a>
+      <a href="#progress" class="members">My progress</a>
+      <a href="#course" class="members">Course</a>
       <a href="#glossary">Glossary</a>
       <a href="#bodies">Bodies</a>
       <a href="#procedure">Procedure</a>
-      <a href="#documents">Documents</a>
-      <a href="#unsc">UNSC</a>
-      <a href="#crisis">Crisis</a>
-      <a href="#funding">Funding</a>
-      <a href="#blocs">Blocs</a>
-      <a href="#checklist">Checklist</a>
-      <a href="#example">Example</a>
+      <a href="#documents" class="members">Documents</a>
+      <a href="#unsc" class="members">UNSC</a>
+      <a href="#crisis" class="members">Crisis</a>
+      <a href="#funding" class="members">Funding</a>
+      <a href="#blocs" class="members">Blocs</a>
+      <a href="#checklist" class="members">Checklist</a>
+      <a href="#example" class="members">Example</a>
+      <a href="#teacher-panel" class="nav-teacher">Teacher</a>
       <a href="#tutoring">Tutoring</a>
+      <a href="#" class="nav-login" onclick="window.__unOpenGate&&__unOpenGate('login');return false">Sign in</a>
       <a href="#register" class="nav-cta">Register</a>
     </nav>
   </div>
 </header>
+<div id="un-userbar">signed in as <span class="who"></span> &middot; <a href="#" onclick="window.__unLogout&&__unLogout();return false">sign out</a></div>
 
 <!-- Hero -->
 <section class="hero" id="home">
@@ -49,12 +144,17 @@
     <h1>The UN in practice, for Model UN</h1>
     <p class="lead">Master the structures of the United Nations and learn to use them to solve
       the problems that come up in simulations — negotiate, draft resolutions and <b>secure
-      funding</b> for your proposals. Fill in the templates here; your work is saved in your browser.</p>
+      funding</b> for your proposals. Fill in the templates here; create your free account and your work is saved to the cloud — on any device.</p>
     <div class="pills">
       <span class="pill">10 hours · 5 sessions</span>
       <span class="pill">Fillable templates</span>
       <span class="pill">Auto-saves</span>
       <span class="pill">Export & print</span>
+    </div>
+    <div class="hero-cta public-cta" style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn gold" onclick="window.__unOpenGate&&__unOpenGate('signup')">Create your free account</button>
+      <button class="btn ghost" onclick="window.__unOpenGate&&__unOpenGate('login')">I already have an account</button>
+      <a class="btn ghost" href="assets/student-manual.pdf" target="_blank" rel="noopener">&#128216; Student manual (PDF)</a>
     </div>
     <div class="gold-line"></div>
   </div>
@@ -71,7 +171,17 @@
 </div>
 
 <!-- Course -->
-<section class="block" id="course">
+<section class="block members" id="progress">
+  <div class="container">
+    <span class="eyebrow">Members</span>
+    <h2 class="section-title">My progress</h2>
+    <p class="section-sub">Everything you type is saved automatically — to this browser and to the cloud, tied to your account.</p>
+    <p id="syncStatus" style="font-size:.9rem;margin:6px 0 0"></p>
+    <div id="progressBody" class="progress-grid" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<section class="block members" id="course">
   <div class="container">
     <span class="eyebrow">Course</span>
     <h2 class="section-title">Session-by-session plan</h2>
@@ -114,7 +224,7 @@
 </section>
 
 <!-- Documents -->
-<section class="block" id="documents">
+<section class="block members" id="documents">
   <div class="container">
     <span class="eyebrow">Hands-on</span>
     <h2 class="section-title">A delegate's documents</h2>
@@ -153,7 +263,7 @@
 </section>
 
 <!-- UN Security Council -->
-<section class="block" id="unsc">
+<section class="block members" id="unsc">
   <div class="container">
     <span class="eyebrow">Committee in focus</span>
     <h2 class="section-title">United Nations Security Council (UNSC)</h2>
@@ -192,7 +302,7 @@
 </section>
 
 <!-- Crisis committees -->
-<section class="block" id="crisis">
+<section class="block members" id="crisis">
   <div class="container">
     <span class="eyebrow">Committee in focus</span>
     <h2 class="section-title">Crisis committees</h2>
@@ -236,7 +346,7 @@
 </section>
 
 <!-- Funding -->
-<section class="block" id="funding">
+<section class="block members" id="funding">
   <div class="container">
     <span class="eyebrow">Core skill</span>
     <h2 class="section-title">How to secure funding</h2>
@@ -252,7 +362,7 @@
 </section>
 
 <!-- Blocs + Opening speech -->
-<section class="block" id="blocs">
+<section class="block members" id="blocs">
   <div class="container">
     <span class="eyebrow">Strategy</span>
     <h2 class="section-title">Bloc map and opening speech</h2>
@@ -273,7 +383,7 @@
 </section>
 
 <!-- Checklist + Rubric -->
-<section class="block" id="checklist">
+<section class="block members" id="checklist">
   <div class="container">
     <span class="eyebrow">Before & after</span>
     <h2 class="section-title">Checklist and self-assessment</h2>
@@ -293,7 +403,7 @@
 </section>
 
 <!-- Worked example -->
-<section class="block" id="example">
+<section class="block members" id="example">
   <div class="container">
     <span class="eyebrow">Worked example</span>
     <h2 class="section-title">A solved case</h2>
@@ -307,6 +417,24 @@
 </section>
 
 <!-- Online tutoring (on demand) -->
+<section class="block" id="teacher-panel">
+  <div class="container">
+    <span class="eyebrow">Teachers only</span>
+    <h2 class="section-title">Teacher panel</h2>
+    <p class="section-sub">Access control and class monitoring. Visible only to teacher accounts.</p>
+    <div class="prof-bar">
+      <label class="prof-switch"><input type="checkbox" id="invite-toggle"> Sign-ups require teacher approval</label>
+      <button class="btn ghost" id="class-csv">&#11015; Class CSV</button>
+    </div>
+    <div id="teacher-pending"></div>
+    <h3 style="margin-top:22px">Class monitor</h3>
+    <p class="section-sub" style="margin-top:2px">One student per row — updates live while they work. Click a student to see every field.</p>
+    <div id="class-table"><p>No students with data yet.</p></div>
+    <h3 style="margin-top:22px">Approved students</h3>
+    <div id="teacher-approved"><p>—</p></div>
+  </div>
+</section>
+
 <section class="block" id="tutoring">
   <div class="container">
     <span class="eyebrow">On demand</span>
@@ -400,7 +528,7 @@
           <li><span>Guided practice writing position papers, resolutions and directives.</span></li>
           <li><span>A self-assessment rubric and a worked example to learn from.</span></li>
         </ul>
-        <p style="font-size:.86rem;color:var(--muted);margin-top:8px">Your form-work stays in your browser; only the details above are sent when you register.</p>
+        <p style="font-size:.86rem;color:var(--muted);margin-top:8px">Your form-work is saved to your delegate account; only the details above are sent when you register.</p>
       </div>
     </div>
   </div>
@@ -410,10 +538,337 @@
   <div class="container">
     <span>© <span id="year"></span> <b>Aluizio Pires · Education</b> · United Nations & Model UN</span>
     <span>A training activity for students of <b>BeBlueSchool — Escola de Idiomas</b></span>
-    <span>Contact: <a href="mailto:aluizio@aluizio.education">aluizio@aluizio.education</a> · <a href="https://wa.me/5561999569649" target="_blank" rel="noopener">WhatsApp +55 61 99956-9649</a> · unitednations.aluizio.education</span>
+    <span>Contact: <a href="mailto:aluizio@aluizio.education">aluizio@aluizio.education</a> · <a href="https://wa.me/5561999569649" target="_blank" rel="noopener">WhatsApp +55 61 99956-9649</a> · <a href="assets/student-manual.pdf">student manual</a> · unitednations.aluizio.education</span>
   </div>
 </footer>
 
 <script src="assets/app.js"></script>
+
+<form name="new-delegate" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input name="email"><input name="when"><input name="bot-field">
+</form>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+         sendPasswordResetEmail, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getDatabase, ref, get, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyArEIA1vJGcPPLJiPC-_lAvvM7jHf6zA2Y",
+  authDomain: "oea-model-un-225f1.firebaseapp.com",
+  databaseURL: "https://oea-model-un-225f1-default-rtdb.firebaseio.com",
+  projectId: "oea-model-un-225f1",
+  storageBucket: "oea-model-un-225f1.firebasestorage.app",
+  messagingSenderId: "1005308303437",
+  appId: "1:1005308303437:web:16a061c2bae7a2cb1be404"
+});
+const auth = getAuth(app);
+const db = getDatabase(app);
+const TEACHERS = ["aluizio@projectc.info", "vanessafilie@icloud.com"];
+const isTeacherEmail = e => TEACHERS.includes((e || "").toLowerCase());
+const KEY = "aluizio_un_mun_en_v1";
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- gate ---------- */
+const gate = document.getElementById('gate');
+const alertBox = document.getElementById('gate-alert');
+const form = document.getElementById('gate-form');
+const submit = document.getElementById('gate-submit');
+let mode = 'login';
+function showAlert(m, ok){ alertBox.className = 'gate-alert ' + (ok ? 'ok' : 'err'); alertBox.textContent = m; }
+function clearAlert(){ alertBox.className = 'gate-alert'; alertBox.textContent = ''; }
+function setMode(m){
+  mode = m; clearAlert();
+  document.getElementById('gate-to-signup').style.display = m==='login' ? '' : 'none';
+  document.getElementById('gate-to-login').style.display  = m==='signup' ? '' : 'none';
+  document.getElementById('gate-title').textContent = m==='signup' ? 'Create your account' : 'Delegate area';
+  submit.textContent = m==='signup' ? 'Create account' : 'Sign in';
+}
+document.getElementById('gate-to-signup').onclick = e=>{e.preventDefault();setMode('signup');};
+document.getElementById('gate-to-login').onclick  = e=>{e.preventDefault();setMode('login');};
+const EN = {
+  'auth/invalid-credential':'Wrong e-mail or password.',
+  'auth/invalid-email':'Invalid e-mail address.',
+  'auth/missing-password':'Please type a password.',
+  'auth/weak-password':'The password needs at least 6 characters.',
+  'auth/email-already-in-use':'This e-mail already has an account. Try signing in.',
+  'auth/too-many-requests':'Too many attempts. Please wait a few minutes.',
+  'auth/network-request-failed':'Network error. Please try again.',
+};
+const tr = c => EN[c] || 'Something went wrong. Please try again.';
+form.addEventListener('submit', async e=>{
+  e.preventDefault(); clearAlert(); submit.disabled = true;
+  const email = document.getElementById('gate-email').value.trim();
+  const pass  = document.getElementById('gate-pass').value;
+  try {
+    if (mode === 'signup') {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      if (isTeacherEmail(email)) { try { await sendEmailVerification(cred.user); } catch(_){} }
+    } else {
+      await signInWithEmailAndPassword(auth, email, pass);
+    }
+  } catch (err) { showAlert(tr(err.code)); submit.disabled = false; }
+});
+document.getElementById('gate-forgot').onclick = async e=>{
+  e.preventDefault();
+  const email = document.getElementById('gate-email').value.trim();
+  if (!email) { showAlert('Type your e-mail above, then click "Forgot my password".'); return; }
+  try { await sendPasswordResetEmail(auth, email);
+    showAlert('We sent a reset link to ' + email + '. Check your inbox (and spam).', true);
+  } catch (err) { showAlert(tr(err.code)); }
+};
+window.__unGateReturn = null;
+window.__unOpenGate = (m)=>{ setMode(m==='signup' ? 'signup' : 'login'); clearAlert();
+  window.__unGateReturn = document.activeElement;
+  document.getElementById('nav').classList.remove('open');
+  document.body.classList.add('gate-open');
+  gate.setAttribute('aria-hidden','false');
+  document.getElementById('gate-email').focus(); };
+window.__unCloseGate = ()=>{ document.body.classList.remove('gate-open');
+  gate.setAttribute('aria-hidden','true');
+  if (window.__unGateReturn && window.__unGateReturn.focus) window.__unGateReturn.focus(); };
+gate.addEventListener('click', e=>{ if (e.target === gate) window.__unCloseGate(); });
+document.addEventListener('keydown', e=>{ if (e.key === 'Escape') window.__unCloseGate(); });
+window.__unLogout = async ()=>{ await signOut(auth); };
+
+/* ---------- cloud sync (un_progresso/<uid>) ---------- */
+let cloudTimer;
+window.__cloudOk = false;
+function setSync(msg, ok){
+  const el = document.getElementById('syncStatus');
+  if (el){ el.textContent = msg; el.style.color = ok ? '#1E8E5A' : '#b3261e'; }
+}
+window.__cloudSave = (state)=>{
+  const u = auth.currentUser; if (!u) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(()=>{
+    set(ref(db, 'un_progresso/' + u.uid), { data: state, ts: Date.now(), email: u.email })
+      .then(()=>{ window.__cloudOk = true;
+        setSync('☁ Synced to the cloud at ' + new Date().toLocaleTimeString('en-GB'), true); })
+      .catch(err=>{ window.__cloudOk = false;
+        setSync('⚠ Could not save to the cloud (' + (err.code || err.message) + '). Your work is still saved in this browser.', false); });
+  }, 1200);
+};
+async function syncFromCloud(user){
+  try {
+    const snap = await get(ref(db, 'un_progresso/' + user.uid));
+    const localTs = parseInt(localStorage.getItem(KEY + '_ts') || '0', 10);
+    if (snap.exists() && (snap.val().ts || 0) > localTs && snap.val().data) {
+      const cloud = snap.val();
+      localStorage.setItem(KEY, JSON.stringify(cloud.data));
+      localStorage.setItem(KEY + '_ts', String(cloud.ts));
+      if (window.__applyState) window.__applyState(cloud.data);
+      setSync('☁ Progress loaded from the cloud (last edited on another device).', true);
+    } else {
+      const local = window.__getState ? window.__getState() : null;
+      if (local && Object.keys(local).length) window.__cloudSave(local);
+      else setSync('☁ Cloud connected — your progress will be saved automatically.', true);
+    }
+    window.__cloudOk = true;
+  } catch (e) {
+    window.__cloudOk = false;
+    setSync('⚠ Could not read the cloud (' + (e.code || e.message) + '). Using this browser’s saved copy.', false);
+  }
+}
+
+/* ---------- access control (mirror of the PT site, un_ branches) ---------- */
+let INVITE_ONLY = false, MY_AUTH = false, IS_TEACHER = false, INIT = false;
+function applyAccess(user){
+  if (IS_TEACHER) { document.body.classList.remove('pending'); return; }
+  const blocked = INVITE_ONLY && !MY_AUTH;
+  document.body.classList.toggle('pending', blocked);
+  if (blocked && user) {
+    const pRef = ref(db, 'un_pendentes/' + user.uid);
+    get(pRef).then(s => {
+      if (s.exists()) return;
+      return set(pRef, { email: user.email, ts: Date.now() }).then(()=>{
+        const body = new URLSearchParams({ 'form-name':'new-delegate', email: user.email, when: new Date().toISOString() });
+        fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body }).catch(()=>{});
+      });
+    }).catch(()=>{});
+  }
+}
+
+/* ---------- teacher panel ---------- */
+const GROUPS = (typeof PROGRESS_GROUPS !== 'undefined') ? PROGRESS_GROUPS : [];
+const SHORT = ['PP','DR','UNSC','Crisis','Fund','Blocs','Check','Self'];
+const FIELD_LABELS = {
+  pp_pais:'Country', pp_contexto:'Context', pp_posicao:'Position', pp_propostas:'Proposals', pp_aliancas:'Alliances',
+  dr_cabecalho:'Header', dr_pre:'Preambular clauses', dr_op:'Operative clauses',
+  unsc_header:'Header', unsc_pre:'Preambular clauses', unsc_op:'Operative clauses',
+  crisis_title:'Title', crisis_type:'Type', crisis_actions:'Actions', crisis_resources:'Resources / actors', crisis_rationale:'Rationale & outcome',
+  fin_estrategia:'Strategy', fin_fonte:'Source', fin_doadores:'Donors',
+  blocos_aliados:'Allies', blocos_oposicao:'Opposition', discurso:'Opening speech',
+};
+function fieldLabel(k){
+  if (FIELD_LABELS[k]) return FIELD_LABELS[k];
+  let m = k.match(/^chk_(\d+)$/);
+  if (m && typeof CHECKLIST !== 'undefined' && CHECKLIST[+m[1]]) return CHECKLIST[+m[1]];
+  m = k.match(/^rub_(\d+)$/);
+  if (m && typeof RUBRIC !== 'undefined' && RUBRIC[+m[1]]) return RUBRIC[+m[1]];
+  return k;
+}
+const filled = v => v === true || (typeof v === 'string' && v.trim() !== '');
+function fmtRel(ts){
+  if (!ts) return '—';
+  const min = Math.round((Date.now() - ts) / 60000);
+  if (min < 2) return 'now';
+  if (min < 60) return min + ' min ago';
+  const h = Math.round(min / 60);
+  if (h < 24) return h + ' h ago';
+  const d = Math.round(h / 24);
+  if (d === 1) return 'yesterday';
+  if (d <= 30) return d + ' days ago';
+  return new Date(ts).toLocaleDateString('en-GB');
+}
+let PROG = {}, APROV = {}, teacherInit = false;
+const openRows = new Set();
+function renderClass(){
+  const root = document.getElementById('class-table');
+  if (!root) return;
+  const rowsData = Object.entries(PROG)
+    .map(([uid, p]) => ({ uid, email: p.email || uid, ts: p.ts || null, data: p.data || {} }))
+    .filter(r => !isTeacherEmail(r.email));
+  if (!rowsData.length) { root.innerHTML = '<p>No students with data yet.</p>'; return; }
+  const calc = r => {
+    let done = 0, total = 0;
+    const gs = GROUPS.map(g => {
+      const keys = g.chaves || g.keys || [];
+      const ok = keys.filter(k => filled(r.data[k])).length;
+      done += ok; total += keys.length;
+      return { ok, total: keys.length, pct: keys.length ? Math.round(ok / keys.length * 100) : 0 };
+    });
+    return { gs, pct: total ? Math.round(done / total * 100) : 0 };
+  };
+  rowsData.forEach(r => r.c = calc(r));
+  rowsData.sort((a, b) => b.c.pct - a.c.pct || a.email.localeCompare(b.email));
+  let html = '<div class="class-wrap"><table class="class-table"><thead><tr><th>Student</th><th>Overall</th>' +
+    GROUPS.map((_, i) => '<th>' + (SHORT[i] || i + 1) + '</th>').join('') +
+    '<th>Last activity</th></tr></thead><tbody>';
+  for (const r of rowsData) {
+    html += '<tr class="student" data-uid="' + esc(r.uid) + '"><td><b>' + esc(r.email) + '</b></td>' +
+      '<td><b>' + r.c.pct + '%</b><div class="cbar"><i style="width:' + r.c.pct + '%"></i></div></td>' +
+      r.c.gs.map(g => '<td>' + g.ok + '/' + g.total + '<div class="cbar"><i style="width:' + g.pct + '%"></i></div></td>').join('') +
+      '<td>' + fmtRel(r.ts) + '</td></tr>';
+    if (openRows.has(r.uid)) {
+      let det = '<div class="det-grid">';
+      GROUPS.forEach(g => {
+        const keys = g.chaves || g.keys || [];
+        det += '<div><h4>' + esc(g.nome || g.name) + '</h4>' + keys.map(k => {
+          const v = r.data[k];
+          let shown;
+          if (v === true) shown = '✓';
+          else if (filled(v)) shown = esc(String(v).length > 350 ? String(v).slice(0, 350) + '…' : String(v));
+          else shown = '<span class="det-empty">— empty</span>';
+          return '<div class="det-field"><b>' + esc(fieldLabel(k)) + ':</b> ' + shown + '</div>';
+        }).join('') + '</div>';
+      });
+      det += '</div>';
+      html += '<tr class="det"><td colspan="' + (3 + GROUPS.length) + '">' + det + '</td></tr>';
+    }
+  }
+  html += '</tbody></table></div>';
+  root.innerHTML = html;
+  root.querySelectorAll('tr.student').forEach(el => el.onclick = () => {
+    const uid = el.dataset.uid;
+    openRows.has(uid) ? openRows.delete(uid) : openRows.add(uid);
+    renderClass();
+  });
+}
+function renderPending(q){
+  const root = document.getElementById('teacher-pending');
+  if (!root) return;
+  const items = Object.entries(q || {});
+  if (!items.length) { root.innerHTML = ''; return; }
+  root.innerHTML = items.map(([uid, v]) =>
+    '<div class="queue-item"><span><b>' + esc(v.email || uid) + '</b> asked to join</span>' +
+    '<span style="display:flex;gap:8px">' +
+    '<button class="btn gold btn-approve" data-uid="' + esc(uid) + '" data-email="' + esc(v.email || '') + '">Approve</button>' +
+    '<button class="btn ghost btn-refuse" data-uid="' + esc(uid) + '">Refuse</button></span></div>').join('');
+  root.querySelectorAll('.btn-approve').forEach(b => b.onclick = async () => {
+    await set(ref(db, 'un_autorizados/' + b.dataset.uid), { email: b.dataset.email, ts: Date.now() });
+    await remove(ref(db, 'un_pendentes/' + b.dataset.uid));
+  });
+  root.querySelectorAll('.btn-refuse').forEach(b => b.onclick = async () => {
+    await remove(ref(db, 'un_pendentes/' + b.dataset.uid));
+  });
+}
+function renderApproved(){
+  const root = document.getElementById('teacher-approved');
+  if (!root) return;
+  const items = Object.entries(APROV || {});
+  if (!items.length) { root.innerHTML = '<p>—</p>'; return; }
+  root.innerHTML = items.map(([uid, v]) =>
+    '<div class="queue-item" style="background:#fff"><span>' + esc(v.email || uid) + '</span>' +
+    '<button class="btn ghost btn-revoke" data-uid="' + esc(uid) + '">Revoke access</button></div>').join('');
+  root.querySelectorAll('.btn-revoke').forEach(b => b.onclick = async () => {
+    if (confirm('Revoke this student’s access?')) await remove(ref(db, 'un_autorizados/' + b.dataset.uid));
+  });
+}
+function csvClass(){
+  const rows = Object.values(PROG).filter(p => !isTeacherEmail(p.email));
+  const escC = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const head = ['student', ...GROUPS.map(g => g.nome || g.name), 'last_activity'];
+  const lines = [head.map(escC).join(';')];
+  rows.forEach(p => {
+    const d = p.data || {};
+    lines.push([p.email,
+      ...GROUPS.map(g => { const ks = g.chaves || g.keys || []; return ks.filter(k => filled(d[k])).length + '/' + ks.length; }),
+      p.ts ? new Date(p.ts).toLocaleString('en-GB') : ''].map(escC).join(';'));
+  });
+  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'un-class.csv'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function initTeacher(){
+  if (teacherInit) return; teacherInit = true;
+  onValue(ref(db, 'un_pendentes'), s => renderPending(s.val() || {}), () => {});
+  onValue(ref(db, 'un_autorizados'), s => { APROV = s.val() || {}; renderApproved(); }, () => {});
+  onValue(ref(db, 'un_progresso'), s => { PROG = s.val() || {}; renderClass(); }, () => {
+    document.getElementById('class-table').innerHTML = '<p style="color:#b3261e">No permission to read the class — check the database rules.</p>';
+  });
+  const tgl = document.getElementById('invite-toggle');
+  tgl.onchange = () => set(ref(db, 'un_config/inviteOnly'), tgl.checked);
+  document.getElementById('class-csv').onclick = csvClass;
+}
+
+/* ---------- auth state ---------- */
+onAuthStateChanged(auth, user => {
+  const verifyBar = document.getElementById('verify-banner');
+  if (user) {
+    document.body.classList.add('authed');
+    document.body.classList.remove('gate-open');
+    const who = document.querySelector('#un-userbar .who');
+    if (who) who.textContent = user.email;
+    IS_TEACHER = isTeacherEmail(user.email) && user.emailVerified;
+    document.body.classList.toggle('teacher', IS_TEACHER);
+    verifyBar.style.display = (isTeacherEmail(user.email) && !user.emailVerified) ? 'block' : 'none';
+    if (IS_TEACHER) initTeacher();
+    if (!INIT) {
+      INIT = true;
+      onValue(ref(db, 'un_config/inviteOnly'), s => {
+        INVITE_ONLY = s.val() === true; applyAccess(auth.currentUser);
+        const tgl = document.getElementById('invite-toggle');
+        if (tgl) tgl.checked = INVITE_ONLY;
+      }, () => {});
+      onValue(ref(db, 'un_autorizados/' + user.uid), s => { MY_AUTH = !!s.val(); applyAccess(auth.currentUser); }, () => {});
+    }
+    applyAccess(user);
+    syncFromCloud(user);
+  } else {
+    document.body.classList.remove('authed', 'teacher', 'pending');
+    IS_TEACHER = false;
+    verifyBar.style.display = 'none';
+    window.__cloudOk = false;
+    setMode('login');
+  }
+});
+document.getElementById('resend-verify').onclick = async e => {
+  e.preventDefault();
+  if (auth.currentUser) { try { await sendEmailVerification(auth.currentUser); alert('Verification e-mail sent to ' + auth.currentUser.email + '.'); } catch (err) { alert('Could not send now (' + (err.code || err.message) + '). Try again in a few minutes.'); } }
+};
+</script>
 </body>
 </html>
