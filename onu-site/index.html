@@ -340,6 +340,8 @@
       </span>
     </div>
     <div id="prof-pendentes"></div>
+    <h3 style="margin-top:24px">Acompanhamento da turma</h3>
+    <div id="prof-turma"><p>Carregando dados da turma…</p></div>
     <form id="prof-form" class="tool" style="margin-top:14px">
       <div class="field"><label>Tipo de crise</label>
         <select id="prof-tipo">
@@ -773,6 +775,7 @@ document.addEventListener('click', e=>{
 
 <script src="assets/app.js"></script>
 <script type="module" src="assets/crises.js"></script>
+<script type="module" src="assets/turma.js"></script>
 <!-- Aviso por e-mail (Netlify Forms): disparado quando um delegado entra na fila de aprovação -->
 <form name="novo-delegado" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
   <input type="email" name="email">

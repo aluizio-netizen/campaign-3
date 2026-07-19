@@ -154,3 +154,16 @@ footer b{color:#fff}
   section.block{break-inside:avoid;border:none;padding:14px 0}
   .card,.tool,.lesson,.table-wrap{box-shadow:none}
 }
+
+/* --------- Acompanhamento da turma (painel do professor) --------- */
+.turma-table th{white-space:nowrap}
+.turma-table td{vertical-align:top}
+.turma-row{cursor:pointer}
+.turma-row:hover td{background:var(--highlight,#f6f1e2)}
+.turma-row.aberta td{background:var(--highlight,#f6f1e2)}
+.turma-aluno{font-weight:700;color:var(--navy);word-break:break-all;min-width:150px}
+.turma-det>td{background:#fbf9f2;padding:14px 16px}
+.turma-det-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.turma-det-grupo h4{margin:0 0 6px;color:var(--navy)}
+.turma-campo{font-size:.86rem;margin-bottom:5px;line-height:1.4}
+.turma-vazio{color:#b0a890;font-style:italic}
