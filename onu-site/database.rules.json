@@ -1,0 +1,87 @@
+{
+  "rules": {
+    "config": {
+      ".read": "auth != null",
+      ".write": "auth.token.email === 'aluizio@aluizio.education'"
+    },
+    "autorizados": {
+      ".read": "auth.token.email === 'aluizio@aluizio.education'",
+      ".write": "auth.token.email === 'aluizio@aluizio.education'",
+      "$uid": {
+        ".read": "auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education'"
+      }
+    },
+    "pendentes": {
+      ".read": "auth.token.email === 'aluizio@aluizio.education'",
+      "$uid": {
+        ".read": "auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education'",
+        ".write": "auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education'"
+      }
+    },
+    "progresso": {
+      "$uid": {
+        ".read": "auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education'",
+        ".write": "auth.uid === $uid"
+      }
+    },
+    "docs": {
+      ".read": "(auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())",
+      ".write": false
+    },
+    "crises": {
+      ".read": "(auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())",
+      ".write": "auth.token.email === 'aluizio@aluizio.education'"
+    },
+    "respostas": {
+      ".read": "auth.token.email === 'aluizio@aluizio.education'",
+      ".write": "auth.token.email === 'aluizio@aluizio.education'",
+      "$cid": {
+        "$uid": {
+          ".read": "auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education'",
+          ".write": "auth.uid === $uid && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())"
+        }
+      }
+    },
+
+    "comites": {
+      ".read": "auth != null",
+      ".write": "auth.token.email === 'aluizio@aluizio.education'"
+    },
+    "delegacoes": {
+      "$comiteId": {
+        ".read": "auth.token.email === 'aluizio@aluizio.education'",
+        ".write": "auth.token.email === 'aluizio@aluizio.education'",
+        "$delegacaoId": {
+          ".read": "auth != null && data.child('membros').child(auth.uid).val() === true"
+        }
+      }
+    },
+    "minhaDelegacao": {
+      ".read": "auth.token.email === 'aluizio@aluizio.education'",
+      ".write": "auth.token.email === 'aluizio@aluizio.education'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid"
+      }
+    },
+    "docsDelegacao": {
+      "$comiteId": {
+        ".read": "auth.token.email === 'aluizio@aluizio.education'",
+        "$delegacaoId": {
+          ".read": "root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true",
+          "$docId": {
+            ".write": "auth.token.email === 'aluizio@aluizio.education' || (root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true && (!data.exists() || data.child('estado').val() === 'rascunho'))"
+          }
+        }
+      }
+    },
+    "feedback": {
+      "$comiteId": {
+        ".read": "auth.token.email === 'aluizio@aluizio.education'",
+        ".write": "auth.token.email === 'aluizio@aluizio.education'",
+        "$delegacaoId": {
+          ".read": "root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true"
+        }
+      }
+    }
+  }
+}

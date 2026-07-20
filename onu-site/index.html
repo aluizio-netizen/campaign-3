@@ -129,12 +129,14 @@
     <button class="nav-toggle" aria-label="Menu" onclick="document.getElementById('nav').classList.toggle('open')">☰ Menu</button>
     <nav class="nav" id="nav">
       <a href="#progresso" class="members">Progresso</a>
+      <a href="#delegacao" class="members">Delegação</a>
       <a href="#aulas" class="members">Curso</a>
       <a href="#glossario">Glossário</a>
       <a href="#orgaos">Órgãos</a>
       <a href="#casos" class="members">Situações</a>
       <a href="#crises" class="members">Crises</a>
       <a href="#painel-prof" class="nav-prof">Painel</a>
+      <a href="#painel-delegacao" class="nav-prof">Delegações</a>
       <a href="#procedimento">Procedimento</a>
       <a href="#documentos" class="members">Documentos</a>
       <a href="#comites" class="members">Comitês</a>
@@ -230,6 +232,36 @@
     <p class="section-sub">Quanto da sua preparação já está pronta. Preencha os documentos, marque o checklist e a autoavaliação — as barras avançam sozinhas, e seu trabalho fica salvo na nuvem, disponível em qualquer aparelho.</p>
     <div id="progressoBody" class="progress-grid" style="margin-top:18px"></div>
     <p id="syncStatus" style="margin-top:12px;font-size:.85rem;color:var(--muted)"></p>
+  </div>
+</section>
+
+<!-- Área da delegação (war-room + submissão) — Fase 1 -->
+<section class="block members" id="delegacao">
+  <div class="container">
+    <span class="eyebrow">Simulação</span>
+    <h2 class="section-title">Sua delegação</h2>
+    <p class="section-sub">Seu espaço privado de trabalho: prepare o position paper da sua delegação e entregue ao professor. Só você (e seu par de delegação) e o professor veem o que está aqui.</p>
+    <style>
+      body.teacher #delegacao{display:none} /* professor usa o painel de delegações */
+      #delegacao .dg-card{background:#121a2c;border:1px solid #24344f;border-radius:12px;padding:22px 24px;margin-top:16px}
+      #delegacao .dg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+      #delegacao .dg-badge{font-size:.74rem;padding:4px 10px;border-radius:999px;background:#24344f;color:#cfe0f5;white-space:nowrap}
+      #delegacao .dg-badge.st-entregue{background:#3a3416;color:#f0e2a6}
+      #delegacao .dg-badge.st-corr{background:#16303a;color:#a6e0f0}
+      #delegacao .dg-badge.st-ok{background:#16361f;color:#bdf0cd}
+      #delegacao .dg-lock{margin:14px 0 0;padding:10px 12px;border-radius:8px;background:#0e1c2e;border-left:3px solid #c9a24a;color:#dfe8f5;font-size:.9rem}
+      #delegacao .dg-ta{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.93rem;margin-top:4px}
+      #delegacao .dg-ta:disabled{opacity:.75}
+      #delegacao .field{margin-bottom:12px} #delegacao label{font-size:.9rem;color:#cfdcec}
+      #delegacao .hint{color:#8ea3bf;font-weight:400}
+      #delegacao .dg-status{font-size:.85rem;margin-left:8px;align-self:center}
+      #delegacao .dg-fb{margin-top:18px;padding:14px 16px;border-radius:10px;background:#0e1c2e;border:1px solid #24344f}
+      #delegacao .dg-rub{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:8px}
+      #delegacao .dg-rub td{border-bottom:1px solid #1e2c44;padding:5px 4px}
+      #delegacao .dg-rub td:last-child{text-align:right;color:#bdf0cd}
+      #delegacao .dg-coment{white-space:pre-wrap;margin:10px 0 0;color:#dfe8f5;font-size:.92rem}
+    </style>
+    <div id="delegacao-body"><p class="section-sub">Carregando sua delegação…</p></div>
   </div>
 </section>
 
@@ -373,6 +405,38 @@
     <div id="prof-ranking"></div>
     <h3 style="margin-top:24px">Crises criadas &amp; respostas</h3>
     <div id="prof-lista"></div>
+  </div>
+</section>
+
+<!-- Painel de delegações (somente professor) — Fase 1 -->
+<section class="block members" id="painel-delegacao">
+  <div class="container">
+    <span class="eyebrow">Somente professor</span>
+    <h2 class="section-title">Delegações &amp; correção</h2>
+    <p class="section-sub">Crie as delegações do comitê, atribua cada aluno aprovado a um país e corrija os position papers entregues.</p>
+    <style>
+      #painel-delegacao{display:none} body.teacher #painel-delegacao{display:block}
+      #painel-delegacao .dg-inline{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+      #painel-delegacao .dg-inline input{flex:1 1 240px;padding:10px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.93rem}
+      #painel-delegacao select.dg-atribui{padding:8px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.9rem;min-width:200px}
+      #painel-delegacao .dg-badge{font-size:.74rem;padding:3px 9px;border-radius:999px;background:#24344f;color:#cfe0f5}
+      #painel-delegacao .dg-badge.st-entregue{background:#3a3416;color:#f0e2a6}
+      #painel-delegacao .dg-badge.st-corr{background:#16303a;color:#a6e0f0}
+      #painel-delegacao .dg-badge.st-ok{background:#16361f;color:#bdf0cd}
+      #painel-delegacao .dg-corr-box{margin-top:10px;border-top:1px solid #24344f;padding-top:10px}
+      #painel-delegacao .dg-lido{white-space:pre-wrap;background:#0d1626;border:1px solid #1e2c44;border-radius:8px;padding:9px 11px;font-size:.9rem;color:#dfe8f5}
+      #painel-delegacao .dg-notas{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+      #painel-delegacao .dg-nota{display:flex;flex-direction:column;font-size:.82rem;color:#9fb0c8;gap:3px}
+      #painel-delegacao .dg-nota-in{width:90px;padding:8px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb}
+      #painel-delegacao .dg-coment-in{width:100%;box-sizing:border-box;padding:9px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb}
+      #painel-delegacao .dg-status{font-size:.85rem;margin-left:8px}
+    </style>
+    <h3 style="margin-top:8px">Delegações do comitê</h3>
+    <div id="dg-prof-delegacoes"><p class="section-sub">Carregando…</p></div>
+    <h3 style="margin-top:24px">Atribuir alunos</h3>
+    <div id="dg-prof-atribuir"><p class="section-sub">Carregando…</p></div>
+    <h3 style="margin-top:24px">Correção dos position papers</h3>
+    <div id="dg-prof-correcao"><p class="section-sub">Carregando…</p></div>
   </div>
 </section>
 
@@ -777,6 +841,7 @@ document.addEventListener('click', e=>{
 <script src="assets/app.js"></script>
 <script type="module" src="assets/crises.js"></script>
 <script type="module" src="assets/turma.js"></script>
+<script type="module" src="assets/delegacao.js"></script>
 <!-- Aviso por e-mail (Netlify Forms): disparado quando um delegado entra na fila de aprovação -->
 <form name="novo-delegado" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
   <input type="email" name="email">
