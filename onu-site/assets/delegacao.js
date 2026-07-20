@@ -160,7 +160,7 @@ function renderProfDelegacoes() {
       '<table class="prof-tab"><thead><tr><th>País</th><th>Membros</th><th></th></tr></thead><tbody>' +
       list.map(([id, d]) => "<tr><td>" + he(d.pais || id) + "</td><td>" +
         (d.membros ? Object.keys(d.membros).map(nomeAluno).map(he).join(", ") : "<i>ninguém ainda</i>") +
-        '</td><td><button class="btn ghost dg-del-delegacao" data-id="' + id + '">Remover</button></td></tr>").join("") +
+        '</td><td><button class="btn ghost dg-del-delegacao" data-id="' + id + '">Remover</button></td></tr>').join("") +
       "</tbody></table>"
       : '<p class="section-sub">Nenhuma delegação criada ainda.</p>');
 }
