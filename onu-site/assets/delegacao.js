@@ -43,11 +43,12 @@ onAuthStateChanged(auth, user => {
   if (INIT) return; INIT = true;
 
   if (IS_TEACHER) {
-    onValue(ref(db, "delegacoes/" + COMITE), s => { DELEGACOES = s.val() || {}; renderProf(); });
-    onValue(ref(db, "minhaDelegacao"), s => { ATRIBUICOES = s.val() || {}; renderProf(); }, () => {});
-    onValue(ref(db, "autorizados"), s => { AUTORIZADOS = s.val() || {}; renderProf(); }, () => {});
-    onValue(ref(db, "docsDelegacao/" + COMITE), s => { DOCS_ALL = s.val() || {}; renderProf(); }, () => {});
-    onValue(ref(db, "feedback/" + COMITE), s => { FB_ALL = s.val() || {}; renderProf(); }, () => {});
+    const _err = (id, node) => e => { const r = document.getElementById(id); if (r) r.innerHTML = '<p class="section-sub" style="color:#f7a">Não foi possível ler <b>' + node + '</b>: ' + (e && (e.code || e.message)) + "</p>"; };
+    onValue(ref(db, "delegacoes/" + COMITE), s => { DELEGACOES = s.val() || {}; renderProf(); }, _err("dg-prof-delegacoes", "delegacoes"));
+    onValue(ref(db, "minhaDelegacao"), s => { ATRIBUICOES = s.val() || {}; renderProf(); }, _err("dg-prof-atribuir", "minhaDelegacao"));
+    onValue(ref(db, "autorizados"), s => { AUTORIZADOS = s.val() || {}; renderProf(); }, _err("dg-prof-atribuir", "autorizados"));
+    onValue(ref(db, "docsDelegacao/" + COMITE), s => { DOCS_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "docsDelegacao"));
+    onValue(ref(db, "feedback/" + COMITE), s => { FB_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "feedback"));
   } else {
     onValue(ref(db, "minhaDelegacao/" + user.uid), s => { MINHA = s.val(); abrirWarRoom(); }, () => { MINHA = null; renderAluno(); });
   }
