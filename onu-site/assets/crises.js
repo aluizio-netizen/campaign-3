@@ -166,6 +166,7 @@ function renderPendentes(p) {
   const list = Object.entries(p);
   if (!list.length) { root.innerHTML = '<div class="prof-item"><b>Aguardando aprovação (0)</b> <span class="tag">tudo em dia</span> — ninguém esperando no momento.</div>'; return; }
   root.innerHTML = '<div class="prof-item"><b>Aguardando aprovação (' + list.length + "):</b>" +
+    ' <button class="btn primary prof-aprovar-todos" style="margin-left:8px">Aprovar TODOS (' + list.length + ")</button>" +
     list.map(([uid, v]) => '<div class="prof-head" style="margin-top:8px">' + he(v.email || uid) +
       ' <button class="btn primary prof-aprovar" data-uid="' + uid + '" data-email="' + he(v.email || "") + '" style="margin-left:8px">Aprovar</button>' +
       ' <button class="btn ghost prof-negar" data-uid="' + uid + '">Remover</button></div>').join("") + "</div>";
@@ -189,6 +190,16 @@ function renderAprovados(a) {
 }
 
 document.addEventListener("click", async e => {
+  const apt = e.target.closest(".prof-aprovar-todos");
+  if (apt) {
+    const alunos = [...document.querySelectorAll(".prof-aprovar")].map(b => ({ uid: b.dataset.uid, email: b.dataset.email || "" }));
+    if (!alunos.length || !confirm("Aprovar todos os " + alunos.length + " alunos aguardando?")) return;
+    apt.disabled = true; apt.textContent = "Aprovando…";
+    for (const a of alunos) {
+      try { await set(ref(db, "autorizados/" + a.uid), { email: a.email, aprovadoEm: Date.now() }); await remove(ref(db, "pendentes/" + a.uid)); } catch (err) {}
+    }
+    return;
+  }
   const ap = e.target.closest(".prof-aprovar"); if (ap) { const uid = ap.dataset.uid; await set(ref(db, "autorizados/" + uid), { email: ap.dataset.email || "", aprovadoEm: Date.now() }); await remove(ref(db, "pendentes/" + uid)); return; }
   const ng = e.target.closest(".prof-negar"); if (ng) { const uid = ng.dataset.uid; await remove(ref(db, "pendentes/" + uid)); return; }
   const rv = e.target.closest(".prof-revogar"); if (rv) { if (confirm("Revogar o acesso deste aluno? Ele voltará a depender de aprovação.")) { try { await remove(ref(db, "autorizados/" + rv.dataset.uid)); } catch (err) { alert(err.message); } } return; }

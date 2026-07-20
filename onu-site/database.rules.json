@@ -49,18 +49,22 @@
     },
     "delegacoes": {
       "$comiteId": {
-        ".read": "auth.token.email === 'aluizio@aluizio.education'",
+        ".read": "auth != null",
         ".write": "auth.token.email === 'aluizio@aluizio.education'",
         "$delegacaoId": {
-          ".read": "auth != null && data.child('membros').child(auth.uid).val() === true"
+          "membros": {
+            "$uid": {
+              ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education')"
+            }
+          }
         }
       }
     },
     "minhaDelegacao": {
       ".read": "auth.token.email === 'aluizio@aluizio.education'",
-      ".write": "auth.token.email === 'aluizio@aluizio.education'",
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid"
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education')"
       }
     },
     "docsDelegacao": {

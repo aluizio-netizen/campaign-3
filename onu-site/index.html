@@ -244,6 +244,12 @@
     <style>
       body.teacher #delegacao{display:none} /* professor usa o painel de delegações */
       #delegacao .dg-card{background:#121a2c;border:1px solid #24344f;border-radius:12px;padding:22px 24px;margin-top:16px}
+      #delegacao .dg-lista-paises{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:14px}
+      #delegacao .dg-pais{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0d1626;border:1px solid #2c3e5c;border-radius:9px;padding:9px 12px}
+      #delegacao .dg-pais.ocupado{opacity:.55}
+      #delegacao .dg-pais-nome{font-size:.93rem;color:#eaf1fb}
+      #delegacao .dg-pais-tag{font-size:.72rem;color:#9fb0c8;white-space:nowrap}
+      #delegacao .dg-pais .btn{padding:5px 12px;font-size:.82rem}
       #delegacao .dg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
       #delegacao .dg-badge{font-size:.74rem;padding:4px 10px;border-radius:999px;background:#24344f;color:#cfe0f5;white-space:nowrap}
       #delegacao .dg-badge.st-entregue{background:#3a3416;color:#f0e2a6}
@@ -432,6 +438,7 @@
       #painel-delegacao .dg-status{font-size:.85rem;margin-left:8px}
     </style>
     <h3 style="margin-top:8px">Delegações do comitê</h3>
+    <div class="prof-bar"><button class="btn ghost" id="dg-seed-unea">➕ Carregar as delegações do UNEA (lista pronta)</button></div>
     <div id="dg-prof-delegacoes"><p class="section-sub">Carregando…</p></div>
     <h3 style="margin-top:24px">Atribuir alunos</h3>
     <div id="dg-prof-atribuir"><p class="section-sub">Carregando…</p></div>

@@ -50,6 +50,7 @@ onAuthStateChanged(auth, user => {
     onValue(ref(db, "docsDelegacao/" + COMITE), s => { DOCS_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "docsDelegacao"));
     onValue(ref(db, "feedback/" + COMITE), s => { FB_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "feedback"));
   } else {
+    onValue(ref(db, "delegacoes/" + COMITE), s => { DELEGACOES = s.val() || {}; renderAluno(); }, () => {});
     onValue(ref(db, "minhaDelegacao/" + user.uid), s => { MINHA = s.val(); abrirWarRoom(); }, () => { MINHA = null; renderAluno(); });
   }
 });
@@ -64,12 +65,31 @@ function abrirWarRoom() {
   onValue(ref(db, "feedback/" + COMITE + "/" + delId + "/" + PP), s => { FB = s.val(); renderAluno(); }, () => {});
 }
 
+function renderEscolha(root) {
+  const list = Object.entries(DELEGACOES).sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
+  if (!list.length) {
+    root.innerHTML = '<div class="dg-card"><p class="section-sub" style="margin:0">O professor ainda não abriu as delegações do comitê. Assim que a lista de países for liberada, ela aparece aqui para você escolher a sua.</p></div>';
+    return;
+  }
+  const itens = list.map(([id, d]) => {
+    const ocupado = d.membros && Object.keys(d.membros).length > 0;
+    return '<div class="dg-pais' + (ocupado ? " ocupado" : "") + '"><span class="dg-pais-nome">' + he(d.pais || id) + "</span>" +
+      (ocupado
+        ? '<span class="dg-pais-tag">já tem delegado</span>'
+        : '<button class="btn primary dg-escolher" data-del="' + id + '">Escolher</button>') + "</div>";
+  }).join("");
+  root.innerHTML =
+    '<div class="dg-card"><h3 style="margin:.2rem 0 .4rem">Escolha seu país</h3>' +
+    '<p class="section-sub">Clique no país que você vai representar em <b>' + he(COMITE_NOME) + '</b>. Um delegado por país.</p>' +
+    '<div class="dg-lista-paises">' + itens + "</div></div>";
+}
+
 function renderAluno() {
   const root = document.getElementById("delegacao-body");
   if (!root || IS_TEACHER) return;
 
   if (!MINHA || !MINHA.delegacaoId) {
-    root.innerHTML = '<div class="dg-card"><p class="section-sub" style="margin:0">Você ainda não foi designado a uma delegação. Assim que o professor te atribuir um país, seu espaço de trabalho aparece aqui automaticamente.</p></div>';
+    renderEscolha(root);
     return;
   }
   const del = DELEGACOES[MINHA.delegacaoId] || {};
@@ -97,6 +117,7 @@ function renderAluno() {
         '<h3 style="margin:.4rem 0 .2rem">Delegação: ' + he(pais) + "</h3>" +
         '<p class="section-sub" style="margin:.2rem 0">Tópicos: ' + TOPICOS.map(he).join(" · ") + "</p></div>" +
         '<span class="dg-badge ' + badge.cls + '">' + badge.rot + "</span></div>" +
+      (travado ? "" : '<p style="margin:2px 0 0"><a href="#" class="dg-trocar" style="color:#8ea3bf;font-size:.82rem">não é seu país? trocar</a></p>') +
       (travado ? '<p class="dg-lock">📄 Position paper entregue em ' + fmt(DOC && DOC.submittedAt) + ". Ele fica travado para edição — fale com o professor se precisar reabrir.</p>" : "") +
       '<h4 style="margin:18px 0 4px">Position paper</h4>' +
       campo("passadoAtual", "1. Ações internacionais (passado/presente)", "o histórico do tema no sistema ONU", DOC && DOC.passadoAtual) +
@@ -115,6 +136,35 @@ function coletarPP() {
   return { passadoAtual: g("passadoAtual"), posicao: g("posicao"), solucoes: g("solucoes") };
 }
 function docPath() { return "docsDelegacao/" + COMITE + "/" + MINHA.delegacaoId + "/" + PP; }
+
+// Aluno escolhe / troca de país (auto-atendimento)
+document.addEventListener("click", async e => {
+  const esc = e.target.closest(".dg-escolher");
+  if (esc) {
+    const del = esc.dataset.del, uid = auth.currentUser && auth.currentUser.uid;
+    if (!uid) return;
+    esc.disabled = true; esc.textContent = "Entrando…";
+    try {
+      await set(ref(db, "delegacoes/" + COMITE + "/" + del + "/membros/" + uid), true);
+      await set(ref(db, "minhaDelegacao/" + uid), { comiteId: COMITE, delegacaoId: del });
+    } catch (err) {
+      alert("Não consegui entrar (" + (err.code || err.message) + "). Esse país pode já ter sido escolhido — a lista vai atualizar.");
+      esc.disabled = false; esc.textContent = "Escolher";
+    }
+    return;
+  }
+  const troc = e.target.closest(".dg-trocar");
+  if (troc) {
+    e.preventDefault();
+    if (!MINHA || !confirm("Sair da delegação " + ((DELEGACOES[MINHA.delegacaoId] || {}).pais || "atual") + " e escolher outro país?")) return;
+    const del = MINHA.delegacaoId, uid = auth.currentUser.uid;
+    try {
+      await remove(ref(db, "delegacoes/" + COMITE + "/" + del + "/membros/" + uid));
+      await remove(ref(db, "minhaDelegacao/" + uid));
+    } catch (err) { alert("Não consegui trocar: " + (err.code || err.message)); }
+    return;
+  }
+});
 
 document.addEventListener("click", async e => {
   if (e.target.id === "dg-salvar") {
@@ -209,6 +259,29 @@ function boxCorrecao(id) {
     (estadoDe(doc) === "corrigido" ? '<button class="btn ghost dg-reabrir" data-id="' + id + '">↺ Reabrir para o aluno</button>' : "") +
     '<span class="dg-status dg-corr-status"></span></div>';
 }
+
+// Lista de delegações do comitê UNEA/YMUNB (da matriz do material). Professor cria todas de uma vez.
+const DELEGACOES_UNEA = [
+  "Estados Unidos", "Brasil", "Guiana", "Suriname", "Venezuela", "Equador", "Colômbia", "Peru", "Bolívia",
+  "Nigéria", "Angola", "Arábia Saudita", "Emirados Árabes Unidos", "Kuwait", "Irã", "Argélia", "Omã",
+  "China", "Índia", "Japão", "Coreia do Sul", "Indonésia",
+  "União Europeia", "França", "Alemanha", "Reino Unido", "Noruega", "Austrália", "Canadá",
+  "RDC (Congo)", "Chile", "Argentina", "África do Sul", "Namíbia", "Zâmbia", "Tanzânia", "Guiné", "Moçambique",
+  "Maldivas", "Tuvalu", "Fiji", "Kiribati", "Bangladesh", "Filipinas",
+];
+function slugPais(pais) {
+  return pais.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+async function carregarDelegacoesUNEA() {
+  if (!confirm("Criar as " + DELEGACOES_UNEA.length + " delegações do comitê UNEA? (não apaga as que já existem nem os alunos já atribuídos)")) return;
+  try {
+    for (const pais of DELEGACOES_UNEA) {
+      await update(ref(db, "delegacoes/" + COMITE + "/" + slugPais(pais)), { pais });
+    }
+    alert(DELEGACOES_UNEA.length + " delegações criadas! Elas já aparecem na lista abaixo e para os alunos escolherem.");
+  } catch (err) { alert("Erro: " + (err.code || err.message)); }
+}
+document.addEventListener("click", e => { if (e.target.id === "dg-seed-unea") carregarDelegacoesUNEA(); });
 
 document.addEventListener("submit", async e => {
   if (e.target.id === "dg-add-form") {
