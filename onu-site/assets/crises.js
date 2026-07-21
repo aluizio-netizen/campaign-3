@@ -8,6 +8,10 @@ const db = getDatabase();
 const TEACHER_EMAIL = "aluizio@aluizio.education";
 
 let IS_TEACHER = false, INIT = false, DATA = {}, INVITE_ONLY = false, MY_AUTH = false, RESP = {};
+// Só dá para dizer que um aluno está pendente depois que AS DUAS respostas chegaram
+// do banco. Sem isso, o estado inicial (inviteOnly=false, MY_AUTH=false) faz um aluno
+// já aprovado ser regravado em pendentes/ a cada carregamento da página.
+let INVITE_READY = false, AUTH_READY = false;
 const he = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const TAG = { orgao: "órgão competente", mocao: "qual moção", mc: "múltipla escolha", vf: "verdadeiro/falso", aberta: "resposta aberta" };
 const tipoTag = t => TAG[t] || t;
@@ -17,8 +21,8 @@ onAuthStateChanged(auth, user => {
   IS_TEACHER = (user.email || "").toLowerCase() === TEACHER_EMAIL;
   document.body.classList.toggle("teacher", IS_TEACHER);
   if (INIT) return; INIT = true;
-  onValue(ref(db, "config/inviteOnly"), s => { INVITE_ONLY = s.val() === true; applyAccess(); if (IS_TEACHER) renderInvite(); });
-  onValue(ref(db, "autorizados/" + user.uid), s => { MY_AUTH = !!s.val(); applyAccess(); });
+  onValue(ref(db, "config/inviteOnly"), s => { INVITE_ONLY = s.val() === true; INVITE_READY = true; applyAccess(); if (IS_TEACHER) renderInvite(); });
+  onValue(ref(db, "autorizados/" + user.uid), s => { MY_AUTH = !!s.val(); AUTH_READY = true; applyAccess(); });
   onValue(ref(db, "crises"), s => { DATA = s.val() || {}; renderAluno(); if (IS_TEACHER) renderProfList(); });
   if (IS_TEACHER) {
     setupForm();
@@ -32,6 +36,9 @@ function applyAccess() {
   if (IS_TEACHER) { document.body.classList.remove("pending"); return; }
   const blocked = INVITE_ONLY && !MY_AUTH;
   document.body.classList.toggle("pending", blocked);
+  // Enfileirar só depois de saber de fato o estado — senão o aluno aprovado
+  // reaparece em "Aguardando aprovação" toda vez que abre o site.
+  if (!(INVITE_READY && AUTH_READY)) return;
   if (blocked && auth.currentUser) {
     const pRef = ref(db, "pendentes/" + auth.currentUser.uid);
     get(pRef).then(s => {

@@ -19,6 +19,7 @@
       }
     },
     "progresso": {
+      ".read": "auth.token.email === 'aluizio@aluizio.education'",
       "$uid": {
         ".read": "auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education'",
         ".write": "auth.uid === $uid"

@@ -13,6 +13,23 @@ const COMITE_NOME = "UNEA — YMUN Brasil 2026";
 const TOPICOS = ["Margem Equatorial da Foz do Amazonas", "Terras Raras / Minerais Críticos (Serra Verde)"];
 const PP = "positionPaper"; // docId do deliverable principal da delegação
 
+// Aviso de salvamento do aluno. Fica no módulo (e não só no DOM) porque o
+// onValue do documento re-renderiza a seção e recriaria o <span> vazio,
+// apagando tanto o "Salvo ✓" quanto a mensagem de erro.
+let STATUS = null, STATUS_TIMER = null;
+function paintStatus() {
+  const st = document.getElementById("dg-status");
+  if (!st) return;
+  st.textContent = STATUS ? STATUS.texto : "";
+  st.style.color = STATUS ? STATUS.cor : "";
+}
+function setStatus(texto, cor) {
+  STATUS = { texto, cor };
+  paintStatus();
+  if (STATUS_TIMER) clearTimeout(STATUS_TIMER);
+  STATUS_TIMER = setTimeout(() => { STATUS = null; paintStatus(); }, 8000);
+}
+
 const he = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmt = ms => ms ? new Date(ms).toLocaleString("pt-BR") : "—";
 const ESTADO = {
@@ -129,6 +146,7 @@ function renderAluno() {
         '<span id="dg-status" class="dg-status"></span></div>') +
       fbHtml +
     "</div>";
+  paintStatus(); // repõe o aviso que o re-render acabou de apagar
 }
 
 function coletarPP() {
@@ -168,11 +186,15 @@ document.addEventListener("click", async e => {
 
 document.addEventListener("click", async e => {
   if (e.target.id === "dg-salvar") {
-    const st = document.getElementById("dg-status");
     try {
       await update(ref(db, docPath()), { ...coletarPP(), estado: "rascunho", updatedBy: auth.currentUser.uid, updatedAt: Date.now() });
-      if (st) { st.textContent = "Salvo ✓"; st.style.color = "#1E8E5A"; }
-    } catch (err) { if (st) { st.textContent = "Não salvou (" + (err.code || err.message) + ")"; st.style.color = "#b3261e"; } }
+      setStatus("Salvo ✓", "#1E8E5A");
+    } catch (err) {
+      const cod = err.code || err.message || "";
+      setStatus(/permission/i.test(cod)
+        ? "⚠ NÃO SALVOU — o paper está travado (entregue ou já corrigido). Copie seu texto e peça ao professor para reabrir."
+        : "⚠ NÃO SALVOU (" + cod + "). Copie seu texto antes de sair da página.", "#b3261e");
+    }
     return;
   }
   if (e.target.id === "dg-entregar") {
