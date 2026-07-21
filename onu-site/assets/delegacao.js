@@ -17,6 +17,8 @@ const PP = "positionPaper"; // docId do deliverable principal da delegação
 // onValue do documento re-renderiza a seção e recriaria o <span> vazio,
 // apagando tanto o "Salvo ✓" quanto a mensagem de erro.
 let STATUS = null, STATUS_TIMER = null;
+// Caixas de correção abertas no painel do professor, preservadas entre re-renders.
+const CORR_ABERTAS = new Set();
 function paintStatus() {
   const st = document.getElementById("dg-status");
   if (!st) return;
@@ -267,6 +269,15 @@ function renderProfCorrecao() {
       '<button class="btn ghost dg-corrigir" data-id="' + id + '">Abrir / corrigir</button></div>' +
       '<div class="dg-corr-box" id="dg-corr-' + id + '" hidden></div></div>';
   }).join("");
+  // Reabre as caixas que já estavam abertas. Abrir um paper "entregue" grava
+  // estado "em_correcao", o que dispara este próprio render e recriaria a caixa
+  // fechada e vazia — o professor via o nada e tinha de clicar duas vezes.
+  CORR_ABERTAS.forEach(id => {
+    const box = document.getElementById("dg-corr-" + id);
+    if (!box) { CORR_ABERTAS.delete(id); return; }
+    box.hidden = false;
+    box.innerHTML = boxCorrecao(id);
+  });
 }
 
 function boxCorrecao(id) {
@@ -345,8 +356,9 @@ document.addEventListener("click", async e => {
   if (corr) {
     const id = corr.dataset.id, box = document.getElementById("dg-corr-" + id);
     if (!box) return;
-    if (!box.hidden) { box.hidden = true; return; }
+    if (!box.hidden) { box.hidden = true; CORR_ABERTAS.delete(id); return; }
     box.hidden = false; box.innerHTML = boxCorrecao(id);
+    CORR_ABERTAS.add(id);
     // ao abrir, marca em correção (se estava só entregue)
     if (estadoDe(DOCS_ALL[id] && DOCS_ALL[id][PP]) === "entregue") {
       update(ref(db, "docsDelegacao/" + COMITE + "/" + id + "/" + PP), { estado: "em_correcao" }).catch(() => {});
