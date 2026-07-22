@@ -12,6 +12,7 @@ const COMITE = "unea-ymunb-2026";
 const COMITE_NOME = "UNEA — YMUN Brasil 2026";
 const TOPICOS = ["Margem Equatorial da Foz do Amazonas", "Terras Raras / Minerais Críticos (Serra Verde)"];
 const PP = "positionPaper"; // docId do deliverable principal da delegação
+const AVISO_PATH = "avisos/" + COMITE; // recado curto do professor, ao vivo p/ todos
 
 // Aviso de salvamento do aluno. Fica no módulo (e não só no DOM) porque o
 // onValue do documento re-renderiza a seção e recriaria o <span> vazio,
@@ -50,10 +51,11 @@ const RUBRICA = [
 const notaTotal = f => f ? RUBRICA.reduce((s, r) => s + (Number(f[r.k]) || 0), 0) : 0;
 
 let IS_TEACHER = false, INIT = false;
+let AVISO = null; // { texto, ts } — recado atual do professor (comum aos dois papéis)
 // aluno
 let MINHA = null, SUB_DEL = null, DOC = null, FB = null;
 // professor
-let DELEGACOES = {}, AUTORIZADOS = {}, ATRIBUICOES = {}, DOCS_ALL = {}, FB_ALL = {};
+let DELEGACOES = {}, AUTORIZADOS = {}, ATRIBUICOES = {}, DOCS_ALL = {}, FB_ALL = {}, PENDENTES = {};
 
 onAuthStateChanged(auth, user => {
   if (!user) return;
@@ -68,9 +70,12 @@ onAuthStateChanged(auth, user => {
     onValue(ref(db, "autorizados"), s => { AUTORIZADOS = s.val() || {}; renderProf(); }, _err("dg-prof-atribuir", "autorizados"));
     onValue(ref(db, "docsDelegacao/" + COMITE), s => { DOCS_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "docsDelegacao"));
     onValue(ref(db, "feedback/" + COMITE), s => { FB_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "feedback"));
+    onValue(ref(db, "pendentes"), s => { PENDENTES = s.val() || {}; renderProfPainel(); }, () => {});
+    onValue(ref(db, AVISO_PATH), s => { AVISO = s.val(); renderProf(); }, () => {});
   } else {
     onValue(ref(db, "delegacoes/" + COMITE), s => { DELEGACOES = s.val() || {}; renderAluno(); }, () => {});
     onValue(ref(db, "minhaDelegacao/" + user.uid), s => { MINHA = s.val(); abrirWarRoom(); }, () => { MINHA = null; renderAluno(); });
+    onValue(ref(db, AVISO_PATH), s => { AVISO = s.val(); renderAluno(); }, () => {});
   }
 });
 
@@ -84,10 +89,32 @@ function abrirWarRoom() {
   onValue(ref(db, "feedback/" + COMITE + "/" + delId + "/" + PP), s => { FB = s.val(); renderAluno(); }, () => {});
 }
 
+// Banner do recado do professor — aparece no topo da aba p/ todos os alunos.
+function avisoBanner() {
+  if (!AVISO || !(AVISO.texto || "").trim()) return "";
+  return '<div class="dg-aviso">📢 <b>Aviso do professor:</b> ' + he(AVISO.texto) +
+    '<span class="dg-aviso-ts">' + fmt(AVISO.ts) + "</span></div>";
+}
+
+// Passo a passo do delegado. `passo` = etapa atual (1..4); 5 = tudo concluído.
+function comoFunciona(passo) {
+  const passos = [
+    "Escolha o país que você vai representar",
+    'Leia o <a href="#unea-briefing">briefing do comitê</a> (tópicos e contexto)',
+    "Escreva seu position paper nas 3 seções",
+    "Entregue ao professor e aguarde a correção",
+  ];
+  return '<div class="dg-guia"><b>Como funciona</b><ol>' +
+    passos.map((p, i) => {
+      const n = i + 1, cls = n < passo ? "feito" : n === passo ? "ativo" : "";
+      return '<li class="' + cls + '">' + p + "</li>";
+    }).join("") + "</ol></div>";
+}
+
 function renderEscolha(root) {
   const list = Object.entries(DELEGACOES).sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
   if (!list.length) {
-    root.innerHTML = '<div class="dg-card"><p class="section-sub" style="margin:0">O professor ainda não abriu as delegações do comitê. Assim que a lista de países for liberada, ela aparece aqui para você escolher a sua.</p></div>';
+    root.innerHTML = avisoBanner() + '<div class="dg-card"><p class="section-sub" style="margin:0">O professor ainda não abriu as delegações do comitê. Assim que a lista de países for liberada, ela aparece aqui para você escolher a sua.</p></div>';
     return;
   }
   const itens = list.map(([id, d]) => {
@@ -98,7 +125,9 @@ function renderEscolha(root) {
         : '<button class="btn primary dg-escolher" data-del="' + id + '">Escolher</button>') + "</div>";
   }).join("");
   root.innerHTML =
-    '<div class="dg-card"><h3 style="margin:.2rem 0 .4rem">Escolha seu país</h3>' +
+    avisoBanner() +
+    comoFunciona(1) +
+    '<div class="dg-card"><h3 style="margin:.2rem 0 .4rem">1. Escolha seu país</h3>' +
     '<p class="section-sub">Clique no país que você vai representar em <b>' + he(COMITE_NOME) + '</b>. Um delegado por país.</p>' +
     '<div class="dg-lista-paises">' + itens + "</div></div>";
 }
@@ -130,7 +159,10 @@ function renderAluno() {
       (FB.comentario ? '<p class="dg-coment">' + he(FB.comentario) + "</p>" : "") + "</div>";
   }
 
+  const passo = est === "corrigido" ? 5 : est === "rascunho" ? 3 : 4;
   root.innerHTML =
+    avisoBanner() +
+    comoFunciona(passo) +
     '<div class="dg-card">' +
       '<div class="dg-head"><div><span class="tag">' + he(COMITE_NOME) + '</span>' +
         '<h3 style="margin:.4rem 0 .2rem">Delegação: ' + he(pais) + "</h3>" +
@@ -218,9 +250,72 @@ function nomeAluno(uid) {
 
 function renderProf() {
   if (!IS_TEACHER) return;
+  renderProfAviso();
+  renderProfPainel();
   renderProfDelegacoes();
   renderProfAtribuir();
   renderProfCorrecao();
+}
+
+// (0a) Compositor do recado ao vivo — publica em avisos/<comite>, visível a todos.
+function renderProfAviso() {
+  const root = document.getElementById("dg-prof-aviso"); if (!root) return;
+  const atual = (AVISO && AVISO.texto) ? AVISO.texto : "";
+  root.innerHTML =
+    '<div class="dg-inline"><input type="text" id="dg-aviso-in" maxlength="240" placeholder="Ex.: Comecem o position paper — entreguem até as 16h" value="' + he(atual) + '">' +
+    '<button class="btn primary" id="dg-aviso-pub">📢 Publicar aviso</button>' +
+    (atual ? '<button class="btn ghost" id="dg-aviso-clr">Limpar</button>' : "") + "</div>" +
+    (atual
+      ? '<p class="section-sub" style="margin:6px 0 0">No ar desde ' + fmt(AVISO.ts) + " — todos os alunos veem no topo da aba <b>Delegação</b>.</p>"
+      : '<p class="section-sub" style="margin:6px 0 0">Nenhum aviso no ar. O que você publicar aqui aparece ao vivo para todos os alunos.</p>');
+}
+
+// (0b) Visão da turma ao vivo — pendentes + panorama de todas as delegações.
+function renderProfPainel() {
+  const root = document.getElementById("dg-prof-painel"); if (!root || !IS_TEACHER) return;
+
+  // Alerta de aprovação sob pressão (item 4): aprovar todos sem sair desta tela.
+  const pend = Object.entries(PENDENTES);
+  const alerta = pend.length
+    ? '<div class="dg-pend">⏳ <b>' + pend.length + " aluno(s) aguardando aprovação:</b> " +
+        pend.map(([, v]) => he((v && v.email) || "sem e-mail")).join(", ") +
+        ' <button class="btn primary" id="dg-aprovar-todos">Aprovar todos (' + pend.length + ")</button></div>"
+    : "";
+
+  const dels = Object.entries(DELEGACOES);
+  if (!dels.length) { root.innerHTML = alerta + '<p class="section-sub">Carregue as delegações do comitê para ver o panorama.</p>'; return; }
+
+  // Só mostra delegações com delegado OU com paper; conta as vazias à parte.
+  const ativas = dels.filter(([id, d]) => (d.membros && Object.keys(d.membros).length) || (DOCS_ALL[id] && DOCS_ALL[id][PP]))
+    .sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
+  const cont = { rascunho: 0, entregue: 0, em_correcao: 0, corrigido: 0 };
+  const rows = ativas.map(([id, d]) => {
+    const doc = DOCS_ALL[id] && DOCS_ALL[id][PP];
+    const membros = d.membros ? Object.keys(d.membros).map(nomeAluno).map(he).join(", ") : '<i style="color:#8ea3bf">sem delegado</i>';
+    const est = doc ? estadoDe(doc) : null;
+    if (est) cont[est] = (cont[est] || 0) + 1;
+    const badge = est ? (ESTADO[est] || ESTADO.rascunho) : null;
+    const fb = (FB_ALL[id] && FB_ALL[id][PP]) || null;
+    const estCel = badge ? '<span class="dg-badge ' + badge.cls + '">' + badge.rot + "</span>" : '<span style="color:#8ea3bf">— sem paper —</span>';
+    const nota = fb ? notaTotal(fb) + "/100" : "—";
+    const ult = doc && (doc.updatedAt || doc.submittedAt) ? fmt(doc.updatedAt || doc.submittedAt) : "—";
+    return "<tr><td><b>" + he(d.pais || id) + "</b></td><td>" + membros + "</td><td>" + estCel + "</td><td>" + nota + "</td><td>" + ult + "</td></tr>";
+  }).join("");
+
+  const vazias = dels.length - ativas.length;
+  const chip = (n, rot, cls) => '<span class="dg-chip ' + (cls || "") + '">' + n + " " + rot + "</span>";
+  const resumo =
+    chip(ativas.length, "com delegado", "c-ok") +
+    chip(cont.rascunho || 0, "rascunhando") +
+    chip((cont.entregue || 0) + (cont.em_correcao || 0), "aguardando correção", "c-wait") +
+    chip(cont.corrigido || 0, "corrigidos", "c-done") +
+    (vazias ? chip(vazias, "países livres") : "");
+
+  root.innerHTML = alerta +
+    '<div class="dg-chips">' + resumo + "</div>" +
+    (ativas.length
+      ? '<div class="table-wrap"><table class="prof-tab dg-turma"><thead><tr><th>País</th><th>Delegado</th><th>Position paper</th><th>Nota</th><th>Última atividade</th></tr></thead><tbody>' + rows + "</tbody></table></div>"
+      : '<p class="section-sub">Nenhum aluno escolheu país ainda.</p>');
 }
 
 // (a) criar / listar delegações
@@ -385,6 +480,37 @@ document.addEventListener("click", async e => {
     const id = reab.dataset.id;
     if (confirm("Reabrir o position paper para o aluno editar de novo?")) {
       try { await update(ref(db, "docsDelegacao/" + COMITE + "/" + id + "/" + PP), { estado: "rascunho" }); } catch (err) { alert(err.message); }
+    }
+    return;
+  }
+});
+
+/* =====================  PROFESSOR — avisos & aprovação ao vivo  ===================== */
+document.addEventListener("click", async e => {
+  // Publicar recado ao vivo p/ todos os alunos
+  if (e.target.id === "dg-aviso-pub") {
+    const inp = document.getElementById("dg-aviso-in"), texto = (inp ? inp.value : "").trim();
+    if (!texto) { alert("Escreva o aviso antes de publicar."); return; }
+    e.target.disabled = true;
+    try { await set(ref(db, AVISO_PATH), { texto, ts: Date.now() }); }
+    catch (err) { alert("Não consegui publicar (" + (err.code || err.message) + ")."); e.target.disabled = false; }
+    return;
+  }
+  if (e.target.id === "dg-aviso-clr") {
+    if (!confirm("Tirar o aviso do ar?")) return;
+    try { await remove(ref(db, AVISO_PATH)); } catch (err) { alert(err.message); }
+    return;
+  }
+  // Aprovar todos os alunos pendentes sem sair do painel de delegações (item 4)
+  if (e.target.id === "dg-aprovar-todos") {
+    const alunos = Object.entries(PENDENTES).map(([uid, v]) => ({ uid, email: (v && v.email) || "" }));
+    if (!alunos.length || !confirm("Aprovar todos os " + alunos.length + " alunos aguardando?")) return;
+    e.target.disabled = true; e.target.textContent = "Aprovando…";
+    for (const a of alunos) {
+      try {
+        await set(ref(db, "autorizados/" + a.uid), { email: a.email, aprovadoEm: Date.now() });
+        await remove(ref(db, "pendentes/" + a.uid));
+      } catch (err) { /* segue aprovando os demais */ }
     }
     return;
   }

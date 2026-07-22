@@ -87,6 +87,12 @@
           ".read": "root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true"
         }
       }
+    },
+    "avisos": {
+      "$comiteId": {
+        ".read": "auth != null",
+        ".write": "auth.token.email === 'aluizio@aluizio.education'"
+      }
     }
   }
 }
