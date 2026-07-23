@@ -50,6 +50,21 @@ const RUBRICA = [
 ];
 const notaTotal = f => f ? RUBRICA.reduce((s, r) => s + (Number(f[r.k]) || 0), 0) : 0;
 
+// Remover uma delegação da lista NÃO apaga o paper que o aluno já gravou — e o
+// professor precisa continuar enxergando esse paper. Por isso os painéis do
+// professor trabalham com a união "delegações da lista + ids que têm documento".
+const ehOrfa = id => !DELEGACOES[id];
+const paisDe = id => (DELEGACOES[id] && DELEGACOES[id].pais) || id;
+const temDoc = id => !!(DOCS_ALL[id] && DOCS_ALL[id][PP]);
+function idsDelegacoes() {
+  const ids = new Set(Object.keys(DELEGACOES));
+  Object.keys(DOCS_ALL).forEach(id => { if (temDoc(id)) ids.add(id); });
+  return [...ids].sort((a, b) => paisDe(a).localeCompare(paisDe(b)));
+}
+const tagOrfa = id => ehOrfa(id)
+  ? ' <span class="dg-badge st-orfa" title="O país foi removido da lista de delegações, mas o documento do aluno continua aqui.">delegação removida da lista</span>'
+  : "";
+
 let IS_TEACHER = false, INIT = false;
 let AVISO = null; // { texto, ts } — recado atual do professor (comum aos dois papéis)
 // aluno
@@ -150,9 +165,14 @@ function renderAluno() {
     '<div class="field"><label>' + rot + (dica ? ' <span class="hint">— ' + dica + "</span>" : "") + "</label>" +
     '<textarea class="dg-ta" data-pp="' + id + '" rows="5"' + (travado ? " disabled" : "") + ">" + he(val || "") + "</textarea></div>";
 
+  // A devolutiva aparece sempre que existir — inclusive quando o professor
+  // reabre o paper para revisão (estado volta a "rascunho"). Antes ela sumia
+  // exatamente na hora em que o aluno mais precisava dela.
   let fbHtml = "";
-  if (est === "corrigido" && FB) {
-    fbHtml = '<div class="dg-fb"><b>Correção do professor — nota ' + notaTotal(FB) + "/100</b>" +
+  if (FB) {
+    const reaberto = est !== "corrigido";
+    fbHtml = '<div class="dg-fb" id="dg-correcao"><b>📝 Correção do professor — nota ' + notaTotal(FB) + "/100</b>" +
+      (reaberto ? '<p class="dg-fb-reab">Seu position paper foi <b>reaberto para revisão</b>. Use a correção abaixo como guia, ajuste o texto e entregue de novo.</p>' : "") +
       '<table class="dg-rub"><tbody>' +
       RUBRICA.map(r => "<tr><td>" + r.rot + "</td><td>" + (Number(FB[r.k]) || 0) + "/" + r.max + "</td></tr>").join("") +
       "</tbody></table>" +
@@ -170,6 +190,7 @@ function renderAluno() {
         '<span class="dg-badge ' + badge.cls + '">' + badge.rot + "</span></div>" +
       (travado ? "" : '<p style="margin:2px 0 0"><a href="#" class="dg-trocar" style="color:#8ea3bf;font-size:.82rem">não é seu país? trocar</a></p>') +
       (travado ? '<p class="dg-lock">📄 Position paper entregue em ' + fmt(DOC && DOC.submittedAt) + ". Ele fica travado para edição — fale com o professor se precisar reabrir.</p>" : "") +
+      fbHtml + // no topo: a correção é a primeira coisa que o aluno precisa ver
       '<h4 style="margin:18px 0 4px">Position paper</h4>' +
       campo("passadoAtual", "1. Ações internacionais (passado/presente)", "o histórico do tema no sistema ONU", DOC && DOC.passadoAtual) +
       campo("posicao", "2. Posição do país (Country Position)", "o que a delegação defende e por quê", DOC && DOC.posicao) +
@@ -178,7 +199,6 @@ function renderAluno() {
         '<div class="toolbar"><button class="btn primary" id="dg-salvar">💾 Salvar rascunho</button>' +
         '<button class="btn gold" id="dg-entregar">📨 Entregar ao professor</button>' +
         '<span id="dg-status" class="dg-status"></span></div>') +
-      fbHtml +
     "</div>";
   paintStatus(); // repõe o aviso que o re-render acabou de apagar
 }
@@ -282,14 +302,17 @@ function renderProfPainel() {
         ' <button class="btn primary" id="dg-aprovar-todos">Aprovar todos (' + pend.length + ")</button></div>"
     : "";
 
-  const dels = Object.entries(DELEGACOES);
-  if (!dels.length) { root.innerHTML = alerta + '<p class="section-sub">Carregue as delegações do comitê para ver o panorama.</p>'; return; }
+  const ids = idsDelegacoes();
+  if (!ids.length) { root.innerHTML = alerta + '<p class="section-sub">Carregue as delegações do comitê para ver o panorama.</p>'; return; }
 
   // Só mostra delegações com delegado OU com paper; conta as vazias à parte.
-  const ativas = dels.filter(([id, d]) => (d.membros && Object.keys(d.membros).length) || (DOCS_ALL[id] && DOCS_ALL[id][PP]))
-    .sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
+  const ativas = ids.filter(id => {
+    const d = DELEGACOES[id] || {};
+    return (d.membros && Object.keys(d.membros).length) || temDoc(id);
+  });
   const cont = { rascunho: 0, entregue: 0, em_correcao: 0, corrigido: 0 };
-  const rows = ativas.map(([id, d]) => {
+  const rows = ativas.map(id => {
+    const d = DELEGACOES[id] || {};
     const doc = DOCS_ALL[id] && DOCS_ALL[id][PP];
     const membros = d.membros ? Object.keys(d.membros).map(nomeAluno).map(he).join(", ") : '<i style="color:#8ea3bf">sem delegado</i>';
     const est = doc ? estadoDe(doc) : null;
@@ -299,17 +322,19 @@ function renderProfPainel() {
     const estCel = badge ? '<span class="dg-badge ' + badge.cls + '">' + badge.rot + "</span>" : '<span style="color:#8ea3bf">— sem paper —</span>';
     const nota = fb ? notaTotal(fb) + "/100" : "—";
     const ult = doc && (doc.updatedAt || doc.submittedAt) ? fmt(doc.updatedAt || doc.submittedAt) : "—";
-    return "<tr><td><b>" + he(d.pais || id) + "</b></td><td>" + membros + "</td><td>" + estCel + "</td><td>" + nota + "</td><td>" + ult + "</td></tr>";
+    return "<tr><td><b>" + he(paisDe(id)) + "</b>" + tagOrfa(id) + "</td><td>" + membros + "</td><td>" + estCel + "</td><td>" + nota + "</td><td>" + ult + "</td></tr>";
   }).join("");
 
-  const vazias = dels.length - ativas.length;
+  const vazias = Object.keys(DELEGACOES).filter(id => ativas.indexOf(id) === -1).length;
+  const orfas = ativas.filter(ehOrfa).length;
   const chip = (n, rot, cls) => '<span class="dg-chip ' + (cls || "") + '">' + n + " " + rot + "</span>";
   const resumo =
     chip(ativas.length, "com delegado", "c-ok") +
     chip(cont.rascunho || 0, "rascunhando") +
     chip((cont.entregue || 0) + (cont.em_correcao || 0), "aguardando correção", "c-wait") +
     chip(cont.corrigido || 0, "corrigidos", "c-done") +
-    (vazias ? chip(vazias, "países livres") : "");
+    (vazias ? chip(vazias, "países livres") : "") +
+    (orfas ? chip(orfas, "fora da lista de delegações", "c-wait") : "");
 
   root.innerHTML = alerta +
     '<div class="dg-chips">' + resumo + "</div>" +
@@ -352,15 +377,14 @@ function renderProfAtribuir() {
 // (c) correção dos position papers entregues
 function renderProfCorrecao() {
   const root = document.getElementById("dg-prof-correcao"); if (!root) return;
-  const list = Object.entries(DELEGACOES).filter(([id]) => DOCS_ALL[id] && DOCS_ALL[id][PP])
-    .sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
+  const list = idsDelegacoes().filter(temDoc);
   if (!list.length) { root.innerHTML = '<p class="section-sub">Nenhum position paper entregue/rascunhado ainda.</p>'; return; }
-  root.innerHTML = list.map(([id, d]) => {
+  root.innerHTML = list.map(id => {
     const doc = DOCS_ALL[id][PP], est = estadoDe(doc), badge = ESTADO[est] || ESTADO.rascunho;
     const fb = (FB_ALL[id] && FB_ALL[id][PP]) || null;
     const nota = fb ? " · nota " + notaTotal(fb) + "/100" : "";
-    return '<div class="prof-item"><div class="prof-head"><b>' + he(d.pais || id) + '</b> ' +
-      '<span class="dg-badge ' + badge.cls + '">' + badge.rot + nota + "</span> " +
+    return '<div class="prof-item"><div class="prof-head"><b>' + he(paisDe(id)) + '</b> ' +
+      '<span class="dg-badge ' + badge.cls + '">' + badge.rot + nota + "</span>" + tagOrfa(id) + " " +
       '<button class="btn ghost dg-corrigir" data-id="' + id + '">Abrir / corrigir</button></div>' +
       '<div class="dg-corr-box" id="dg-corr-' + id + '" hidden></div></div>';
   }).join("");
@@ -442,7 +466,17 @@ document.addEventListener("click", async e => {
   const del = e.target.closest(".dg-del-delegacao");
   if (del) {
     const id = del.dataset.id;
-    if (confirm("Remover esta delegação? (não apaga os documentos já gravados)")) {
+    // Remover a delegação tira do aluno o acesso ao próprio paper (as regras do
+    // banco dependem de delegacoes/<id>/membros/<uid>). Por isso o aviso é duro
+    // quando já existe delegado ou documento gravado.
+    const d = DELEGACOES[id] || {};
+    const ocupada = (d.membros && Object.keys(d.membros).length) || temDoc(id);
+    const aviso = ocupada
+      ? "ATENÇÃO: " + paisDe(id) + " já tem delegado e/ou position paper gravado.\n\n" +
+        "O documento NÃO é apagado e continua no seu painel de correção (marcado como “delegação removida da lista”), " +
+        "mas o aluno perde o acesso ao próprio paper enquanto o país estiver fora da lista.\n\nRemover mesmo assim?"
+      : "Remover esta delegação? (não apaga os documentos já gravados)";
+    if (confirm(aviso)) {
       try { await remove(ref(db, "delegacoes/" + COMITE + "/" + id)); } catch (err) { alert(err.message); }
     }
     return;
