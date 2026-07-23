@@ -65,6 +65,19 @@ const tagOrfa = id => ehOrfa(id)
   ? ' <span class="dg-badge st-orfa" title="O país foi removido da lista de delegações, mas o documento do aluno continua aqui.">delegação removida da lista</span>'
   : "";
 
+// Rótulo de estado no painel do professor. Quando já existe nota mas o estado
+// não é "corrigido", o paper foi corrigido e REABERTO para o aluno revisar —
+// e o rótulo diz isso, em vez de mostrar só "Rascunho" (que parece não corrigido).
+function badgeEstado(est, fb, comNota) {
+  const b = ESTADO[est] || ESTADO.rascunho;
+  if (fb && est !== "corrigido") {
+    const n = comNota ? " (" + notaTotal(fb) + "/100)" : "";
+    return '<span class="dg-badge st-corr" title="Você já corrigiu este paper (nota ' + notaTotal(fb) +
+      "/100) e o reabriu para o aluno revisar. A nota anterior está guardada; o aluno vê a correção e reenvia.\">↺ reaberto · já corrigido" + n + "</span>";
+  }
+  return '<span class="dg-badge ' + b.cls + '">' + b.rot + (comNota && fb ? " · nota " + notaTotal(fb) + "/100" : "") + "</span>";
+}
+
 let IS_TEACHER = false, INIT = false;
 let AVISO = null; // { texto, ts } — recado atual do professor (comum aos dois papéis)
 // aluno
@@ -373,12 +386,11 @@ function renderProfPainel() {
     const membros = d.membros ? Object.keys(d.membros).map(nomeAluno).map(he).join(", ") : '<i style="color:#8ea3bf">sem delegado</i>';
     const est = doc ? estadoDe(doc) : null;
     if (est) cont[est] = (cont[est] || 0) + 1;
-    const badge = est ? (ESTADO[est] || ESTADO.rascunho) : null;
     const fb = (FB_ALL[id] && FB_ALL[id][PP]) || null;
     // Aluno escreveu na aba Documentos (progresso) mas não entregou pela Delegação?
     const nDocs = !doc && d.membros ? Math.max(...Object.keys(d.membros).map(ppDocsDoAluno), 0) : 0;
-    const estCel = badge
-      ? '<span class="dg-badge ' + badge.cls + '">' + badge.rot + "</span>"
+    const estCel = doc
+      ? badgeEstado(est, fb, false)
       : (nDocs
         ? '<span class="dg-badge st-entregue" title="O aluno preencheu o Position Paper no editor da aba Documentos (' + nDocs + '/5 campos), mas não entregou pela aba Delegação. Peça que ele copie o texto para a aba Delegação e clique Entregar.">✏️ rascunho na aba Documentos (' + nDocs + '/5)</span>'
         : '<span style="color:#8ea3bf">— sem paper —</span>');
@@ -442,11 +454,10 @@ function renderProfCorrecao() {
   const list = idsDelegacoes().filter(temDoc);
   if (!list.length) { root.innerHTML = '<p class="section-sub">Nenhum position paper entregue/rascunhado ainda.</p>'; return; }
   root.innerHTML = list.map(id => {
-    const doc = DOCS_ALL[id][PP], est = estadoDe(doc), badge = ESTADO[est] || ESTADO.rascunho;
+    const doc = DOCS_ALL[id][PP], est = estadoDe(doc);
     const fb = (FB_ALL[id] && FB_ALL[id][PP]) || null;
-    const nota = fb ? " · nota " + notaTotal(fb) + "/100" : "";
     return '<div class="prof-item"><div class="prof-head"><b>' + he(paisDe(id)) + '</b> ' +
-      '<span class="dg-badge ' + badge.cls + '">' + badge.rot + nota + "</span>" + tagOrfa(id) + " " +
+      badgeEstado(est, fb, true) + tagOrfa(id) + " " +
       '<button class="btn ghost dg-corrigir" data-id="' + id + '">Abrir / corrigir</button></div>' +
       '<div class="dg-corr-box" id="dg-corr-' + id + '" hidden></div></div>';
   }).join("");
