@@ -68,7 +68,20 @@ const tagOrfa = id => ehOrfa(id)
 let IS_TEACHER = false, INIT = false;
 let AVISO = null; // { texto, ts } — recado atual do professor (comum aos dois papéis)
 // aluno
-let MINHA = null, SUB_DEL = null, DOC = null, FB = null;
+let MINHA = null, SUB_DEL = null, DOC = null, FB = null, MEU_PROG = null;
+
+// Mapeia o rascunho da aba "Documentos" (progresso/<uid>) para as 3 seções
+// do position paper daqui. É um ponto de partida — o aluno revisa depois.
+function rascunhoDocsMapeado() {
+  const p = MEU_PROG || {};
+  const g = k => (p[k] || "").toString().trim();
+  const propostas = g("pp_propostas"), aliancas = g("pp_aliancas");
+  const solucoes = aliancas
+    ? (propostas ? propostas + "\n\nAlianças e negociação:\n" + aliancas : "Alianças e negociação:\n" + aliancas)
+    : propostas;
+  const map = { passadoAtual: g("pp_contexto"), posicao: g("pp_posicao"), solucoes };
+  return { map, temAlgo: !!(map.passadoAtual || map.posicao || map.solucoes) };
+}
 // professor
 let DELEGACOES = {}, AUTORIZADOS = {}, ATRIBUICOES = {}, DOCS_ALL = {}, FB_ALL = {}, PENDENTES = {}, PROGRESSO = {};
 
@@ -104,6 +117,7 @@ onAuthStateChanged(auth, user => {
   } else {
     onValue(ref(db, "delegacoes/" + COMITE), s => { DELEGACOES = s.val() || {}; renderAluno(); }, () => {});
     onValue(ref(db, "minhaDelegacao/" + user.uid), s => { MINHA = s.val(); abrirWarRoom(); }, () => { MINHA = null; renderAluno(); });
+    onValue(ref(db, "progresso/" + user.uid), s => { MEU_PROG = s.val() || null; renderAluno(); }, () => {});
     onValue(ref(db, AVISO_PATH), s => { AVISO = s.val(); renderAluno(); }, () => {});
   }
 });
@@ -206,6 +220,10 @@ function renderAluno() {
       (travado ? '<p class="dg-lock">📄 Position paper entregue em ' + fmt(DOC && DOC.submittedAt) + ". Ele fica travado para edição — fale com o professor se precisar reabrir.</p>" : "") +
       fbHtml + // no topo: a correção é a primeira coisa que o aluno precisa ver
       '<h4 style="margin:18px 0 4px">Position paper</h4>' +
+      (!travado && rascunhoDocsMapeado().temAlgo
+        ? '<div class="dg-puxar"><button class="btn ghost" id="dg-puxar-docs">⬇ Puxar meu rascunho da aba Documentos</button>' +
+          '<span class="hint">preenche as 3 seções com o que você escreveu em <b>Documentos</b> — você revisa antes de entregar</span></div>'
+        : "") +
       campo("passadoAtual", "1. Ações internacionais (passado/presente)", "o histórico do tema no sistema ONU", DOC && DOC.passadoAtual) +
       campo("posicao", "2. Posição do país (Country Position)", "o que a delegação defende e por quê", DOC && DOC.posicao) +
       campo("solucoes", "3. Soluções propostas (Proposed Solutions)", "iniciativas com nome próprio", DOC && DOC.solucoes) +
@@ -253,6 +271,30 @@ document.addEventListener("click", async e => {
 });
 
 document.addEventListener("click", async e => {
+  if (e.target.id === "dg-puxar-docs") {
+    if (!MINHA || !MINHA.delegacaoId) return;
+    const { map } = rascunhoDocsMapeado();
+    const patch = {};
+    Object.entries(map).forEach(([k, v]) => { if (v) patch[k] = v; });
+    if (!Object.keys(patch).length) { setStatus("Nada para puxar — a aba Documentos está vazia.", "#b3261e"); return; }
+    // Só avisa de substituição se o que o aluno já digitou for diferente do que virá.
+    const atual = coletarPP();
+    const vaiSubstituir = Object.keys(patch).some(k => (atual[k] || "").trim() && atual[k].trim() !== patch[k].trim());
+    if (vaiSubstituir && !confirm("Puxar o rascunho vai substituir o texto que você já digitou nestas seções. Continuar?")) return;
+    e.target.disabled = true;
+    try {
+      // Preserva o que já estava digitado nos campos não sobrescritos.
+      await update(ref(db, docPath()), { ...atual, ...patch, estado: "rascunho", updatedBy: auth.currentUser.uid, updatedAt: Date.now() });
+      setStatus("Rascunho puxado e salvo ✓ — revise as 3 seções e clique em 📨 Entregar quando estiver pronto.", "#1E8E5A");
+    } catch (err) {
+      const cod = err.code || err.message || "";
+      setStatus(/permission/i.test(cod)
+        ? "⚠ Não consegui puxar — o paper está travado. Peça ao professor para reabrir."
+        : "⚠ Não consegui puxar (" + cod + ").", "#b3261e");
+      e.target.disabled = false;
+    }
+    return;
+  }
   if (e.target.id === "dg-salvar") {
     try {
       await update(ref(db, docPath()), { ...coletarPP(), estado: "rascunho", updatedBy: auth.currentUser.uid, updatedAt: Date.now() });
