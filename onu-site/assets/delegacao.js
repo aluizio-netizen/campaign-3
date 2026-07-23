@@ -70,7 +70,17 @@ let AVISO = null; // { texto, ts } — recado atual do professor (comum aos dois
 // aluno
 let MINHA = null, SUB_DEL = null, DOC = null, FB = null;
 // professor
-let DELEGACOES = {}, AUTORIZADOS = {}, ATRIBUICOES = {}, DOCS_ALL = {}, FB_ALL = {}, PENDENTES = {};
+let DELEGACOES = {}, AUTORIZADOS = {}, ATRIBUICOES = {}, DOCS_ALL = {}, FB_ALL = {}, PENDENTES = {}, PROGRESSO = {};
+
+// Campos do editor "Documentos do delegado" (aba Documentos → progresso/<uid>).
+// Se um aluno preencheu isto mas não entregou pela aba Delegação, o trabalho
+// dele existe, só não chega ao painel de correção.
+const PP_DOCS_CHAVES = ["pp_pais", "pp_contexto", "pp_posicao", "pp_propostas", "pp_aliancas"];
+function ppDocsDoAluno(uid) {
+  const p = uid && PROGRESSO[uid];
+  if (!p) return 0;
+  return PP_DOCS_CHAVES.filter(k => (p[k] || "").toString().trim()).length;
+}
 
 onAuthStateChanged(auth, user => {
   if (!user) return;
@@ -86,6 +96,10 @@ onAuthStateChanged(auth, user => {
     onValue(ref(db, "docsDelegacao/" + COMITE), s => { DOCS_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "docsDelegacao"));
     onValue(ref(db, "feedback/" + COMITE), s => { FB_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "feedback"));
     onValue(ref(db, "pendentes"), s => { PENDENTES = s.val() || {}; renderProfPainel(); }, () => {});
+    // Espelho do editor "Documentos do delegado" (progresso/<uid>). Só para
+    // sinalizar quando um aluno escreveu o position paper na aba errada — o
+    // paper que se corrige continua vindo de docsDelegacao.
+    onValue(ref(db, "progresso"), s => { PROGRESSO = s.val() || {}; renderProf(); }, () => {});
     onValue(ref(db, AVISO_PATH), s => { AVISO = s.val(); renderProf(); }, () => {});
   } else {
     onValue(ref(db, "delegacoes/" + COMITE), s => { DELEGACOES = s.val() || {}; renderAluno(); }, () => {});
@@ -319,7 +333,13 @@ function renderProfPainel() {
     if (est) cont[est] = (cont[est] || 0) + 1;
     const badge = est ? (ESTADO[est] || ESTADO.rascunho) : null;
     const fb = (FB_ALL[id] && FB_ALL[id][PP]) || null;
-    const estCel = badge ? '<span class="dg-badge ' + badge.cls + '">' + badge.rot + "</span>" : '<span style="color:#8ea3bf">— sem paper —</span>';
+    // Aluno escreveu na aba Documentos (progresso) mas não entregou pela Delegação?
+    const nDocs = !doc && d.membros ? Math.max(...Object.keys(d.membros).map(ppDocsDoAluno), 0) : 0;
+    const estCel = badge
+      ? '<span class="dg-badge ' + badge.cls + '">' + badge.rot + "</span>"
+      : (nDocs
+        ? '<span class="dg-badge st-entregue" title="O aluno preencheu o Position Paper no editor da aba Documentos (' + nDocs + '/5 campos), mas não entregou pela aba Delegação. Peça que ele copie o texto para a aba Delegação e clique Entregar.">✏️ rascunho na aba Documentos (' + nDocs + '/5)</span>'
+        : '<span style="color:#8ea3bf">— sem paper —</span>');
     const nota = fb ? notaTotal(fb) + "/100" : "—";
     const ult = doc && (doc.updatedAt || doc.submittedAt) ? fmt(doc.updatedAt || doc.submittedAt) : "—";
     return "<tr><td><b>" + he(paisDe(id)) + "</b>" + tagOrfa(id) + "</td><td>" + membros + "</td><td>" + estCel + "</td><td>" + nota + "</td><td>" + ult + "</td></tr>";
