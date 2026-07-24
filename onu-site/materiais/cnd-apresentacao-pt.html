@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CND — Comissão de Entorpecentes · YMUN Brasil 2026</title>
+<meta name="description" content="Apresentação do comitê CND (Commission on Narcotic Drugs) — YMUN Brasil 2026. Tráfico transnacional de drogas e transição de economias rurais.">
+<style>
+  :root{
+    --navy:#1B2A4A; --navy2:#22335A; --navy3:#0E1B33;
+    --blue:#2E5AAC; --blue-soft:#9db8e6;
+    --gold:#C9A227; --gold-soft:#E7CE7A;
+    --ink:#EAF1FB; --muted:#9fb3d0; --line:rgba(201,162,39,.28);
+    --card:rgba(255,255,255,.04); --card-line:rgba(157,184,230,.22);
+    --display:Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--sans); color:var(--ink);
+    background:#0a1526;
+    overflow:hidden;
+  }
+  /* ---- deck frame ---- */
+  .deck{position:fixed;inset:0}
+  .slide{
+    position:absolute;inset:0;
+    display:none;flex-direction:column;justify-content:center;
+    padding:6vh 8vw;
+    background:radial-gradient(120% 120% at 82% 12%, #22335A 0%, #16264a 42%, #0b1830 100%);
+  }
+  .slide.active{display:flex;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* decorative Y watermark */
+  .slide::after{
+    content:"Y";position:absolute;right:4vw;bottom:-6vh;
+    font-family:var(--display);font-weight:700;font-size:46vh;line-height:1;
+    color:rgba(201,162,39,.06);pointer-events:none;user-select:none;
+  }
+  .slide > *{position:relative;z-index:1}
+  /* ---- typography ---- */
+  .eyebrow{
+    font-size:1.05vw;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--gold);font-weight:700;margin-bottom:1.6vh;
+  }
+  h1{font-family:var(--display);font-size:6.2vw;line-height:1.02;margin:0;color:#fff;font-weight:700}
+  h2{font-family:var(--display);font-size:3.5vw;line-height:1.08;margin:0 0 2.4vh;color:#fff;font-weight:700}
+  h2 .rule{display:block;width:9vw;height:4px;background:var(--gold);border-radius:3px;margin-top:1.6vh}
+  p.lead{font-size:1.7vw;line-height:1.6;color:var(--ink);max-width:60ch;margin:.4vh 0}
+  ul{margin:1vh 0 0;padding-left:0;list-style:none}
+  li{
+    font-size:1.55vw;line-height:1.5;color:var(--ink);
+    padding:1.1vh 0 1.1vh 3.4vw;position:relative;max-width:64ch;
+    border-bottom:1px solid rgba(157,184,230,.1);
+  }
+  li:last-child{border-bottom:0}
+  li::before{
+    content:"";position:absolute;left:1vw;top:2.1vh;
+    width:.9vw;height:.9vw;background:var(--gold);border-radius:2px;transform:rotate(45deg);
+  }
+  li b{color:#fff}
+  li .k{color:var(--gold-soft);font-weight:700}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:2vw 4vw}
+  .two-col ul{margin-top:0}
+  .subhead{font-size:1.35vw;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0 0 .4vh}
+  /* stat row */
+  .stats{display:flex;gap:2.4vw;margin-top:3vh;flex-wrap:wrap}
+  .stat{border-left:3px solid var(--gold);padding:.4vh 0 .4vh 1.4vw}
+  .stat .n{font-family:var(--display);font-size:3.6vw;color:var(--gold);line-height:1;font-weight:700}
+  .stat .l{font-size:1.15vw;color:var(--muted);margin-top:.8vh;max-width:22ch;line-height:1.4}
+  .note{font-size:1.2vw;color:var(--muted);margin-top:2.4vh;line-height:1.5;max-width:70ch}
+  .note b{color:var(--gold-soft)}
+  .tag-topic{
+    display:inline-block;font-size:1.1vw;letter-spacing:.16em;text-transform:uppercase;
+    color:#0c1322;background:var(--gold);border-radius:5px;padding:.5vh 1.2vw;font-weight:800;margin-bottom:2.2vh;
+  }
+  .qa{counter-reset:q}
+  .qa li{padding-left:4.2vw}
+  .qa li::before{
+    counter-increment:q;content:counter(q);
+    background:none;transform:none;width:auto;height:auto;
+    left:1vw;top:1.1vh;color:var(--gold);font-family:var(--display);font-weight:700;font-size:1.7vw;
+  }
+  /* ---- title slide ---- */
+  .slide.title{justify-content:center}
+  .slide.title .eyebrow{font-size:1.3vw}
+  .slide.title h1{font-size:8vw;margin-bottom:1vh}
+  .slide.title .sub{font-family:var(--display);font-style:italic;font-size:2.4vw;color:var(--blue-soft)}
+  .slide.title .meta{margin-top:5vh;font-size:1.5vw;color:var(--ink)}
+  .slide.title .meta b{color:var(--gold)}
+  .goldbar{width:12vw;height:5px;background:var(--gold);border-radius:3px;margin:2.4vh 0}
+  /* section divider slide */
+  .slide.divider{background:radial-gradient(120% 120% at 20% 20%, #2b3f6d 0%, #16264a 45%, #0b1830 100%)}
+  .slide.divider h1{font-size:5vw;max-width:22ch}
+  /* ---- chrome ---- */
+  .hud{position:fixed;z-index:10;bottom:2.4vh;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:2vw;pointer-events:none}
+  .hud .bar{flex:0 0 26vw;height:3px;background:rgba(157,184,230,.2);border-radius:2px;overflow:hidden}
+  .hud .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));border-radius:2px;transition:width .3s ease}
+  .hud .count{font-size:1.1vw;color:var(--muted);font-variant-numeric:tabular-nums;min-width:5ch;text-align:center}
+  .nav-btn{position:fixed;z-index:10;top:0;bottom:0;width:12vw;border:0;background:transparent;cursor:pointer;opacity:0}
+  .nav-btn.prev{left:0}.nav-btn.next{right:0}
+  .brand-mini{position:fixed;z-index:10;top:2.4vh;left:8vw;font-family:var(--display);font-size:1.15vw;color:var(--muted);letter-spacing:.04em}
+  .brand-mini b{color:var(--gold)}
+  .hint{position:fixed;z-index:10;top:2.4vh;right:8vw;font-size:1vw;color:rgba(159,179,208,.55)}
+  /* ---- print → PDF (1 slide per page) ---- */
+  @media print{
+    @page{size:1280px 720px;margin:0}
+    html,body{height:auto;overflow:visible;background:#0b1830}
+    .deck{position:static}
+    .slide{
+      display:flex!important;position:relative;inset:auto;
+      width:1280px;height:720px;page-break-after:always;break-after:page;
+      padding:70px 96px;
+    }
+    .slide::after{font-size:340px;bottom:-40px}
+    .eyebrow{font-size:13px}
+    h1{font-size:74px}.slide.title h1{font-size:92px}.slide.divider h1{font-size:60px}
+    h2{font-size:42px}h2 .rule{width:108px}
+    .slide.title .sub{font-size:30px}.slide.title .meta{font-size:19px}.slide.title .eyebrow{font-size:16px}
+    p.lead{font-size:21px}li{font-size:19px;padding-left:42px}li::before{width:11px;height:11px;left:12px}
+    .qa li{padding-left:52px}.qa li::before{font-size:22px}
+    .subhead{font-size:16px}.tag-topic{font-size:13px;padding:5px 15px}
+    .stat .n{font-size:44px}.stat .l{font-size:14px}.note{font-size:15px}
+    .goldbar{width:150px}.brand-mini,.hint,.hud,.nav-btn{display:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="brand-mini">Aluizio Pires <b>· ONU</b></div>
+<div class="hint">← → navega · F tela cheia</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · TÍTULO -->
+  <section class="slide title active">
+    <div class="eyebrow">Yale Model United Nations Brasil · 14–16 ago 2026</div>
+    <h1>CND</h1>
+    <div class="sub">Comissão de Entorpecentes</div>
+    <div class="goldbar"></div>
+    <div class="meta">Guia de preparação do delegado &nbsp;·&nbsp; Chair: <b>Aaron Ma</b><br>Commission on Narcotic Drugs — órgão do ECOSOC</div>
+  </section>
+
+  <!-- 2 · O QUE É -->
+  <section class="slide">
+    <div class="eyebrow">O comitê</div>
+    <h2>O que é a CND?<span class="rule"></span></h2>
+    <p class="lead">A <b>Comissão de Entorpecentes</b> é o foro global da ONU sobre drogas — uma comissão funcional do <span class="k">ECOSOC</span>, criada em <b>1946</b>. Desde 1991 é o órgão diretor do <span class="k">UNODC</span> (Escritório da ONU sobre Drogas e Crime).</p>
+    <ul>
+      <li>Supervisiona os <b>tratados internacionais</b> de controle de drogas e orienta políticas de prevenção e tratamento.</li>
+      <li>Classifica novas substâncias (opioides sintéticos e canabinoides entraram em controle em <b>março de 2026</b>).</li>
+      <li><b>53 Estados-membros</b> eleitos pelo ECOSOC · um voto cada · maioria simples.</li>
+      <li>Papel <b>supervisório</b>: recomenda e coordena, mas <b>não fiscaliza nem pune</b> o descumprimento.</li>
+    </ul>
+    <p class="note">Trabalha junto com a <b>OMS</b> (saúde) e o <b>INCB</b> — a Junta Internacional de Fiscalização de Entorpecentes.</p>
+  </section>
+
+  <!-- 3 · OS DOIS TÓPICOS -->
+  <section class="slide">
+    <div class="eyebrow">Agenda</div>
+    <h2>Os dois tópicos do comitê<span class="rule"></span></h2>
+    <div class="two-col" style="margin-top:1vh">
+      <div>
+        <div class="tag-topic">Tópico 1</div>
+        <p class="lead" style="font-size:1.5vw"><b>Ampliar a cooperação global</b> contra o tráfico transnacional de drogas.</p>
+        <p class="note" style="margin-top:1.4vh">Como os Estados cooperam quando o crime atravessa fronteiras — inteligência, portos, precursores químicos, justiça.</p>
+      </div>
+      <div>
+        <div class="tag-topic">Tópico 2</div>
+        <p class="lead" style="font-size:1.5vw"><b>Transicionar economias rurais</b> para longe do cultivo ilícito.</p>
+        <p class="note" style="margin-top:1.4vh">A raiz socioeconômica: coca e papoula como renda de comunidades pobres — e como oferecer alternativas viáveis.</p>
+      </div>
+    </div>
+    <p class="note"><b>Chave do comitê:</b> na CND as posições dos blocos são <b>menos rígidas</b> — nações adversárias em outros temas acham terreno comum aqui.</p>
+  </section>
+
+  <!-- 4 · GLOSSÁRIO -->
+  <section class="slide">
+    <div class="eyebrow">Vocabulário essencial</div>
+    <h2>Termos que você precisa dominar<span class="rule"></span></h2>
+    <div class="two-col">
+      <ul>
+        <li><span class="k">Desenvolvimento Alternativo</span> — política que ataca as causas socioeconômicas do cultivo ilícito com renda rural legal.</li>
+        <li><span class="k">Cultivo ilícito</span> — plantio de coca/papoula, concentrado em áreas isoladas e sem mercado.</li>
+        <li><span class="k">Hawala</span> — sistema informal de transferência de dinheiro baseado em confiança, fora dos bancos.</li>
+        <li><span class="k">MLA</span> — Assistência Jurídica Mútua entre Estados para coletar provas e sustentar processos.</li>
+      </ul>
+      <ul>
+        <li><span class="k">NPS</span> — Novas Substâncias Psicoativas: ainda fora de controle internacional quando surgem.</li>
+        <li><span class="k">Precursores</span> — químicos usados para fabricar drogas, não ilegais em si.</li>
+        <li><span class="k">Sequenciamento</span> — princípio de que meios de vida legais devem vir <b>antes</b> da repressão.</li>
+        <li><span class="k">Extradição</span> — entrega de acusado/condenado de um Estado a outro para processo ou pena.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 · DIVISOR TÓPICO 1 -->
+  <section class="slide divider">
+    <div class="tag-topic">Tópico 1</div>
+    <h1>Cooperação global contra o tráfico transnacional de drogas</h1>
+    <div class="goldbar"></div>
+    <p class="lead">Crime organizado que conecta produção, transporte e distribuição através de fronteiras — cada vez mais globalizado.</p>
+  </section>
+
+  <!-- 6 · TÓPICO 1 — O PROBLEMA -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 1 · O problema</div>
+    <h2>Por que nenhum país resolve sozinho<span class="rule"></span></h2>
+    <ul>
+      <li>A globalização criou cadeias transfronteiriças: <b>precursores no país A</b>, processamento no <b>país B</b>, venda no <b>país C</b>.</li>
+      <li>Cada etapa explora leis, fiscalização e infraestrutura existentes — mas cada etapa é também um <b>ponto de intervenção</b>.</li>
+      <li>Cada Estado regula à sua maneira (precursores, fronteiras, penas), e as redes exploram justamente as brechas entre eles.</li>
+      <li>Só cooperação resolve: <b>compartilhamento de inteligência</b>, padrões comuns de portos e alfândegas, cooperação judicial.</li>
+    </ul>
+    <p class="note">A pergunta central: <b>o que deve ser feito agora, em 2026, para conter o fluxo de drogas de país a país?</b></p>
+  </section>
+
+  <!-- 7 · TÓPICO 1 — HISTÓRIA -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 1 · Linha do tempo</div>
+    <h2>Um século de tratados e adaptação criminosa<span class="rule"></span></h2>
+    <div class="two-col">
+      <ul>
+        <li><b>1912</b> — Convenção do Ópio de Haia: restringe narcóticos a fins médicos e científicos.</li>
+        <li><b>1961</b> — Convenção Única sobre Entorpecentes: unifica o sistema e cria o INCB.</li>
+        <li><b>1971</b> — Convenção sobre Substâncias Psicotrópicas amplia o controle.</li>
+        <li><b>1988</b> — Convenção contra o Tráfico Ilícito: extradição, MLA, apreensão de ativos e precursores.</li>
+      </ul>
+      <ul>
+        <li><b>Anos 70–80</b> — Cartel de Medellín (Pablo Escobar); depois Sinaloa, CJNG, ’Ndrangheta, PCC.</li>
+        <li><b>1997</b> — Criação do UNODC.</li>
+        <li><b>2009 / 2016</b> — Declarações que unem controle a redução da pobreza e direitos humanos.</li>
+        <li><b>2030</b> — Agenda de Desenvolvimento liga a política de drogas à redução de desigualdade.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 8 · TÓPICO 1 — FERRAMENTAS ATUAIS -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 1 · Situação atual</div>
+    <h2>As ferramentas de cooperação hoje<span class="rule"></span></h2>
+    <ul>
+      <li><b>UNODC Drugs Monitoring Platform</b> e o <b>I-24/7 da INTERPOL</b> — dados sobre rotas e redes compartilhados em tempo real por <b>196 países</b>.</li>
+      <li><b>INCB</b> monitora precursores (Notificação Pré-Exportação Online, PICS, GRIDS) — já desviou remessas de precursores de fentanil.</li>
+      <li>Mas as dinâmicas variam muito por região — não há solução única.</li>
+    </ul>
+    <div class="stats">
+      <div class="stat"><div class="n">196</div><div class="l">países conectados ao I-24/7 da INTERPOL</div></div>
+      <div class="stat"><div class="n">53</div><div class="l">Estados-membros votantes na CND</div></div>
+    </div>
+  </section>
+
+  <!-- 9 · TÓPICO 1 — AMÉRICAS -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 1 · Panorama regional</div>
+    <h2>Américas: consumo e produção<span class="rule"></span></h2>
+    <div class="two-col">
+      <div>
+        <div class="subhead">América do Norte</div>
+        <ul>
+          <li>Maior mercado consumidor: opioides, cocaína, metanfetamina.</li>
+          <li>Cartéis <b>Sinaloa</b> e <b>CJNG</b> dominam as rotas; crise do <b>fentanil</b>.</li>
+          <li>EUA designam os cartéis como <b>organizações terroristas</b>; OFAC sanciona lavagem e empresas de fachada.</li>
+          <li>Tensões EUA–México às vezes minam a cooperação.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="subhead">América do Sul</div>
+        <ul>
+          <li><b>Colômbia, Peru, Bolívia</b>: polo mundial de produção de cocaína.</li>
+          <li>Rotas sobem pela América Central ou cruzam o Atlântico rumo à Europa.</li>
+          <li><b>Projeto CRIMJUST</b> (UE, INTERPOL, UNODC): investigação conjunta e inteligência.</li>
+          <li>Operação Lionfish III: 357 presos, +52 toneladas apreendidas em 13 países.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · TÓPICO 1 — EUROPA / ÁSIA / ÁFRICA / OCEANIA -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 1 · Panorama regional</div>
+    <h2>Europa, Ásia, África e Oceania<span class="rule"></span></h2>
+    <div class="two-col">
+      <ul>
+        <li><span class="k">Europa</span> — mercado de destino; ’Ndrangheta; portos da Bélgica e Holanda. <b>MAOC-N</b> apreendeu +1.800 t (2019–24).</li>
+        <li><span class="k">Ásia</span> — Triângulo Dourado (Myanmar, Laos, Tailândia): recorde de <b>236 t de metanfetamina</b> apreendidas em 2024. China é fonte de precursores. Cooperação via <b>MOU do Mekong</b>.</li>
+      </ul>
+      <ul>
+        <li><span class="k">África</span> — trânsito de cocaína para a Europa; fronteiras frágeis. Iniciativa da Costa da África Ocidental (<b>WACI</b>, 2009).</li>
+        <li><span class="k">Oceania</span> — isolamento geográfico; preços altos atraem o crime. <b>OCO</b> + Força de Fronteira australiana monitoram rotas marítimas.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 11 · TÓPICO 1 — TENDÊNCIAS + QUESTÕES -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 1 · Tendências & debate</div>
+    <h2>Para onde o crime evolui<span class="rule"></span></h2>
+    <div class="two-col">
+      <div>
+        <div class="subhead">Tendências</div>
+        <ul>
+          <li>Exploração da infraestrutura de comércio legal (portos).</li>
+          <li><b>Submarinos</b> de contrabando, comunicação criptografada, criptomoedas e hawala.</li>
+          <li>Atraso entre inovação da droga e sua regulação.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="subhead">Questões a considerar</div>
+        <ul class="qa">
+          <li>Que formas de compartilhar inteligência são viáveis frente a soberania e leis distintas?</li>
+          <li>Como monitorar precursores sem barrar a indústria legal?</li>
+          <li>Como repartir o custo entre produtores, exportadores e consumidores?</li>
+          <li>Como evitar que a repressão seja "armada" politicamente entre rivais?</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · DIVISOR TÓPICO 2 -->
+  <section class="slide divider">
+    <div class="tag-topic">Tópico 2</div>
+    <h1>Transicionar economias rurais para longe do cultivo ilícito</h1>
+    <div class="goldbar"></div>
+    <p class="lead">A base que alimenta todo o tráfico global começa numa escolha econômica de comunidades pobres.</p>
+  </section>
+
+  <!-- 13 · TÓPICO 2 — O PROBLEMA -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 2 · O problema</div>
+    <h2>Cultivo ilícito é, na raiz, pobreza<span class="rule"></span></h2>
+    <ul>
+      <li>Em muitas regiões rurais faltam infraestrutura, crédito e mercados agrícolas legais.</li>
+      <li>A economia ilícita oferece <b>renda imediata e confiável</b> — e vira a base que abastece o tráfico mundial.</li>
+      <li>Logo, é ao mesmo tempo um problema <b>criminal e socioeconômico</b>: atacar a raiz reduziria drasticamente o tráfico.</li>
+      <li>O desafio do delegado: desenhar estratégias que <b>reduzam a produção</b> E <b>construam economias rurais robustas</b>.</li>
+    </ul>
+  </section>
+
+  <!-- 14 · TÓPICO 2 — DADOS -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 2 · A escala</div>
+    <h2>Tendências recentes<span class="rule"></span></h2>
+    <div class="stats">
+      <div class="stat"><div class="n">376 mil</div><div class="l">hectares de coca no mundo em 2023 (Colômbia: 253 mil)</div></div>
+      <div class="stat"><div class="n">+17%</div><div class="l">de papoula em Myanmar → 53.100 ha (2025)</div></div>
+      <div class="stat"><div class="n">−95%</div><div class="l">de cultivo no Afeganistão após a proibição do Talibã (2022)</div></div>
+    </div>
+    <p class="note" style="margin-top:4vh">O caso do <b>Afeganistão</b> mostra o dilema central: o banimento cortou a oferta global de ópio, mas <b>devastou meios de vida rurais</b> — insegurança alimentar e pobreza mais profunda. Repressão sem alternativa gera dano maior no longo prazo.</p>
+  </section>
+
+  <!-- 15 · TÓPICO 2 — HISTÓRIA -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 2 · Linha do tempo</div>
+    <h2>De cultura milenar a mercadoria ilícita<span class="rule"></span></h2>
+    <ul>
+      <li>Papoula cultivada na Mesopotâmia desde ~<b>3.400 a.C.</b>; folha de coca com uso ritual nos Andes — por milênios, não eram ilícitas.</li>
+      <li>Séculos <b>XVIII–XIX</b>: o Império Britânico industrializa o ópio na Índia e o exporta para a China.</li>
+      <li><b>1961</b> — a Convenção Única consolida a proibição global.</li>
+      <li><b>1998</b> — Sessão Especial da ONU adota o <b>Desenvolvimento Alternativo</b> como estratégia-chave.</li>
+      <li><b>2013</b> — Princípios Orientadores: participação comunitária, acesso à terra, integração ao mercado e <b>sequenciamento</b>.</li>
+    </ul>
+  </section>
+
+  <!-- 16 · TÓPICO 2 — CASOS -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 2 · Situação atual</div>
+    <h2>O que os países estão tentando<span class="rule"></span></h2>
+    <div class="two-col">
+      <ul>
+        <li><span class="k">Colômbia</span> — fumigação com glifosato (até 2015) gerou dano ambiental; o <b>PNIS</b> (2017) inscreveu +99 mil famílias para substituir voluntariamente a coca.</li>
+        <li><span class="k">Bolívia</span> — "controle social": permite cultivo limitado para uso tradicional, com os <b>cocaleros</b> como parceiros na regulação.</li>
+      </ul>
+      <ul>
+        <li><span class="k">Tailândia</span> — o <b>Royal Project</b> é o caso de sucesso: transição para café e macadâmia com investimento de longo prazo.</li>
+        <li><span class="k">Myanmar</span> — o golpe de 2021 fez a papoula ressurgir. <span class="k">África Ocidental</span> — sem crédito e estradas, o cultivo ilícito segue mais atrativo.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 17 · TÓPICO 2 — TENDÊNCIAS + QUESTÕES -->
+  <section class="slide">
+    <div class="eyebrow">Tópico 2 · Tendências & debate</div>
+    <h2>Lições e perguntas em aberto<span class="rule"></span></h2>
+    <div class="two-col">
+      <div>
+        <div class="subhead">Tendências</div>
+        <ul>
+          <li>Programas que funcionam têm <b>compromisso de longo prazo</b> e participação da comunidade; os que falham impõem <b>bans de cima para baixo</b>.</li>
+          <li><b>Efeito-deslocamento:</b> reduzir num país empurra o cultivo para o vizinho.</li>
+          <li>Mudança climática altera onde cada cultivo é viável.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="subhead">Questões a considerar</div>
+        <ul class="qa">
+          <li>Que riscos surgem se o desenvolvimento alternativo falha ou não é financiado?</li>
+          <li>Que indicadores, além de hectares, medem sucesso?</li>
+          <li>Como a cooperação internacional evita o deslocamento entre países?</li>
+          <li>Como integrar sustentabilidade ambiental à transição de cultivos?</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 18 · BLOCOS -->
+  <section class="slide">
+    <div class="eyebrow">Negociação</div>
+    <h2>Posições dos blocos<span class="rule"></span></h2>
+    <p class="lead" style="font-size:1.45vw">Na CND os blocos são <b>fluidos</b> — um mesmo país pode transitar entre eles conforme o tópico. Quatro lógicas para orientar sua pesquisa:</p>
+    <div class="two-col" style="margin-top:1vh">
+      <ul>
+        <li><span class="k">Repressão em primeiro lugar</span> — leis duras e punição como ferramenta principal; resultados rápidos, custo humanitário.</li>
+        <li><span class="k">Orientados ao desenvolvimento</span> — atacam as causas de raiz; defendem desenvolvimento alternativo e redução de danos.</li>
+      </ul>
+      <ul>
+        <li><span class="k">Produtores e de trânsito</span> — arcam com custo desproporcional; pedem responsabilidade compartilhada no financiamento.</li>
+        <li><span class="k">Mercados consumidores</span> — priorizam segurança de fronteiras, inteligência financeira e tratamento da dependência.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 19 · POSITION PAPER -->
+  <section class="slide">
+    <div class="eyebrow">Sua entrega</div>
+    <h2>Como montar seu position paper<span class="rule"></span></h2>
+    <p class="lead" style="font-size:1.5vw">Para cada um dos dois tópicos, três seções:</p>
+    <ul class="qa">
+      <li><b>Ações internacionais (passado/presente)</b> — o histórico do tema no sistema ONU e os tratados que importam.</li>
+      <li><b>Posição do país</b> — o que a sua delegação defende, ancorada nos interesses reais do seu Estado.</li>
+      <li><b>Soluções propostas</b> — iniciativas concretas, com nome próprio, que você levaria à mesa.</li>
+    </ul>
+    <p class="note">Cabeçalho com <b>Comitê · Delegação · Cargo</b>, linguagem diplomática. Você escreve e entrega o seu direto na aba <b>Delegação</b> da plataforma.</p>
+  </section>
+
+  <!-- 20 · FECHAMENTO -->
+  <section class="slide title">
+    <div class="eyebrow">CND · YMUN Brasil 2026</div>
+    <h1 style="font-size:5.4vw">Nenhum país<br>resolve sozinho.</h1>
+    <div class="goldbar"></div>
+    <p class="lead">Países que parecem opostos na superfície encontram terreno comum diante de uma das questões mais urgentes do mundo. Prepare o seu país — e leve soluções à mesa.</p>
+    <div class="meta">Material de preparação · <b>onu.aluizio.education</b></div>
+  </section>
+
+</div>
+
+<div class="hud">
+  <span class="count" id="count">1 / 20</span>
+  <span class="bar"><i id="bar"></i></span>
+</div>
+<button class="nav-btn prev" id="prev" aria-label="Anterior"></button>
+<button class="nav-btn next" id="next" aria-label="Próximo"></button>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0, n = slides.length;
+  var count = document.getElementById('count'), bar = document.getElementById('bar');
+  function show(k){
+    i = Math.max(0, Math.min(n-1, k));
+    slides.forEach(function(s,x){ s.classList.toggle('active', x===i); });
+    count.textContent = (i+1)+' / '+n;
+    bar.style.width = ((i+1)/n*100)+'%';
+    location.hash = 's'+(i+1);
+  }
+  function next(){ show(i+1); } function prev(){ show(i-1); }
+  document.getElementById('next').onclick = next;
+  document.getElementById('prev').onclick = prev;
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){ next(); e.preventDefault(); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ prev(); e.preventDefault(); }
+    else if(e.key==='Home'){ show(0); }
+    else if(e.key==='End'){ show(n-1); }
+    else if(e.key==='f'||e.key==='F'){
+      if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); }
+      else{ document.exitFullscreen&&document.exitFullscreen(); }
+    }
+  });
+  // swipe (touch)
+  var x0=null;
+  document.addEventListener('touchstart',function(e){ x0=e.touches[0].clientX; },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(x0===null) return;
+    var dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>40){ dx<0?next():prev(); } x0=null;
+  },{passive:true});
+  var m = (location.hash.match(/^#s(\d+)$/)); show(m? parseInt(m[1],10)-1 : 0);
+})();
+</script>
+</body>
+</html>
