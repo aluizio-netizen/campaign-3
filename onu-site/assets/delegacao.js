@@ -26,7 +26,7 @@ const DELEGACOES_CND = [
   "Rússia", "Turquia",
   "China", "Índia", "Mianmar", "Tailândia", "Laos", "Afeganistão", "Paquistão", "Irã", "Filipinas", "Japão",
   "Emirados Árabes Unidos",
-  "Nigéria", "Guiné-Bissau", "Gana", "África do Sul", "Quênia", "Marrocos",
+  "Nigéria", "Guiné-Bissau", "Gana", "África do Sul", "Quênia", "Marrocos", "Tanzânia",
   "Austrália", "Nova Zelândia",
 ];
 const COMITES = {
