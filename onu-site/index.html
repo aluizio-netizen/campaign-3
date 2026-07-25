@@ -138,9 +138,11 @@
       <a href="#orgaos">Órgãos</a>
       <a href="#casos" class="members">Situações</a>
       <a href="#crises" class="members">Crises</a>
+      <a href="#sala-crise" class="members">Sala de Crise</a>
       <a href="#painel-prof" class="nav-prof">Painel</a>
       <a href="#painel-delegacao" class="nav-prof">Delegações</a>
       <a href="#painel-materiais" class="nav-prof">Materiais·prof</a>
+      <a href="#painel-simulacao" class="nav-prof">Simulação·prof</a>
       <a href="#procedimento">Procedimento</a>
       <a href="#documentos" class="members">Documentos</a>
       <a href="#comites" class="members">Comitês</a>
@@ -626,6 +628,32 @@
 </section>
 
 <!-- Painel do professor -->
+<section class="block members" id="sala-crise">
+  <div class="container">
+    <span class="eyebrow">Simulação ao vivo</span>
+    <h2 class="section-title">Sala de Crise</h2>
+    <p class="section-sub">Durante a simulação, o professor lança crises aqui — com cronômetro. Sua delegação delibera na sala do Zoom e registra a solução do grupo nesta página antes de voltar ao plenário.</p>
+    <style>
+      .sc-card{background:#121a2c;border:1px solid #6b5320;border-left:5px solid #c9a24a;border-radius:12px;padding:20px 22px;margin-top:16px}
+      .sc-card-plen{border-color:#2b5f3f;border-left-color:#4fbf85}
+      .sc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+      .sc-badge{background:#3a1e16;color:#f3c9a6;border:1px solid #6b4320;border-radius:999px;padding:5px 14px;font-size:.8rem;font-weight:700;letter-spacing:.06em}
+      .sc-badge-plen{background:#12241a;color:#bdf0cd;border-color:#2b5f3f}
+      .sc-relogio{margin-left:auto;font-family:Georgia,serif;font-size:1.7rem;font-weight:700;color:#e7ce7a;font-variant-numeric:tabular-nums}
+      .sc-relogio.sc-final{color:#f3a6a6}
+      .sc-relogio.sc-zero{color:#f36c6c;font-size:1.1rem;letter-spacing:.08em}
+      .sc-texto{white-space:pre-wrap;color:#dfe8f5;font-size:.95rem;line-height:1.55}
+      .sc-instrucao{background:#0e1c2e;border:1px solid #24344f;border-radius:10px;padding:12px 14px;margin:12px 0;color:#cfdcec;font-size:.9rem}
+      .sc-solucao{background:#0d1626;border:1px solid #1e2c44;border-radius:10px;padding:12px 14px;margin:10px 0}
+      .sc-solucao p{white-space:pre-wrap;margin:6px 0 0;color:#dfe8f5;font-size:.92rem}
+      .sc-solucao b{color:#e7ce7a}
+      #sala-crise textarea{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.93rem;margin-top:4px}
+      #sala-crise .hint a{color:#a9c2e6}
+    </style>
+    <div id="sala-crise-body"><p class="section-sub">Carregando…</p></div>
+  </div>
+</section>
+
 <section class="block members" id="painel-prof">
   <div class="container">
     <span class="eyebrow">Somente professor</span>
@@ -746,6 +774,31 @@
       #painel-materiais .dg-status{font-size:.85rem;align-self:center}
     </style>
     <div id="mt-prof"><p class="section-sub">Carregando…</p></div>
+  </div>
+</section>
+
+<section class="block members" id="painel-simulacao">
+  <div class="container">
+    <span class="eyebrow">Somente professor</span>
+    <h2 class="section-title">Sala de Crise — comando ao vivo</h2>
+    <p class="section-sub">Lance a crise com cronômetro, acompanhe as soluções chegando das salas do Zoom, abra o plenário e arquive a rodada.</p>
+    <style>
+      #painel-simulacao{display:none} body.teacher #painel-simulacao{display:block}
+      #painel-simulacao .mt-form{background:#121a2c;border:1px solid #24344f;border-radius:12px;padding:16px 18px}
+      #painel-simulacao .mt-linha{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+      #painel-simulacao .mt-linha:last-child{margin-bottom:0}
+      #painel-simulacao .mt-linha input[type="text"]{flex:1 1 260px;padding:10px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.93rem}
+      #painel-simulacao .sc-prazo{color:#cfdcec;font-size:.9rem;display:flex;align-items:center;gap:6px}
+      #painel-simulacao .sc-prazo input{padding:8px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb}
+      #painel-simulacao .sc-tabs{display:flex;gap:8px;margin:4px 0 16px}
+      #painel-simulacao .sc-tabs .dg-tab{padding:9px 18px;border-radius:10px;border:1px solid #2c3e5c;background:#0d1626;color:#cfe0f5;font-size:.95rem;cursor:pointer}
+      #painel-simulacao .sc-tabs .dg-tab.ativa{background:#1c3050;border-color:#c9a24a;color:#fff;font-weight:600}
+      #painel-simulacao .dg-status{font-size:.85rem}
+      #painel-simulacao .dg-badge{font-size:.74rem;padding:3px 9px;border-radius:999px;background:#24344f;color:#cfe0f5}
+      #painel-simulacao .dg-badge.st-ok{background:#16361f;color:#bdf0cd}
+      #painel-simulacao .dg-badge.st-orfa{background:#3d1f1c;color:#f3c3bd}
+    </style>
+    <div id="sim-prof"><p class="section-sub">Carregando…</p></div>
   </div>
 </section>
 
@@ -1152,6 +1205,7 @@ document.addEventListener('click', e=>{
 <script type="module" src="assets/turma.js"></script>
 <script type="module" src="assets/delegacao.js"></script>
 <script type="module" src="assets/materiais.js"></script>
+<script type="module" src="assets/simulacao.js"></script>
 <!-- Aviso por e-mail (Netlify Forms): disparado quando um delegado entra na fila de aprovação -->
 <form name="novo-delegado" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
   <input type="email" name="email">
