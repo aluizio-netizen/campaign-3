@@ -130,6 +130,7 @@
     <nav class="nav" id="nav">
       <a href="#progresso" class="members">Progresso</a>
       <a href="#delegacao" class="members">Delegação</a>
+      <a href="#materiais" class="members">Materiais</a>
       <a href="#unea-briefing" class="members">Briefing UNEA</a>
       <a href="#cnd-briefing" class="members">Briefing CND</a>
       <a href="#aulas" class="members">Curso</a>
@@ -139,6 +140,7 @@
       <a href="#crises" class="members">Crises</a>
       <a href="#painel-prof" class="nav-prof">Painel</a>
       <a href="#painel-delegacao" class="nav-prof">Delegações</a>
+      <a href="#painel-materiais" class="nav-prof">Materiais·prof</a>
       <a href="#procedimento">Procedimento</a>
       <a href="#documentos" class="members">Documentos</a>
       <a href="#comites" class="members">Comitês</a>
@@ -319,6 +321,28 @@
 </section>
 
 <!-- Briefing público do comitê UNEA (para todas as delegações) -->
+<section class="block members" id="materiais">
+  <div class="container">
+    <span class="eyebrow">Biblioteca</span>
+    <h2 class="section-title">Materiais do curso</h2>
+    <p class="section-sub">Arquivos liberados pelo professor — guias, slides e kits. Alguns materiais são restritos: se um arquivo foi liberado só para você, ele aparece aqui com o selo 🔒.</p>
+    <style>
+      #materiais .mt-grupo{margin:22px 0 10px;color:#eaf1fb}
+      #materiais .mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+      #materiais .mt-card{background:#121a2c;border:1px solid #24344f;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+      #materiais .mt-card h4{margin:2px 0;color:#eaf1fb;font-size:1rem}
+      #materiais .mt-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+      #materiais .mt-tipo{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#c9a24a;font-weight:700}
+      #materiais .mt-vis{font-size:.74rem;color:#9fb0c8;white-space:nowrap}
+      #materiais .mt-desc{margin:0;font-size:.88rem;color:#9fb0c8}
+      #materiais .mt-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:8px}
+      #materiais .mt-ts{font-size:.76rem;color:#8ea3bf}
+      #materiais .mt-abrir{padding:6px 14px;font-size:.85rem}
+    </style>
+    <div id="materiais-body"><p class="section-sub">Carregando materiais…</p></div>
+  </div>
+</section>
+
 <section class="block members" id="unea-briefing">
   <div class="container">
     <span class="eyebrow">Comitê</span>
@@ -704,6 +728,27 @@
 </section>
 
 <!-- Procedimento -->
+<section class="block members" id="painel-materiais">
+  <div class="container">
+    <span class="eyebrow">Somente professor</span>
+    <h2 class="section-title">Materiais — publicar &amp; controlar acesso</h2>
+    <p class="section-sub">Publique arquivos por assunto e escolha quem vê: 🔓 público (qualquer logado), 👥 turma (só aprovados) ou 🔒 restrito (alunos marcados um a um — ideal para kits sigilosos de crise).</p>
+    <style>
+      #painel-materiais{display:none} body.teacher #painel-materiais{display:block}
+      #painel-materiais .mt-form{background:#121a2c;border:1px solid #24344f;border-radius:12px;padding:16px 18px}
+      #painel-materiais .mt-linha{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+      #painel-materiais .mt-linha:last-child{margin-bottom:0}
+      #painel-materiais .mt-linha input{flex:2 1 220px;padding:10px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.93rem}
+      #painel-materiais .mt-linha select{flex:1 1 160px;padding:10px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb;font-size:.9rem}
+      #painel-materiais .mt-vis{font-size:.78rem;color:#9fb0c8}
+      #painel-materiais .mt-quem-box{margin-top:8px;border-top:1px solid #24344f;padding-top:6px;display:flex;flex-wrap:wrap;gap:6px 16px}
+      #painel-materiais .mt-aluno{font-size:.88rem;color:#cfdcec;display:inline-flex;align-items:center;gap:6px}
+      #painel-materiais .dg-status{font-size:.85rem;align-self:center}
+    </style>
+    <div id="mt-prof"><p class="section-sub">Carregando…</p></div>
+  </div>
+</section>
+
 <section class="block" id="procedimento">
   <div class="container">
     <span class="eyebrow">Procedimento</span>
@@ -1106,6 +1151,7 @@ document.addEventListener('click', e=>{
 <script type="module" src="assets/crises.js"></script>
 <script type="module" src="assets/turma.js"></script>
 <script type="module" src="assets/delegacao.js"></script>
+<script type="module" src="assets/materiais.js"></script>
 <!-- Aviso por e-mail (Netlify Forms): disparado quando um delegado entra na fila de aprovação -->
 <form name="novo-delegado" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
   <input type="email" name="email">

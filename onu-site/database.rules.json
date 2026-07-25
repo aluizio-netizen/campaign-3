@@ -93,6 +93,27 @@
         ".read": "auth != null",
         ".write": "auth.token.email === 'aluizio@aluizio.education'"
       }
+    },
+    "materiais": {
+      "publico": {
+        ".read": "auth != null",
+        ".write": "auth.token.email === 'aluizio@aluizio.education'"
+      },
+      "turma": {
+        ".read": "auth.token.email === 'aluizio@aluizio.education' || root.child('autorizados').child(auth.uid).exists()",
+        ".write": "auth.token.email === 'aluizio@aluizio.education'"
+      },
+      "restrito": {
+        ".read": "auth.token.email === 'aluizio@aluizio.education'",
+        ".write": "auth.token.email === 'aluizio@aluizio.education'"
+      },
+      "alunos": {
+        ".read": "auth.token.email === 'aluizio@aluizio.education'",
+        ".write": "auth.token.email === 'aluizio@aluizio.education'",
+        "$uid": {
+          ".read": "auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education'"
+        }
+      }
     }
   }
 }
