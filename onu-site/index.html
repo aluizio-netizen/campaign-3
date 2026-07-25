@@ -308,6 +308,11 @@
       #delegacao .dg-guia li.feito{color:#7fae86}
       #delegacao .dg-guia li.feito::marker{content:"✓ "}
       #delegacao .dg-guia a{color:#a9c2e6}
+      #delegacao .dg-comites{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}
+      #delegacao .dg-comite-card{background:#0d1626;border:1px solid #2c3e5c;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start}
+      #delegacao .dg-comite-card:hover{border-color:#c9a24a}
+      #delegacao .dg-comite-card .btn{margin-top:auto;align-self:stretch;text-align:center}
+      #delegacao .dg-comite-card a{color:#a9c2e6}
     </style>
     <div id="delegacao-body"><p class="section-sub">Carregando sua delegação…</p></div>
   </div>
@@ -676,16 +681,20 @@
       #painel-delegacao .dg-chip.c-done{border-color:#2f6b3f;color:#bdf0cd}
       #painel-delegacao .dg-pend{background:#2a1e0e;border:1px solid #6b5320;border-radius:10px;padding:12px 14px;margin-bottom:14px;color:#f3e6c8;font-size:.92rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
       #painel-delegacao .dg-pend .btn{margin-left:auto}
+      #dg-prof-comite-tabs{display:flex;gap:8px;margin:4px 0 18px;flex-wrap:wrap}
+      #dg-prof-comite-tabs .dg-tab{padding:9px 18px;border-radius:10px;border:1px solid #2c3e5c;background:#0d1626;color:#cfe0f5;font-size:.95rem;cursor:pointer}
+      #dg-prof-comite-tabs .dg-tab.ativa{background:#1c3050;border-color:#c9a24a;color:#fff;font-weight:600}
+      #dg-prof-comite-tabs .dg-tab-n{font-size:.78rem;color:#9fb0c8;margin-left:4px}
       #painel-delegacao table.dg-turma{width:100%;border-collapse:collapse;font-size:.9rem}
       #painel-delegacao table.dg-turma th,#painel-delegacao table.dg-turma td{padding:7px 8px;border-bottom:1px solid #1e2c44;text-align:left;vertical-align:top}
       #painel-delegacao table.dg-turma th{color:#9fb0c8;font-weight:600;font-size:.82rem}
     </style>
+    <div id="dg-prof-comite-tabs"></div>
     <h3 style="margin-top:8px">📢 Aviso ao vivo para a turma</h3>
     <div id="dg-prof-aviso"><p class="section-sub">Carregando…</p></div>
     <h3 style="margin-top:24px">Visão da turma ao vivo</h3>
     <div id="dg-prof-painel"><p class="section-sub">Carregando…</p></div>
     <h3 style="margin-top:24px">Delegações do comitê</h3>
-    <div class="prof-bar"><button class="btn ghost" id="dg-seed-unea">➕ Carregar as delegações do UNEA (lista pronta)</button></div>
     <div id="dg-prof-delegacoes"><p class="section-sub">Carregando…</p></div>
     <h3 style="margin-top:24px">Atribuir alunos</h3>
     <div id="dg-prof-atribuir"><p class="section-sub">Carregando…</p></div>

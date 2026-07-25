@@ -7,12 +7,49 @@ const auth = getAuth();
 const db = getDatabase();
 const TEACHER_EMAIL = "aluizio@aluizio.education";
 
-// Comitê ativo (Fase 1: um só). Trocar/estender quando houver mais de um.
-const COMITE = "unea-ymunb-2026";
-const COMITE_NOME = "UNEA — YMUN Brasil 2026";
-const TOPICOS = ["Margem Equatorial da Foz do Amazonas", "Terras Raras / Minerais Críticos (Serra Verde)"];
+// Comitês da plataforma. As listas de países são só o ponto de partida do
+// botão "carregar lista pronta" — o professor ajusta pela interface.
+const DELEGACOES_UNEA = [
+  "Estados Unidos", "Brasil", "Guiana", "Suriname", "Venezuela", "Equador", "Colômbia", "Peru", "Bolívia",
+  "Nigéria", "Angola", "Arábia Saudita", "Emirados Árabes Unidos", "Kuwait", "Irã", "Argélia", "Omã",
+  "China", "Índia", "Japão", "Coreia do Sul", "Indonésia",
+  "União Europeia", "França", "Alemanha", "Reino Unido", "Noruega", "Austrália", "Canadá",
+  "RDC (Congo)", "Chile", "Argentina", "África do Sul", "Namíbia", "Zâmbia", "Tanzânia", "Guiné", "Moçambique",
+  "Maldivas", "Tuvalu", "Fiji", "Kiribati", "Bangladesh", "Filipinas",
+];
+// O guia oficial da CND (YMUN Brasil 2026) não traz matriz de países; esta
+// lista foi montada com os países citados no guia (produção, trânsito, consumo).
+const DELEGACOES_CND = [
+  "Estados Unidos", "México", "Canadá", "Brasil", "Colômbia", "Peru", "Bolívia", "Equador", "Venezuela",
+  "Panamá", "Guatemala",
+  "Bélgica", "Países Baixos", "Itália", "França", "Alemanha", "Reino Unido", "Espanha", "Portugal",
+  "Rússia", "Turquia",
+  "China", "Índia", "Mianmar", "Tailândia", "Laos", "Afeganistão", "Paquistão", "Irã", "Filipinas", "Japão",
+  "Emirados Árabes Unidos",
+  "Nigéria", "Guiné-Bissau", "Gana", "África do Sul", "Quênia", "Marrocos",
+  "Austrália", "Nova Zelândia",
+];
+const COMITES = {
+  "unea-ymunb-2026": {
+    sigla: "UNEA",
+    nome: "UNEA — YMUN Brasil 2026",
+    desc: "Assembleia da ONU para o Meio Ambiente",
+    topicos: ["Margem Equatorial da Foz do Amazonas", "Terras Raras / Minerais Críticos (Serra Verde)"],
+    briefing: "#unea-briefing",
+    paises: DELEGACOES_UNEA,
+  },
+  "cnd-ymunb-2026": {
+    sigla: "CND",
+    nome: "CND — YMUN Brasil 2026",
+    desc: "Commission on Narcotic Drugs (comitê em inglês)",
+    topicos: ["Cooperação global contra o tráfico transnacional de drogas", "Transição de economias rurais para fora dos cultivos ilícitos"],
+    briefing: "#cnd-briefing",
+    paises: DELEGACOES_CND,
+  },
+};
+const COMITE_PADRAO = "unea-ymunb-2026"; // comitê dos registros antigos (antes do multi-comitê)
+const comInfo = cid => COMITES[cid] || { sigla: cid, nome: cid, desc: "", topicos: [], briefing: "#", paises: [] };
 const PP = "positionPaper"; // docId do deliverable principal da delegação
-const AVISO_PATH = "avisos/" + COMITE; // recado curto do professor, ao vivo p/ todos
 
 // Aviso de salvamento do aluno. Fica no módulo (e não só no DOM) porque o
 // onValue do documento re-renderiza a seção e recriaria o <span> vazio,
@@ -79,9 +116,15 @@ function badgeEstado(est, fb, comNota) {
 }
 
 let IS_TEACHER = false, INIT = false;
-let AVISO = null; // { texto, ts } — recado atual do professor (comum aos dois papéis)
+let AVISO = null; // recado do comitê ATIVO (derivado de AVISO_C a cada render)
+// Dados por comitê (as regras do banco já são por $comiteId; aqui espelhamos isso)
+let DELEG_C = {}; // delegacoes/<cid>
+let AVISO_C = {}; // avisos/<cid>
+let DOCS_C = {}, FB_C = {}; // docsDelegacao/<cid>, feedback/<cid> (só professor)
 // aluno
 let MINHA = null, SUB_DEL = null, DOC = null, FB = null, MEU_PROG = null;
+let COM_SEL = null; // comitê que o aluno está navegando ANTES de escolher país
+let UNSUB_DOC = []; // unsubscribes do doc/feedback da delegação assinada
 
 // Mapeia o rascunho da aba "Documentos" (progresso/<uid>) para as 3 seções
 // do position paper daqui. É um ponto de partida — o aluno revisa depois.
@@ -95,8 +138,10 @@ function rascunhoDocsMapeado() {
   const map = { passadoAtual: g("pp_contexto"), posicao: g("pp_posicao"), solucoes };
   return { map, temAlgo: !!(map.passadoAtual || map.posicao || map.solucoes) };
 }
-// professor
+// professor — DELEGACOES/DOCS_ALL/FB_ALL são a fatia do comitê ATIVO (aba),
+// preenchidas a partir de DELEG_C/DOCS_C/FB_C no início de cada renderProf().
 let DELEGACOES = {}, AUTORIZADOS = {}, ATRIBUICOES = {}, DOCS_ALL = {}, FB_ALL = {}, PENDENTES = {}, PROGRESSO = {};
+let PROF_COMITE = COMITE_PADRAO; // aba ativa do painel do professor
 
 // Campos do editor "Documentos do delegado" (aba Documentos → progresso/<uid>).
 // Se um aluno preencheu isto mas não entregou pela aba Delegação, o trabalho
@@ -116,47 +161,65 @@ onAuthStateChanged(auth, user => {
 
   if (IS_TEACHER) {
     const _err = (id, node) => e => { const r = document.getElementById(id); if (r) r.innerHTML = '<p class="section-sub" style="color:#f7a">Não foi possível ler <b>' + node + '</b>: ' + (e && (e.code || e.message)) + "</p>"; };
-    onValue(ref(db, "delegacoes/" + COMITE), s => { DELEGACOES = s.val() || {}; renderProf(); }, _err("dg-prof-delegacoes", "delegacoes"));
+    Object.keys(COMITES).forEach(cid => {
+      onValue(ref(db, "delegacoes/" + cid), s => { DELEG_C[cid] = s.val() || {}; renderProf(); }, _err("dg-prof-delegacoes", "delegacoes/" + cid));
+      onValue(ref(db, "docsDelegacao/" + cid), s => { DOCS_C[cid] = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "docsDelegacao/" + cid));
+      onValue(ref(db, "feedback/" + cid), s => { FB_C[cid] = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "feedback/" + cid));
+      onValue(ref(db, "avisos/" + cid), s => { AVISO_C[cid] = s.val(); renderProf(); }, () => {});
+    });
     onValue(ref(db, "minhaDelegacao"), s => { ATRIBUICOES = s.val() || {}; renderProf(); }, _err("dg-prof-atribuir", "minhaDelegacao"));
     onValue(ref(db, "autorizados"), s => { AUTORIZADOS = s.val() || {}; renderProf(); }, _err("dg-prof-atribuir", "autorizados"));
-    onValue(ref(db, "docsDelegacao/" + COMITE), s => { DOCS_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "docsDelegacao"));
-    onValue(ref(db, "feedback/" + COMITE), s => { FB_ALL = s.val() || {}; renderProf(); }, _err("dg-prof-correcao", "feedback"));
     onValue(ref(db, "pendentes"), s => { PENDENTES = s.val() || {}; renderProfPainel(); }, () => {});
     // Espelho do editor "Documentos do delegado" (progresso/<uid>). Só para
     // sinalizar quando um aluno escreveu o position paper na aba errada — o
     // paper que se corrige continua vindo de docsDelegacao.
     onValue(ref(db, "progresso"), s => { PROGRESSO = s.val() || {}; renderProf(); }, () => {});
-    onValue(ref(db, AVISO_PATH), s => { AVISO = s.val(); renderProf(); }, () => {});
   } else {
-    onValue(ref(db, "delegacoes/" + COMITE), s => { DELEGACOES = s.val() || {}; renderAluno(); }, () => {});
+    Object.keys(COMITES).forEach(cid => {
+      onValue(ref(db, "delegacoes/" + cid), s => { DELEG_C[cid] = s.val() || {}; renderAluno(); }, () => {});
+      onValue(ref(db, "avisos/" + cid), s => { AVISO_C[cid] = s.val(); renderAluno(); }, () => {});
+    });
     onValue(ref(db, "minhaDelegacao/" + user.uid), s => { MINHA = s.val(); abrirWarRoom(); }, () => { MINHA = null; renderAluno(); });
     onValue(ref(db, "progresso/" + user.uid), s => { MEU_PROG = s.val() || null; renderAluno(); }, () => {});
-    onValue(ref(db, AVISO_PATH), s => { AVISO = s.val(); renderAluno(); }, () => {});
   }
 });
 
+// Comitê do aluno logado: o gravado na atribuição; registros antigos (sem
+// comiteId) são da UNEA, que era o único comitê da Fase 1.
+const cidDoAluno = () => (MINHA && MINHA.comiteId) || (MINHA ? COMITE_PADRAO : null);
+
 /* =====================  ALUNO — war-room  ===================== */
 function abrirWarRoom() {
-  const delId = MINHA && MINHA.delegacaoId;
-  if (!delId) { renderAluno(); return; }
-  if (SUB_DEL === delId) { renderAluno(); return; } // já assinado
-  SUB_DEL = delId;
-  onValue(ref(db, "docsDelegacao/" + COMITE + "/" + delId + "/" + PP), s => { DOC = s.val(); renderAluno(); }, () => {});
-  onValue(ref(db, "feedback/" + COMITE + "/" + delId + "/" + PP), s => { FB = s.val(); renderAluno(); }, () => {});
+  const delId = MINHA && MINHA.delegacaoId, cid = cidDoAluno();
+  if (!delId || !cid) { renderAluno(); return; }
+  const chave = cid + "/" + delId;
+  if (SUB_DEL === chave) { renderAluno(); return; } // já assinado
+  SUB_DEL = chave;
+  // Desassina o doc/feedback anterior (troca de país OU de comitê) — senão o
+  // listener velho continuaria sobrescrevendo DOC/FB com dados da outra delegação.
+  UNSUB_DOC.forEach(f => { try { f(); } catch (_e) {} });
+  DOC = null; FB = null;
+  UNSUB_DOC = [
+    onValue(ref(db, "docsDelegacao/" + chave + "/" + PP), s => { DOC = s.val(); renderAluno(); }, () => {}),
+    onValue(ref(db, "feedback/" + chave + "/" + PP), s => { FB = s.val(); renderAluno(); }, () => {}),
+  ];
 }
 
-// Banner do recado do professor — aparece no topo da aba p/ todos os alunos.
-function avisoBanner() {
-  if (!AVISO || !(AVISO.texto || "").trim()) return "";
-  return '<div class="dg-aviso">📢 <b>Aviso do professor:</b> ' + he(AVISO.texto) +
-    '<span class="dg-aviso-ts">' + fmt(AVISO.ts) + "</span></div>";
+// Banner do recado do professor — o aviso é por comitê.
+function avisoBanner(cid) {
+  const a = cid && AVISO_C[cid];
+  if (!a || !(a.texto || "").trim()) return "";
+  return '<div class="dg-aviso">📢 <b>Aviso do professor:</b> ' + he(a.texto) +
+    '<span class="dg-aviso-ts">' + fmt(a.ts) + "</span></div>";
 }
 
 // Passo a passo do delegado. `passo` = etapa atual (1..4); 5 = tudo concluído.
-function comoFunciona(passo) {
+function comoFunciona(passo, com) {
   const passos = [
-    "Escolha o país que você vai representar",
-    'Leia o <a href="#unea-briefing">briefing do comitê</a> (tópicos e contexto)',
+    "Escolha seu comitê e o país que você vai representar",
+    com
+      ? 'Leia o <a href="' + com.briefing + '">briefing do comitê ' + he(com.sigla) + "</a> (tópicos e contexto)"
+      : "Leia o briefing do seu comitê (tópicos e contexto)",
     "Escreva seu position paper nas 3 seções",
     "Entregue ao professor e aguarde a correção",
   ];
@@ -167,10 +230,37 @@ function comoFunciona(passo) {
     }).join("") + "</ol></div>";
 }
 
-function renderEscolha(root) {
-  const list = Object.entries(DELEGACOES).sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
+// Passo 1a — escolher o comitê (cartões, um por comitê).
+function renderEscolhaComite(root) {
+  const cards = Object.entries(COMITES).map(([cid, c]) => {
+    const dels = Object.values(DELEG_C[cid] || {});
+    const livres = dels.filter(d => !(d.membros && Object.keys(d.membros).length)).length;
+    const vagas = dels.length
+      ? livres + " de " + dels.length + " países livres"
+      : "delegações ainda não abertas pelo professor";
+    return '<div class="dg-comite-card"><span class="tag">' + he(c.sigla) + "</span>" +
+      '<h3 style="margin:.5rem 0 .2rem">' + he(c.nome) + "</h3>" +
+      '<p class="section-sub" style="margin:.2rem 0">' + he(c.desc) + "</p>" +
+      '<p class="section-sub" style="margin:.4rem 0">Tópicos: ' + c.topicos.map(he).join(" · ") + "</p>" +
+      '<p class="section-sub" style="margin:.4rem 0"><a href="' + c.briefing + '">📖 Ver o briefing</a> · ' + he(vagas) + "</p>" +
+      '<button class="btn primary dg-escolher-comite" data-cid="' + cid + '">Entrar neste comitê</button></div>';
+  }).join("");
+  root.innerHTML =
+    comoFunciona(1, null) +
+    '<div class="dg-card"><h3 style="margin:.2rem 0 .4rem">1. Escolha seu comitê</h3>' +
+    '<p class="section-sub">A turma tem dois comitês na YMUN Brasil 2026. Entre no comitê em que você vai atuar — em caso de dúvida, pergunte ao professor.</p>' +
+    '<div class="dg-comites">' + cards + "</div></div>";
+}
+
+// Passo 1b — escolher o país dentro do comitê escolhido.
+function renderEscolha(root, cid) {
+  const com = comInfo(cid);
+  const dels = DELEG_C[cid] || {};
+  const voltar = '<p style="margin:2px 0 10px"><a href="#" class="dg-voltar-comites" style="color:#8ea3bf;font-size:.82rem">← escolher outro comitê</a></p>';
+  const list = Object.entries(dels).sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
   if (!list.length) {
-    root.innerHTML = avisoBanner() + '<div class="dg-card"><p class="section-sub" style="margin:0">O professor ainda não abriu as delegações do comitê. Assim que a lista de países for liberada, ela aparece aqui para você escolher a sua.</p></div>';
+    root.innerHTML = avisoBanner(cid) + comoFunciona(1, com) + '<div class="dg-card">' + voltar +
+      '<p class="section-sub" style="margin:0">O professor ainda não abriu as delegações de <b>' + he(com.nome) + '</b>. Assim que a lista de países for liberada, ela aparece aqui para você escolher a sua.</p></div>';
     return;
   }
   const itens = list.map(([id, d]) => {
@@ -178,13 +268,13 @@ function renderEscolha(root) {
     return '<div class="dg-pais' + (ocupado ? " ocupado" : "") + '"><span class="dg-pais-nome">' + he(d.pais || id) + "</span>" +
       (ocupado
         ? '<span class="dg-pais-tag">já tem delegado</span>'
-        : '<button class="btn primary dg-escolher" data-del="' + id + '">Escolher</button>') + "</div>";
+        : '<button class="btn primary dg-escolher" data-del="' + id + '" data-cid="' + cid + '">Escolher</button>') + "</div>";
   }).join("");
   root.innerHTML =
-    avisoBanner() +
-    comoFunciona(1) +
-    '<div class="dg-card"><h3 style="margin:.2rem 0 .4rem">1. Escolha seu país</h3>' +
-    '<p class="section-sub">Clique no país que você vai representar em <b>' + he(COMITE_NOME) + '</b>. Um delegado por país.</p>' +
+    avisoBanner(cid) +
+    comoFunciona(1, com) +
+    '<div class="dg-card">' + voltar + '<h3 style="margin:.2rem 0 .4rem">2. Escolha seu país</h3>' +
+    '<p class="section-sub">Clique no país que você vai representar em <b>' + he(com.nome) + '</b>. Um delegado por país.</p>' +
     '<div class="dg-lista-paises">' + itens + "</div></div>";
 }
 
@@ -193,10 +283,12 @@ function renderAluno() {
   if (!root || IS_TEACHER) return;
 
   if (!MINHA || !MINHA.delegacaoId) {
-    renderEscolha(root);
+    if (!COM_SEL) renderEscolhaComite(root);
+    else renderEscolha(root, COM_SEL);
     return;
   }
-  const del = DELEGACOES[MINHA.delegacaoId] || {};
+  const cid = cidDoAluno(), com = comInfo(cid);
+  const del = (DELEG_C[cid] || {})[MINHA.delegacaoId] || {};
   const pais = del.pais || MINHA.delegacaoId;
   const est = estadoDe(DOC);
   const travado = est !== "rascunho";
@@ -222,12 +314,12 @@ function renderAluno() {
 
   const passo = est === "corrigido" ? 5 : est === "rascunho" ? 3 : 4;
   root.innerHTML =
-    avisoBanner() +
-    comoFunciona(passo) +
+    avisoBanner(cid) +
+    comoFunciona(passo, com) +
     '<div class="dg-card">' +
-      '<div class="dg-head"><div><span class="tag">' + he(COMITE_NOME) + '</span>' +
+      '<div class="dg-head"><div><span class="tag">' + he(com.nome) + '</span>' +
         '<h3 style="margin:.4rem 0 .2rem">Delegação: ' + he(pais) + "</h3>" +
-        '<p class="section-sub" style="margin:.2rem 0">Tópicos: ' + TOPICOS.map(he).join(" · ") + "</p></div>" +
+        '<p class="section-sub" style="margin:.2rem 0">Tópicos: ' + com.topicos.map(he).join(" · ") + "</p></div>" +
         '<span class="dg-badge ' + badge.cls + '">' + badge.rot + "</span></div>" +
       (travado ? "" : '<p style="margin:2px 0 0"><a href="#" class="dg-trocar" style="color:#8ea3bf;font-size:.82rem">não é seu país? trocar</a></p>') +
       (travado ? '<p class="dg-lock">📄 Position paper entregue em ' + fmt(DOC && DOC.submittedAt) + ". Ele fica travado para edição — fale com o professor se precisar reabrir.</p>" : "") +
@@ -252,18 +344,23 @@ function coletarPP() {
   const g = id => { const t = document.querySelector('.dg-ta[data-pp="' + id + '"]'); return t ? t.value : ""; };
   return { passadoAtual: g("passadoAtual"), posicao: g("posicao"), solucoes: g("solucoes") };
 }
-function docPath() { return "docsDelegacao/" + COMITE + "/" + MINHA.delegacaoId + "/" + PP; }
+function docPath() { return "docsDelegacao/" + cidDoAluno() + "/" + MINHA.delegacaoId + "/" + PP; }
 
-// Aluno escolhe / troca de país (auto-atendimento)
+// Aluno escolhe comitê / país e troca (auto-atendimento)
 document.addEventListener("click", async e => {
+  const escCom = e.target.closest(".dg-escolher-comite");
+  if (escCom) { COM_SEL = escCom.dataset.cid; renderAluno(); return; }
+  const voltar = e.target.closest(".dg-voltar-comites");
+  if (voltar) { e.preventDefault(); COM_SEL = null; renderAluno(); return; }
   const esc = e.target.closest(".dg-escolher");
   if (esc) {
-    const del = esc.dataset.del, uid = auth.currentUser && auth.currentUser.uid;
+    const del = esc.dataset.del, cid = esc.dataset.cid || COM_SEL || COMITE_PADRAO;
+    const uid = auth.currentUser && auth.currentUser.uid;
     if (!uid) return;
     esc.disabled = true; esc.textContent = "Entrando…";
     try {
-      await set(ref(db, "delegacoes/" + COMITE + "/" + del + "/membros/" + uid), true);
-      await set(ref(db, "minhaDelegacao/" + uid), { comiteId: COMITE, delegacaoId: del });
+      await set(ref(db, "delegacoes/" + cid + "/" + del + "/membros/" + uid), true);
+      await set(ref(db, "minhaDelegacao/" + uid), { comiteId: cid, delegacaoId: del });
     } catch (err) {
       alert("Não consegui entrar (" + (err.code || err.message) + "). Esse país pode já ter sido escolhido — a lista vai atualizar.");
       esc.disabled = false; esc.textContent = "Escolher";
@@ -273,11 +370,15 @@ document.addEventListener("click", async e => {
   const troc = e.target.closest(".dg-trocar");
   if (troc) {
     e.preventDefault();
-    if (!MINHA || !confirm("Sair da delegação " + ((DELEGACOES[MINHA.delegacaoId] || {}).pais || "atual") + " e escolher outro país?")) return;
+    if (!MINHA) return;
+    const cid = cidDoAluno();
+    const paisAtual = ((DELEG_C[cid] || {})[MINHA.delegacaoId] || {}).pais || "atual";
+    if (!confirm("Sair da delegação " + paisAtual + " e escolher outro país ou comitê?")) return;
     const del = MINHA.delegacaoId, uid = auth.currentUser.uid;
     try {
-      await remove(ref(db, "delegacoes/" + COMITE + "/" + del + "/membros/" + uid));
+      await remove(ref(db, "delegacoes/" + cid + "/" + del + "/membros/" + uid));
       await remove(ref(db, "minhaDelegacao/" + uid));
+      COM_SEL = cid; // volta para a lista de países do mesmo comitê
     } catch (err) { alert("Não consegui trocar: " + (err.code || err.message)); }
     return;
   }
@@ -339,12 +440,37 @@ function nomeAluno(uid) {
 
 function renderProf() {
   if (!IS_TEACHER) return;
+  // Fatia do comitê ativo — todo o painel abaixo trabalha sobre estas visões.
+  DELEGACOES = DELEG_C[PROF_COMITE] || {};
+  DOCS_ALL = DOCS_C[PROF_COMITE] || {};
+  FB_ALL = FB_C[PROF_COMITE] || {};
+  AVISO = AVISO_C[PROF_COMITE] || null;
+  renderProfTabs();
   renderProfAviso();
   renderProfPainel();
   renderProfDelegacoes();
   renderProfAtribuir();
   renderProfCorrecao();
 }
+
+// Abas de comitê do painel (UNEA | CND). Tudo abaixo delas é por comitê.
+function renderProfTabs() {
+  const root = document.getElementById("dg-prof-comite-tabs"); if (!root) return;
+  root.innerHTML = Object.entries(COMITES).map(([cid, c]) => {
+    const dels = DELEG_C[cid] || {};
+    const n = Object.keys(dels).length;
+    return '<button class="dg-tab' + (cid === PROF_COMITE ? " ativa" : "") + '" data-cid="' + cid + '">' +
+      he(c.sigla) + (n ? ' <span class="dg-tab-n">' + n + " países</span>" : "") + "</button>";
+  }).join("");
+}
+document.addEventListener("click", e => {
+  const tab = e.target.closest(".dg-tab");
+  if (tab && tab.dataset.cid && tab.dataset.cid !== PROF_COMITE) {
+    PROF_COMITE = tab.dataset.cid;
+    CORR_ABERTAS.clear(); // caixas de correção abertas pertencem à outra aba
+    renderProf();
+  }
+});
 
 // (0a) Compositor do recado ao vivo — publica em avisos/<comite>, visível a todos.
 function renderProfAviso() {
@@ -355,8 +481,8 @@ function renderProfAviso() {
     '<button class="btn primary" id="dg-aviso-pub">📢 Publicar aviso</button>' +
     (atual ? '<button class="btn ghost" id="dg-aviso-clr">Limpar</button>' : "") + "</div>" +
     (atual
-      ? '<p class="section-sub" style="margin:6px 0 0">No ar desde ' + fmt(AVISO.ts) + " — todos os alunos veem no topo da aba <b>Delegação</b>.</p>"
-      : '<p class="section-sub" style="margin:6px 0 0">Nenhum aviso no ar. O que você publicar aqui aparece ao vivo para todos os alunos.</p>');
+      ? '<p class="section-sub" style="margin:6px 0 0">No ar desde ' + fmt(AVISO.ts) + " — os alunos do <b>" + he(comInfo(PROF_COMITE).sigla) + "</b> veem no topo da aba <b>Delegação</b>.</p>"
+      : '<p class="section-sub" style="margin:6px 0 0">Nenhum aviso no ar. O que você publicar aqui aparece ao vivo para os alunos do <b>' + he(comInfo(PROF_COMITE).sigla) + "</b>.</p>");
 }
 
 // (0b) Visão da turma ao vivo — pendentes + panorama de todas as delegações.
@@ -420,8 +546,10 @@ function renderProfPainel() {
 // (a) criar / listar delegações
 function renderProfDelegacoes() {
   const root = document.getElementById("dg-prof-delegacoes"); if (!root) return;
+  const com = comInfo(PROF_COMITE);
   const list = Object.entries(DELEGACOES).sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
   root.innerHTML =
+    '<div class="prof-bar"><button class="btn ghost" id="dg-seed">➕ Carregar as delegações do ' + he(com.sigla) + " (lista pronta, " + com.paises.length + " países)</button></div>" +
     '<form id="dg-add-form" class="dg-inline"><input type="text" id="dg-add-pais" placeholder="País (ex.: Estados Unidos)">' +
     '<button class="btn ghost" type="submit">➕ Adicionar delegação</button></form>' +
     (list.length ?
@@ -439,11 +567,17 @@ function renderProfAtribuir() {
   const alunos = Object.entries(AUTORIZADOS);
   const opcoes = Object.entries(DELEGACOES).sort((a, b) => (a[1].pais || "").localeCompare(b[1].pais || ""));
   if (!alunos.length) { root.innerHTML = '<p class="section-sub">Nenhum aluno aprovado ainda — aprove na seção de crises/painel.</p>'; return; }
-  root.innerHTML = '<table class="prof-tab"><thead><tr><th>Aluno</th><th>Delegação</th></tr></thead><tbody>' +
+  root.innerHTML = '<p class="section-sub" style="margin:0 0 8px">Atribuindo dentro de <b>' + he(comInfo(PROF_COMITE).sigla) + "</b> — troque de aba para atribuir no outro comitê.</p>" +
+    '<table class="prof-tab"><thead><tr><th>Aluno</th><th>Delegação</th></tr></thead><tbody>' +
     alunos.map(([uid, v]) => {
-      const atual = ATRIBUICOES[uid] && ATRIBUICOES[uid].delegacaoId;
+      const at = ATRIBUICOES[uid] || {};
+      const atCid = at.delegacaoId ? (at.comiteId || COMITE_PADRAO) : null;
+      const noOutro = atCid && atCid !== PROF_COMITE; // atribuído no outro comitê
+      const atual = noOutro ? null : at.delegacaoId;
+      const paisOutro = noOutro ? ((DELEG_C[atCid] || {})[at.delegacaoId] || {}).pais || at.delegacaoId : null;
       const sel = '<select class="dg-atribui" data-uid="' + uid + '"><option value="">— sem delegação —</option>' +
-        opcoes.map(([id, d]) => '<option value="' + id + '"' + (id === atual ? " selected" : "") + ">" + he(d.pais || id) + "</option>").join("") + "</select>";
+        opcoes.map(([id, d]) => '<option value="' + id + '"' + (id === atual ? " selected" : "") + ">" + he(d.pais || id) + "</option>").join("") + "</select>" +
+        (noOutro ? ' <span class="hint" title="Escolher um país aqui MOVE o aluno para este comitê.">já está no ' + he(comInfo(atCid).sigla) + ": " + he(paisOutro) + "</span>" : "");
       return "<tr><td>" + he((v && v.email) || uid) + "</td><td>" + sel + "</td></tr>";
     }).join("") + "</tbody></table>";
 }
@@ -485,28 +619,22 @@ function boxCorrecao(id) {
     '<span class="dg-status dg-corr-status"></span></div>';
 }
 
-// Lista de delegações do comitê UNEA/YMUNB (da matriz do material). Professor cria todas de uma vez.
-const DELEGACOES_UNEA = [
-  "Estados Unidos", "Brasil", "Guiana", "Suriname", "Venezuela", "Equador", "Colômbia", "Peru", "Bolívia",
-  "Nigéria", "Angola", "Arábia Saudita", "Emirados Árabes Unidos", "Kuwait", "Irã", "Argélia", "Omã",
-  "China", "Índia", "Japão", "Coreia do Sul", "Indonésia",
-  "União Europeia", "França", "Alemanha", "Reino Unido", "Noruega", "Austrália", "Canadá",
-  "RDC (Congo)", "Chile", "Argentina", "África do Sul", "Namíbia", "Zâmbia", "Tanzânia", "Guiné", "Moçambique",
-  "Maldivas", "Tuvalu", "Fiji", "Kiribati", "Bangladesh", "Filipinas",
-];
 function slugPais(pais) {
   return pais.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
-async function carregarDelegacoesUNEA() {
-  if (!confirm("Criar as " + DELEGACOES_UNEA.length + " delegações do comitê UNEA? (não apaga as que já existem nem os alunos já atribuídos)")) return;
+// Cria de uma vez as delegações da lista pronta do comitê da aba ativa.
+async function carregarDelegacoes(cid) {
+  const com = comInfo(cid);
+  if (!com.paises.length) { alert("Este comitê não tem lista pronta de países."); return; }
+  if (!confirm("Criar as " + com.paises.length + " delegações do comitê " + com.sigla + "? (não apaga as que já existem nem os alunos já atribuídos)")) return;
   try {
-    for (const pais of DELEGACOES_UNEA) {
-      await update(ref(db, "delegacoes/" + COMITE + "/" + slugPais(pais)), { pais });
+    for (const pais of com.paises) {
+      await update(ref(db, "delegacoes/" + cid + "/" + slugPais(pais)), { pais });
     }
-    alert(DELEGACOES_UNEA.length + " delegações criadas! Elas já aparecem na lista abaixo e para os alunos escolherem.");
+    alert(com.paises.length + " delegações criadas no " + com.sigla + "! Elas já aparecem na lista abaixo e para os alunos escolherem.");
   } catch (err) { alert("Erro: " + (err.code || err.message)); }
 }
-document.addEventListener("click", e => { if (e.target.id === "dg-seed-unea") carregarDelegacoesUNEA(); });
+document.addEventListener("click", e => { if (e.target.id === "dg-seed") carregarDelegacoes(PROF_COMITE); });
 
 document.addEventListener("submit", async e => {
   if (e.target.id === "dg-add-form") {
@@ -514,7 +642,7 @@ document.addEventListener("submit", async e => {
     const inp = document.getElementById("dg-add-pais"), pais = inp.value.trim();
     if (!pais) return;
     const id = pais.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    try { await update(ref(db, "delegacoes/" + COMITE + "/" + id), { pais }); inp.value = ""; }
+    try { await update(ref(db, "delegacoes/" + PROF_COMITE + "/" + id), { pais }); inp.value = ""; }
     catch (err) { alert("Erro ao adicionar: " + (err.code || err.message)); }
   }
 });
@@ -523,11 +651,13 @@ document.addEventListener("change", async e => {
   const sel = e.target.closest(".dg-atribui");
   if (sel) {
     const uid = sel.dataset.uid, novo = sel.value, antigo = ATRIBUICOES[uid] && ATRIBUICOES[uid].delegacaoId;
+    // O aluno pode estar atribuído no OUTRO comitê — remove de onde ele estava.
+    const antigoCid = (ATRIBUICOES[uid] && ATRIBUICOES[uid].comiteId) || COMITE_PADRAO;
     try {
-      if (antigo && antigo !== novo) await remove(ref(db, "delegacoes/" + COMITE + "/" + antigo + "/membros/" + uid));
+      if (antigo && (antigoCid !== PROF_COMITE || antigo !== novo)) await remove(ref(db, "delegacoes/" + antigoCid + "/" + antigo + "/membros/" + uid));
       if (novo) {
-        await set(ref(db, "delegacoes/" + COMITE + "/" + novo + "/membros/" + uid), true);
-        await set(ref(db, "minhaDelegacao/" + uid), { comiteId: COMITE, delegacaoId: novo });
+        await set(ref(db, "delegacoes/" + PROF_COMITE + "/" + novo + "/membros/" + uid), true);
+        await set(ref(db, "minhaDelegacao/" + uid), { comiteId: PROF_COMITE, delegacaoId: novo });
       } else {
         await remove(ref(db, "minhaDelegacao/" + uid));
       }
@@ -550,7 +680,7 @@ document.addEventListener("click", async e => {
         "mas o aluno perde o acesso ao próprio paper enquanto o país estiver fora da lista.\n\nRemover mesmo assim?"
       : "Remover esta delegação? (não apaga os documentos já gravados)";
     if (confirm(aviso)) {
-      try { await remove(ref(db, "delegacoes/" + COMITE + "/" + id)); } catch (err) { alert(err.message); }
+      try { await remove(ref(db, "delegacoes/" + PROF_COMITE + "/" + id)); } catch (err) { alert(err.message); }
     }
     return;
   }
@@ -563,7 +693,7 @@ document.addEventListener("click", async e => {
     CORR_ABERTAS.add(id);
     // ao abrir, marca em correção (se estava só entregue)
     if (estadoDe(DOCS_ALL[id] && DOCS_ALL[id][PP]) === "entregue") {
-      update(ref(db, "docsDelegacao/" + COMITE + "/" + id + "/" + PP), { estado: "em_correcao" }).catch(() => {});
+      update(ref(db, "docsDelegacao/" + PROF_COMITE + "/" + id + "/" + PP), { estado: "em_correcao" }).catch(() => {});
     }
     return;
   }
@@ -576,8 +706,8 @@ document.addEventListener("click", async e => {
     notas.criadoEm = Date.now();
     const st = box.querySelector(".dg-corr-status");
     try {
-      await set(ref(db, "feedback/" + COMITE + "/" + id + "/" + PP), notas);
-      await update(ref(db, "docsDelegacao/" + COMITE + "/" + id + "/" + PP), { estado: "corrigido" });
+      await set(ref(db, "feedback/" + PROF_COMITE + "/" + id + "/" + PP), notas);
+      await update(ref(db, "docsDelegacao/" + PROF_COMITE + "/" + id + "/" + PP), { estado: "corrigido" });
       if (st) { st.textContent = "Nota lançada ✓"; st.style.color = "#1E8E5A"; }
     } catch (err) { if (st) { st.textContent = "Erro (" + (err.code || err.message) + ")"; st.style.color = "#b3261e"; } }
     return;
@@ -586,7 +716,7 @@ document.addEventListener("click", async e => {
   if (reab) {
     const id = reab.dataset.id;
     if (confirm("Reabrir o position paper para o aluno editar de novo?")) {
-      try { await update(ref(db, "docsDelegacao/" + COMITE + "/" + id + "/" + PP), { estado: "rascunho" }); } catch (err) { alert(err.message); }
+      try { await update(ref(db, "docsDelegacao/" + PROF_COMITE + "/" + id + "/" + PP), { estado: "rascunho" }); } catch (err) { alert(err.message); }
     }
     return;
   }
@@ -599,13 +729,13 @@ document.addEventListener("click", async e => {
     const inp = document.getElementById("dg-aviso-in"), texto = (inp ? inp.value : "").trim();
     if (!texto) { alert("Escreva o aviso antes de publicar."); return; }
     e.target.disabled = true;
-    try { await set(ref(db, AVISO_PATH), { texto, ts: Date.now() }); }
+    try { await set(ref(db, "avisos/" + PROF_COMITE), { texto, ts: Date.now() }); }
     catch (err) { alert("Não consegui publicar (" + (err.code || err.message) + ")."); e.target.disabled = false; }
     return;
   }
   if (e.target.id === "dg-aviso-clr") {
     if (!confirm("Tirar o aviso do ar?")) return;
-    try { await remove(ref(db, AVISO_PATH)); } catch (err) { alert(err.message); }
+    try { await remove(ref(db, "avisos/" + PROF_COMITE)); } catch (err) { alert(err.message); }
     return;
   }
   // Aprovar todos os alunos pendentes sem sair do painel de delegações (item 4)
