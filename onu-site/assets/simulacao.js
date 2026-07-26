@@ -16,6 +16,45 @@ const COMITES = {
 };
 const COMITE_PADRAO = "unea-ymunb-2026";
 
+// Crises prontas por comitê (CND delibera em inglês). Escolher uma no seletor
+// preenche o formulário; o professor revisa/ajusta e lança quando quiser.
+const CRISES_PRONTAS = {
+  "unea-ymunb-2026": [
+    {
+      t: "Blowout na Margem Equatorial",
+      prazo: 20,
+      x: "Uma plataforma de perfuração exploratória sofre um blowout a 160 km da foz do Amazonas. A mancha de óleo, estimada em 8 mil barris/dia, avança em direção ao Grande Sistema de Recifes da Amazônia e às águas territoriais de países vizinhos. O plano de emergência previa resposta em 36 horas, mas o primeiro navio de contenção só chega em 5 dias. Comunidades pesqueiras já relatam óleo nas redes.\n\nDados-chave: as correntes levam a mancha para noroeste, rumo à fronteira marítima; o licenciamento da bacia estava em disputa judicial; 3 países vizinhos já acionaram protocolos de emergência.\n\nEspera-se das delegações: (1) medidas imediatas de contenção e cooperação regional; (2) posição sobre moratória de novas perfurações na margem; (3) responsabilização e compensação.",
+    },
+    {
+      t: "Rompimento de barragem na mina de Serra Verde",
+      prazo: 20,
+      x: "Uma barragem de rejeitos da mina de terras raras de Serra Verde se rompe após chuvas extremas, despejando lama com metais pesados em um rio que abastece 12 municípios. A demanda global por minerais críticos para a transição energética pressiona pela reabertura rápida da mina; comunidades e cientistas pedem suspensão total das operações.\n\nDados-chave: 200 mil pessoas sem água potável; a mina responde por parcela relevante da oferta global de terras raras fora da China; auditorias já apontavam risco na barragem há 2 anos.\n\nEspera-se das delegações: (1) resposta emergencial e ajuda internacional; (2) padrões internacionais vinculantes para a mineração de minerais críticos; (3) como conciliar transição energética e proteção ambiental.",
+    },
+  ],
+  "cnd-ymunb-2026": [
+    {
+      t: "Record cocaine seizure exposes new Atlantic route",
+      prazo: 20,
+      x: "Interpol and federal police announce the seizure of 22 tonnes of cocaine at the Port of Santos, hidden in soy shipments bound for West Africa. Recovered documents reveal a new trans-Atlantic corridor through the Gulf of Guinea, run by an alliance between a South American cartel and West African networks. Two transit countries declare they lack the resources to patrol their coasts and ports.\n\nKey facts: a large share of Europe-bound cocaine now crosses through West Africa; port scanners cover less than 10% of containers; corruption investigations have been opened in three port authorities.\n\nYour delegation must propose: (1) immediate measures for intelligence sharing and port control; (2) how to fund and support transit states; (3) your country's position on joint maritime patrols.",
+    },
+    {
+      t: "Synthetic opioid crisis goes global overnight",
+      prazo: 20,
+      x: "In the last 72 hours, hospitals in North America, Europe and Southeast Asia report waves of overdoses linked to a new fentanyl analogue, sold online and shipped by post. UNODC traces the precursor chemicals to unregulated laboratories in at least two member states, exported legally as \"industrial solvents\". The substance is 40 times more potent than heroin and standard test strips do not detect it.\n\nKey facts: 300+ deaths in one week across 11 countries; the analogue is not yet scheduled under the international conventions; postal services cannot screen small parcels at scale.\n\nYour delegation must propose: (1) an emergency scheduling mechanism for new analogues; (2) precursor controls that do not paralyse legitimate industry; (3) the harm-reduction and public-health responses your country supports.",
+    },
+    {
+      t: "Alternative development programme collapses",
+      prazo: 20,
+      x: "The flagship crop-substitution programme in the Andean region — presented last year as proof that farmers can leave coca behind — is collapsing. A global crash in coffee and cacao prices, followed by a severe drought, wiped out the income of 40,000 families who had abandoned illicit cultivation. Satellite imagery already shows coca replanting in 60% of the programme's municipalities, and armed groups are offering seeds and credit to returning farmers.\n\nKey facts: farm-gate coca paste prices have tripled; the host country requests USD 200 million in emergency support; donor countries are reluctant; the programme's roads, schools and cooperatives remain half-built.\n\nYour delegation must propose: (1) an emergency response to stop the replanting wave; (2) how to make substitution income shock-proof (price guarantees, insurance, market access); (3) who pays.",
+    },
+    {
+      t: "Narco-submarine incident triggers jurisdiction clash",
+      prazo: 15,
+      x: "A semi-submersible vessel carrying 3 tonnes of cocaine was intercepted in international waters with a multinational crew. Two member states claim jurisdiction — the flag state and the state whose navy made the interception — and each demands custody of the crew and the evidence. Defence lawyers argue the boarding was illegal and the case risks collapsing within 48 hours. The dispute has frozen a joint naval operation covering the entire corridor.\n\nKey facts: maritime interdiction in the area depends on flag-state consent under Article 17 of the 1988 Vienna Convention; the two states have no bilateral agreement; 7 similar vessels are believed to be at sea right now.\n\nYour delegation must propose: (1) an immediate solution for custody and evidence in this case; (2) a standing protocol so the next interception does not end in another diplomatic crisis.",
+    },
+  ],
+};
+
 const he = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmtHora = ms => ms ? new Date(ms).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -51,6 +90,12 @@ onAuthStateChanged(auth, user => {
     const rodando = Object.values(CRISE).some(c => c && c.status === "no_ar");
     if (rodando) atualizaRelogios();
   }, 1000);
+});
+
+// Aba em 2º plano tem o setInterval estrangulado pelo navegador; quando o aluno
+// volta do Zoom, dá um snap imediato no relógio (o valor é recalculado do fimEm).
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) atualizaRelogios();
 });
 
 // Aluno assina a solução da própria delegação (para ver o texto salvo do grupo
@@ -89,9 +134,40 @@ function atualizaRelogios() {
 }
 
 /* =====================  ALUNO  ===================== */
+// Professor vê aqui uma prévia (somente leitura) do que os alunos estão vendo;
+// o controle da rodada continua no painel Simulação·prof.
+function renderPrevia(root) {
+  const aviso = '<p class="hint">👨‍🏫 Você está logado como professor — esta é a prévia do que os alunos veem. O controle da simulação fica em <a href="#painel-simulacao">Simulação·prof</a>.</p>';
+  const vivas = Object.keys(COMITES).filter(cid => CRISE[cid] && CRISE[cid].status && CRISE[cid].status !== "encerrada");
+  if (!vivas.length) {
+    root.innerHTML = '<p class="section-sub">Nenhuma crise ao vivo agora.</p>' + aviso;
+    return;
+  }
+  root.innerHTML = vivas.map(cid => {
+    const c = CRISE[cid], com = COMITES[cid] || { sigla: cid, nome: cid };
+    const plenario = c.status === "plenario";
+    const sols = Object.entries(SOLUCOES[cid] || {});
+    const corpo = plenario
+      ? (sols.length
+          ? sols.sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0)).map(([del, s]) => {
+              const pais = ((DELEG[cid] || {})[del] || {}).pais || del;
+              return '<div class="sc-solucao"><b>' + he(pais) + "</b><p>" + he(s.texto) + "</p></div>";
+            }).join("")
+          : '<p class="section-sub">Nenhuma solução registrada.</p>')
+      : '<p class="hint">' + sols.length + " solução(ões) entregue(s) até agora — o quadro completo está no painel.</p>";
+    return '<div class="sc-card' + (plenario ? " sc-card-plen" : "") + '">' +
+      '<div class="sc-head"><span class="sc-badge' + (plenario ? " sc-badge-plen" : "") + '">' +
+      (plenario ? "📣 PLENÁRIO ABERTO" : "🚨 CRISE AO VIVO") + "</span>" +
+      '<span class="tag">' + he(com.sigla) + "</span>" +
+      (c.status === "no_ar" ? '<span class="sc-relogio" data-relogio="' + cid + '">' + relogio(restante(c)) + "</span>" : "") +
+      "</div><h3>" + he(c.titulo) + '</h3><p class="sc-texto">' + he(c.texto) + "</p>" + corpo + "</div>";
+  }).join("") + aviso;
+}
+
 function renderAluno() {
   const root = document.getElementById("sala-crise-body");
-  if (!root || IS_TEACHER) return;
+  if (!root) return;
+  if (IS_TEACHER) { renderPrevia(root); return; }
 
   const meuCid = (MINHA && MINHA.comiteId) || null;
   // mostra a crise do comitê do aluno; sem delegação, mostra o que estiver no ar
@@ -172,8 +248,14 @@ function renderProf() {
 
   let corpo = "";
   if (!c || c.status === "encerrada" || !c.status) {
+    const prontas = CRISES_PRONTAS[cid] || [];
     corpo =
       '<div class="mt-form"><h3 style="margin:.2rem 0 .6rem">🚨 Lançar crise ao vivo — ' + he(com.sigla) + "</h3>" +
+      (prontas.length
+        ? '<div class="mt-linha"><label class="sc-prazo" style="flex:1 1 100%">📚 Crise pronta:&nbsp;<select id="sc-pronta" style="flex:1"><option value="">— escrever do zero —</option>' +
+          prontas.map((p, i) => '<option value="' + i + '">' + he(p.t) + "</option>").join("") +
+          "</select></label></div>"
+        : "") +
       '<div class="mt-linha"><input type="text" id="sc-titulo" placeholder="Título da crise (ex.: Derramamento na Margem Equatorial)"></div>' +
       '<div class="mt-linha"><textarea id="sc-texto" rows="5" style="flex:1 1 100%;padding:10px;border-radius:8px;border:1px solid #2c3e5c;background:#0d1626;color:#eaf1fb" placeholder="Narrativa da crise: o que aconteceu, dados-chave, o que se espera das delegações..."></textarea></div>' +
       '<div class="mt-linha"><label class="sc-prazo">Prazo de deliberação: <input type="number" id="sc-prazo" min="3" max="120" value="20" style="width:80px"> min</label>' +
@@ -223,6 +305,17 @@ function renderProf() {
 
   root.innerHTML = tabs + corpo + histHtml;
 }
+
+// Escolher uma crise pronta preenche o formulário (o professor ainda revisa e lança).
+document.addEventListener("change", e => {
+  if (e.target.id !== "sc-pronta") return;
+  const p = (CRISES_PRONTAS[SIM_COMITE] || [])[Number(e.target.value)];
+  if (!p) return;
+  const t = document.getElementById("sc-titulo"), x = document.getElementById("sc-texto"), pr = document.getElementById("sc-prazo");
+  if (t) t.value = p.t;
+  if (x) x.value = p.x;
+  if (pr && p.prazo) pr.value = p.prazo;
+});
 
 document.addEventListener("click", async e => {
   const tab = e.target.closest("[data-simtab]");
