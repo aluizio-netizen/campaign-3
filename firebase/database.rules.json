@@ -45,7 +45,7 @@
     },
 
     "comites": {
-      ".read": "auth != null",
+      ".read": "auth != null && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())",
       ".write": "auth.token.email === 'aluizio@aluizio.education'"
     },
     "delegacoes": {
@@ -97,7 +97,7 @@
     "simulacao": {
       "$comiteId": {
         "crise": {
-          ".read": "auth != null",
+          ".read": "auth != null && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())",
           ".write": "auth.token.email === 'aluizio@aluizio.education'"
         },
         "solucoes": {
