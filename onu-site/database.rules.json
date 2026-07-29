@@ -50,12 +50,12 @@
     },
     "delegacoes": {
       "$comiteId": {
-        ".read": "auth != null",
+        ".read": "auth != null && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())",
         ".write": "auth.token.email === 'aluizio@aluizio.education'",
         "$delegacaoId": {
           "membros": {
             "$uid": {
-              ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education')"
+              ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education') && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())"
             }
           }
         }
@@ -65,16 +65,16 @@
       ".read": "auth.token.email === 'aluizio@aluizio.education'",
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education')"
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'aluizio@aluizio.education') && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())"
       }
     },
     "docsDelegacao": {
       "$comiteId": {
         ".read": "auth.token.email === 'aluizio@aluizio.education'",
         "$delegacaoId": {
-          ".read": "root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true",
+          ".read": "root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())",
           "$docId": {
-            ".write": "auth.token.email === 'aluizio@aluizio.education' || (root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true && (!data.exists() || data.child('estado').val() === 'rascunho'))"
+            ".write": "auth.token.email === 'aluizio@aluizio.education' || (root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true && (!data.exists() || data.child('estado').val() === 'rascunho') && (root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists()))"
           }
         }
       }
@@ -90,7 +90,7 @@
     },
     "avisos": {
       "$comiteId": {
-        ".read": "auth != null",
+        ".read": "auth != null && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())",
         ".write": "auth.token.email === 'aluizio@aluizio.education'"
       }
     },
