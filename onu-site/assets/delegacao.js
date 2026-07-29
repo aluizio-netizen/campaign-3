@@ -79,7 +79,7 @@ const COMITES = {
     ],
     briefing: "#cnd-briefing",
     paises: DELEGACOES_CND,
-    idioma: "Comitê em inglês — escreva o paper em inglês.",
+    idioma: "O CND roda em INGLÊS — o position paper tem de ser escrito em inglês. As orientações e os rótulos aqui estão em português só para te guiar; o texto que você digitar nos campos vai em inglês.",
     porTopico: true,
     campos: camposPorTopico(TOPICOS_CND),
   },
@@ -507,13 +507,16 @@ function renderAluno() {
 // Régua de formato oficial do YMUNB, à vista enquanto o aluno escreve.
 function regraFormato(com) {
   if (!com.porTopico) return "";
-  return '<div class="dg-regra"><b>Formato exigido pelo YMUN Brasil</b><ul>' +
+  return '<div class="dg-regra">' +
+    // O idioma vem antes de tudo: descobrir isso depois de escrever significa
+    // reescrever o paper inteiro.
+    (com.idioma ? '<p class="dg-idioma">🌐 ' + he(com.idioma) + "</p>" : "") +
+    "<b>Formato exigido pelo YMUN Brasil</b><ul>" +
     "<li><b>Uma página por tópico</b> — os dois tópicos no mesmo documento, em seções separadas. Faltou um tópico, o paper é considerado incompleto e fica <b>fora da premiação</b>.</li>" +
     "<li>Times New Roman 12, margens de 2,54 cm.</li>" +
     "<li>No canto superior esquerdo da 1ª página: <code>Committee</code> / <code>Delegate Name</code> (seu nome real) / <code>Position</code> (seu país).</li>" +
     "<li>Citações <b>MLA no corpo do texto</b> (não use notas de rodapé); bibliografia só no fim do documento inteiro.</li>" +
     "<li>Entrega ao YMUNB: link do <b>Google Docs</b> com compartilhamento <b>“qualquer pessoa com o link” como EDITOR</b>.</li>" +
-    (com.idioma ? "<li>" + he(com.idioma) + "</li>" : "") +
     '</ul><p class="dg-regra-nota">Aqui na plataforma você escreve por seções para o professor corrigir; na hora de enviar ao YMUNB, monte o documento na ordem acima.</p></div>';
 }
 
