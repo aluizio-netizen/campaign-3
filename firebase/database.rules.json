@@ -101,7 +101,7 @@
           ".write": "auth.token.email === 'aluizio@aluizio.education'"
         },
         "solucoes": {
-          ".read": "auth.token.email === 'aluizio@aluizio.education' || (auth != null && root.child('simulacao').child($comiteId).child('crise').child('status').val() === 'plenario')",
+          ".read": "auth.token.email === 'aluizio@aluizio.education' || (auth != null && root.child('simulacao').child($comiteId).child('crise').child('status').val() === 'plenario' && (root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists()))",
           ".write": "auth.token.email === 'aluizio@aluizio.education'",
           "$delegacaoId": {
             ".read": "auth != null && root.child('delegacoes').child($comiteId).child($delegacaoId).child('membros').child(auth.uid).val() === true",
