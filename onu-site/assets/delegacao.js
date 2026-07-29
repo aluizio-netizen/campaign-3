@@ -135,12 +135,39 @@ const RUBRICA_CND = [
 // declaração. Feedback já gravado da UNEA continua lido pela rubrica antiga.
 const RUBRICAS = { "cnd-ymunb-2026": RUBRICA_CND };
 const rubricaDe = cid => RUBRICAS[cid] || RUBRICA;
-const notaTotal = (f, cid) => f ? rubricaDe(cid).reduce((s, r) => s + (Number(f[r.k]) || 0), 0) : 0;
+// Notas do CND lançadas ANTES da rubrica nova não têm o item "cobertura". Lê-las
+// pela rubrica nova mostraria coisas como "precisão 22/20" — então a nota antiga
+// continua sendo exibida pela rubrica com que foi dada.
+const ehFbLegado = (cid, f) => !!(f && RUBRICAS[cid] && f.cobertura == null &&
+  RUBRICA.some(r => f[r.k] != null));
+const rubricaFB = (cid, f) => ehFbLegado(cid, f) ? RUBRICA : rubricaDe(cid);
+const notaTotal = (f, cid) => f ? rubricaFB(cid, f).reduce((s, r) => s + (Number(f[r.k]) || 0), 0) : 0;
 
 const palavras = s => (s || "").trim() ? (s || "").trim().split(/\s+/).length : 0;
-// Palavras de um tópico = soma das 3 seções dele.
+
+// COMPATIBILIDADE. Os primeiros position papers do CND foram escritos quando o
+// comitê ainda usava um único conjunto de 3 seções (chaves passadoAtual/posicao/
+// solucoes). Ao passar o CND para o formato por tópico, esse texto deixaria de
+// aparecer na tela — o aluno abriria o paper e veria tudo vazio. Aqui as chaves
+// antigas continuam sendo LIDAS no Tópico 1. Nada é apagado nem reescrito por
+// conta própria: quando o aluno salvar, o texto passa a viver nas chaves novas.
+const LEGADO = { acoes: "passadoAtual", posicao: "posicao", solucoes: "solucoes" };
+// Paper que SÓ existe no formato antigo — nenhuma seção nova foi preenchida
+// ainda. O teste é "tudo ou nada" de propósito: assim que o aluno salva no
+// formato novo, o legado para de ser lido de vez. Se o critério fosse campo a
+// campo, apagar o Tópico 1 faria o texto antigo ressurgir no próximo render, e
+// o aluno não conseguiria limpar a seção.
+const temLegado = (com, doc) => !!(com.porTopico && doc &&
+  Object.values(LEGADO).some(k => (doc[k] || "").trim()) &&
+  !com.campos.some(c => (doc[c.k] || "").trim()));
+function valorCampo(com, doc, c) {
+  if (com.porTopico && c.topico === 0 && temLegado(com, doc)) return (doc && doc[LEGADO[c.k.slice(3)]]) || "";
+  return (doc && doc[c.k]) || "";
+}
+
+// Palavras de um tópico = soma das 3 seções dele (já com o texto legado).
 const palavrasTopico = (com, doc, i) => (com.campos || []).filter(c => c.topico === i)
-  .reduce((n, c) => n + palavras(doc && doc[c.k]), 0);
+  .reduce((n, c) => n + palavras(valorCampo(com, doc, c)), 0);
 
 // Remover uma delegação da lista NÃO apaga o paper que o aluno já gravou — e o
 // professor precisa continuar enxergando esse paper. Por isso os painéis do
@@ -413,7 +440,7 @@ function renderAluno() {
     '<div class="field"><label>' + n + ". " + c.rot +
     (c.en ? ' <span class="dg-en">(' + he(c.en) + ")</span>" : "") +
     (c.dica ? ' <span class="hint">— ' + c.dica + "</span>" : "") + "</label>" +
-    '<textarea class="dg-ta" data-pp="' + c.k + '" data-topico="' + c.topico + '" rows="5"' + (travado ? " disabled" : "") + ">" + he((DOC && DOC[c.k]) || "") + "</textarea></div>";
+    '<textarea class="dg-ta" data-pp="' + c.k + '" data-topico="' + c.topico + '" rows="5"' + (travado ? " disabled" : "") + ">" + he(valorCampo(com, DOC, c)) + "</textarea></div>";
 
   // Blocos do paper. Com porTopico, cada tópico é uma página própria e ganha
   // contador — é a regra do YMUNB que mais derruba delegado por descuido.
@@ -437,7 +464,7 @@ function renderAluno() {
     fbHtml = '<div class="dg-fb" id="dg-correcao"><b>📝 Correção do professor — nota ' + notaTotal(FB, cid) + "/100</b>" +
       (reaberto ? '<p class="dg-fb-reab">Seu position paper foi <b>reaberto para revisão</b>. Use a correção abaixo como guia, ajuste o texto e entregue de novo.</p>' : "") +
       '<table class="dg-rub"><tbody>' +
-      rubricaDe(cid).map(r => "<tr><td>" + r.rot + "</td><td>" + (Number(FB[r.k]) || 0) + "/" + r.max + "</td></tr>").join("") +
+      rubricaFB(cid, FB).map(r => "<tr><td>" + r.rot + "</td><td>" + (Number(FB[r.k]) || 0) + "/" + r.max + "</td></tr>").join("") +
       "</tbody></table>" +
       (FB.comentario ? '<p class="dg-coment">' + he(FB.comentario) + "</p>" : "") + "</div>";
   }
@@ -456,6 +483,12 @@ function renderAluno() {
       (travado ? '<p class="dg-lock">📄 Position paper entregue em ' + fmt(DOC && DOC.submittedAt) + ". Ele fica travado para edição — fale com o professor se precisar reabrir.</p>" : "") +
       fbHtml + // no topo: a correção é a primeira coisa que o aluno precisa ver
       '<h4 style="margin:18px 0 4px">Position paper</h4>' +
+      (temLegado(com, DOC)
+        ? '<div class="dg-migra">📌 <b>O comitê passou a exigir uma página por tópico.</b> ' +
+          "O que você já tinha escrito foi carregado no <b>Tópico 1</b> abaixo — nada se perdeu. " +
+          "Revise, mova para o Tópico 2 o que for daquele tema e escreva o que faltar. " +
+          "Assim que você clicar em 💾 Salvar rascunho, o texto passa a viver no formato novo.</div>"
+        : "") +
       regraFormato(com) +
       (!travado && rascunhoDocsMapeado().temAlgo
         ? '<div class="dg-puxar"><button class="btn ghost" id="dg-puxar-docs">⬇ Puxar meu rascunho da aba Documentos</button>' +
@@ -495,10 +528,10 @@ function contadorTopico(com, i, doc) {
 }
 
 function coletarPP() {
-  const out = {};
-  comInfo(cidDoAluno()).campos.forEach(c => {
+  const out = {}, com = comInfo(cidDoAluno());
+  com.campos.forEach(c => {
     const t = document.querySelector('.dg-ta[data-pp="' + c.k + '"]');
-    out[c.k] = t ? t.value : ((DOC && DOC[c.k]) || "");
+    out[c.k] = t ? t.value : valorCampo(com, DOC, c);
   });
   return out;
 }
@@ -792,7 +825,7 @@ function boxCorrecao(id) {
   const com = comInfo(PROF_COMITE);
   const doc = (DOCS_ALL[id] && DOCS_ALL[id][PP]) || {}, fb = (FB_ALL[id] && FB_ALL[id][PP]) || {};
   const secao = (rot, val) => "<h5 style=\"margin:12px 0 2px\">" + rot + '</h5><div class="dg-lido">' + (he(val) || "<i>(vazio)</i>") + "</div>";
-  const campos = cs => cs.map((c, j) => secao(j + 1 + ". " + c.rot, doc[c.k])).join("");
+  const campos = cs => cs.map((c, j) => secao(j + 1 + ". " + c.rot, valorCampo(com, doc, c))).join("");
   // Num comitê por tópico o professor vê o paper como o chair vai ver: uma
   // página por tópico, com o tamanho de cada uma à vista.
   const corpo = com.porTopico
@@ -809,7 +842,14 @@ function boxCorrecao(id) {
     : campos(com.campos);
   const inputs = rubricaDe(PROF_COMITE).map(r =>
     '<label class="dg-nota">' + r.rot + ' (0–' + r.max + ')<input type="number" min="0" max="' + r.max + '" class="dg-nota-in" data-k="' + r.k + '" value="' + (fb[r.k] != null ? fb[r.k] : "") + '"></label>').join("");
-  return corpo +
+  // Nota antiga: os campos abaixo vêm da rubrica anterior e os tetos mudaram.
+  const avisoFb = ehFbLegado(PROF_COMITE, fb)
+    ? '<p class="dg-migra-nota">↺ A nota anterior (' + notaTotal(fb, PROF_COMITE) + "/100) foi lançada com a rubrica antiga, sem o item “cobertura dos dois tópicos” e com outros tetos. Ao relançar, confira todos os campos.</p>"
+    : "";
+  const avisoLeg = temLegado(com, doc)
+    ? '<p class="dg-migra-nota">📌 Este paper ainda está no formato antigo (um único conjunto de 3 seções). O texto aparece no Tópico 1 e passa para o formato novo quando o aluno salvar.</p>'
+    : "";
+  return corpo + avisoLeg + avisoFb +
     '<div class="dg-notas" data-id="' + id + '">' + inputs +
     '<label class="dg-nota" style="flex:1 1 100%">Comentário<textarea class="dg-coment-in" rows="3">' + he(fb.comentario || "") + "</textarea></label></div>" +
     '<div class="toolbar"><button class="btn primary dg-lancar" data-id="' + id + '">Lançar nota (marca como corrigido)</button>' +
