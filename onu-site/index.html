@@ -313,6 +313,41 @@
       #delegacao .dg-guia li.feito{color:#7fae86}
       #delegacao .dg-guia li.feito::marker{content:"✓ "}
       #delegacao .dg-guia a{color:#a9c2e6}
+      /* orientação particular da delegação */
+      #delegacao .dg-orient{background:#101d31;border:1px solid #2c4a70;border-left:4px solid #6aa6e8;border-radius:12px;padding:12px 18px;margin-bottom:16px}
+      #delegacao .dg-orient>summary{cursor:pointer;color:#eaf1fb;font-weight:600;font-size:.98rem;list-style:none}
+      #delegacao .dg-orient>summary::-webkit-details-marker{display:none}
+      #delegacao .dg-orient>summary::before{content:"▸ ";color:#6aa6e8}
+      #delegacao .dg-orient[open]>summary::before{content:"▾ "}
+      #delegacao .dg-orient>summary span{color:#8ea3bf;font-weight:400;font-size:.85rem}
+      #delegacao .dg-or-body{margin-top:10px}
+      #delegacao .dg-or-eixo{color:#dfe8f5;font-size:.93rem;line-height:1.65;margin:.2rem 0 .8rem}
+      #delegacao .dg-or-top{border-top:1px solid #23384f;padding-top:10px;margin-top:10px}
+      #delegacao .dg-or-num{display:block;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#c9a24a;margin-bottom:3px}
+      #delegacao .dg-or-top b{color:#eaf1fb;font-size:.92rem}
+      #delegacao .dg-or-top p{color:#cfdcec;font-size:.9rem;line-height:1.65;margin:.4rem 0 0}
+      #delegacao .dg-or-bloco,#delegacao .dg-or-evitar{margin-top:12px;padding:10px 13px;border-radius:8px;font-size:.89rem;line-height:1.6}
+      #delegacao .dg-or-bloco{background:#0d1626;border:1px solid #23384f}
+      #delegacao .dg-or-evitar{background:#2a1616;border:1px solid #5f2b2b}
+      #delegacao .dg-or-bloco b,#delegacao .dg-or-evitar b{display:block;color:#eaf1fb;margin-bottom:3px;font-size:.84rem}
+      #delegacao .dg-or-bloco p,#delegacao .dg-or-evitar p{margin:0;color:#cfdcec}
+      /* régua de formato do YMUNB + blocos por tópico */
+      #delegacao .dg-regra{background:#0d1626;border:1px solid #23384f;border-radius:10px;padding:12px 16px;margin:10px 0 16px}
+      #delegacao .dg-regra b{color:#eaf1fb;font-size:.86rem}
+      #delegacao .dg-regra ul{margin:8px 0 0;padding-left:20px;color:#cfdcec;font-size:.86rem;line-height:1.6}
+      #delegacao .dg-regra li{margin:4px 0}
+      #delegacao .dg-regra code{background:#16233b;border-radius:4px;padding:1px 5px;font-size:.85em;color:#f0e2a6}
+      #delegacao .dg-regra-nota{color:#8ea3bf;font-size:.82rem;margin:9px 0 0}
+      #delegacao .dg-topico{border:1px solid #24344f;border-radius:12px;padding:4px 16px 12px;margin:16px 0}
+      #delegacao .dg-topico-head{margin:12px 0 4px}
+      #delegacao .dg-topico-num{display:block;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#c9a24a;margin-bottom:3px}
+      #delegacao .dg-topico-head b{color:#eaf1fb;font-size:.95rem}
+      #delegacao .dg-topico-en{display:block;color:#8ea3bf;font-size:.84rem;font-style:italic;margin-top:2px}
+      #delegacao .dg-cont{display:inline-block;margin-top:6px;font-size:.76rem;padding:2px 9px;border-radius:999px;background:#24344f;color:#cfe0f5}
+      #delegacao .dg-cont.ok{background:#16361f;color:#bdf0cd}
+      #delegacao .dg-cont.curto,#delegacao .dg-cont.longo{background:#3a3416;color:#f0e2a6}
+      #delegacao .dg-cont.vazio{background:#2a1616;color:#f0b6b6}
+      #delegacao .dg-en{color:#8ea3bf;font-weight:400}
       #delegacao .dg-comites{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}
       #delegacao .dg-comite-card{background:#0d1626;border:1px solid #2c3e5c;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start}
       #delegacao .dg-comite-card:hover{border-color:#c9a24a}
@@ -778,6 +813,11 @@
       #painel-delegacao table.dg-turma{width:100%;border-collapse:collapse;font-size:.9rem}
       #painel-delegacao table.dg-turma th,#painel-delegacao table.dg-turma td{padding:7px 8px;border-bottom:1px solid #1e2c44;text-align:left;vertical-align:top}
       #painel-delegacao table.dg-turma th{color:#9fb0c8;font-weight:600;font-size:.82rem}
+      #painel-delegacao .dg-corr-top{margin:18px 0 2px;padding:8px 11px;border-radius:8px;background:#101d31;border-left:3px solid #c9a24a;color:#eaf1fb;font-size:.92rem}
+      #painel-delegacao .dg-cont{display:inline-block;margin-left:8px;font-size:.78rem;padding:2px 8px;border-radius:999px;background:#24344f;color:#cfe0f5}
+      #painel-delegacao .dg-cont.ok{background:#16361f;color:#bdf0cd}
+      #painel-delegacao .dg-cont.curto,#painel-delegacao .dg-cont.longo{background:#3a3416;color:#f0e2a6}
+      #painel-delegacao .dg-cont.vazio{background:#3a1616;color:#f0b6b6}
     </style>
     <div id="dg-prof-comite-tabs"></div>
     <h3 style="margin-top:8px">📢 Aviso ao vivo para a turma</h3>

@@ -29,6 +29,27 @@ const DELEGACOES_CND = [
   "Nigéria", "Guiné-Bissau", "Gana", "África do Sul", "Quênia", "Marrocos", "Tanzânia",
   "Austrália", "Nova Zelândia",
 ];
+// Estrutura do position paper. A regra oficial do YMUN Brasil é "you should
+// spend one page on each topic of your committee" — uma página POR TÓPICO, não
+// uma página no documento inteiro, com os tópicos em seções separadas do MESMO
+// documento. Paper a que falta um tópico é considerado incompleto e fica fora da
+// premiação. Como CND e UNEA são órgãos do ECOSOC/AG, os dois seguem o formato
+// GA/ECOSOC: três seções por tópico, a primeira curta e a terceira a maior.
+const SECOES_GA = [
+  { suf: "acoes",    rot: "Ações internacionais (passado/presente)", en: "Past/Current International Actions", dica: "a MAIS CURTA — como o mundo já tratou o tema" },
+  { suf: "posicao",  rot: "Posição do país",                         en: "Country Position",                   dica: "o que a delegação defende e por quê" },
+  { suf: "solucoes", rot: "Soluções propostas",                      en: "Proposed Future Solutions",          dica: "a MAIOR — iniciativas com nome próprio" },
+];
+// Uma página em Times New Roman 12, margens de 2,54 cm e espaço simples dá por
+// volta de 500 palavras. A faixa é o alvo de cada TÓPICO, não do documento.
+const META_MIN = 450, META_MAX = 600;
+// Chaves (t1_acoes, t2_posicao…) vão cruas para o RTDB — não renomear sem migrar
+// os documentos já gravados.
+const camposPorTopico = topicos => topicos.flatMap((_, i) =>
+  SECOES_GA.map(s => ({ k: "t" + (i + 1) + "_" + s.suf, rot: s.rot, en: s.en, dica: s.dica, topico: i })));
+
+const TOPICOS_CND = ["Cooperação global contra o tráfico transnacional de drogas", "Transição de economias rurais para fora dos cultivos ilícitos"];
+
 const COMITES = {
   "unea-ymunb-2026": {
     sigla: "UNEA",
@@ -37,14 +58,30 @@ const COMITES = {
     topicos: ["Margem Equatorial da Foz do Amazonas", "Terras Raras / Minerais Críticos (Serra Verde)"],
     briefing: "#unea-briefing",
     paises: DELEGACOES_UNEA,
+    // Mantido na estrutura antiga de propósito: os papers do curso de julho já
+    // estão gravados nestas chaves, e migrar deixaria o texto dos alunos órfão.
+    porTopico: false,
+    campos: [
+      { k: "passadoAtual", rot: "Ações internacionais (passado/presente)", en: "Past/Current International Actions", dica: "o histórico do tema no sistema ONU", topico: 0 },
+      { k: "posicao",      rot: "Posição do país",                         en: "Country Position",                   dica: "o que a delegação defende e por quê", topico: 0 },
+      { k: "solucoes",     rot: "Soluções propostas",                      en: "Proposed Future Solutions",          dica: "iniciativas com nome próprio", topico: 0 },
+    ],
   },
   "cnd-ymunb-2026": {
     sigla: "CND",
     nome: "CND — YMUN Brasil 2026",
     desc: "Commission on Narcotic Drugs (comitê em inglês)",
-    topicos: ["Cooperação global contra o tráfico transnacional de drogas", "Transição de economias rurais para fora dos cultivos ilícitos"],
+    topicos: TOPICOS_CND,
+    // Títulos oficiais do guia do chair — é como o tópico aparece para o YMUNB.
+    topicosEn: [
+      "Enhancing Global Cooperation Against Transnational Drug Trafficking",
+      "Transitioning Rural Economies Away from Illicit Crop Cultivation",
+    ],
     briefing: "#cnd-briefing",
     paises: DELEGACOES_CND,
+    idioma: "Comitê em inglês — escreva o paper em inglês.",
+    porTopico: true,
+    campos: camposPorTopico(TOPICOS_CND),
   },
 };
 const COMITE_PADRAO = "unea-ymunb-2026"; // comitê dos registros antigos (antes do multi-comitê)
@@ -85,7 +122,25 @@ const RUBRICA = [
   { k: "coerencia",    rot: "Coerência c/ a política real", max: 25 },
   { k: "solucoes",     rot: "Qualidade das soluções", max: 30 },
 ];
-const notaTotal = f => f ? RUBRICA.reduce((s, r) => s + (Number(f[r.k]) || 0), 0) : 0;
+// No CND a conformidade formal do YMUNB e a cobertura dos DOIS tópicos ganham
+// nota própria — é onde o delegado perde premiação por descuido, não por mérito.
+const RUBRICA_CND = [
+  { k: "conformidade", rot: "Conformidade formal (cabeçalho, TNR 12, MLA)", max: 20 },
+  { k: "cobertura",    rot: "Cobertura dos dois tópicos (~1 página cada)",  max: 10 },
+  { k: "precisao",     rot: "Precisão factual",                             max: 20 },
+  { k: "coerencia",    rot: "Coerência c/ a política real do país",         max: 25 },
+  { k: "solucoes",     rot: "Qualidade das soluções",                       max: 25 },
+];
+// A rubrica é por comitê, mas mora fora de COMITES para não depender da ordem de
+// declaração. Feedback já gravado da UNEA continua lido pela rubrica antiga.
+const RUBRICAS = { "cnd-ymunb-2026": RUBRICA_CND };
+const rubricaDe = cid => RUBRICAS[cid] || RUBRICA;
+const notaTotal = (f, cid) => f ? rubricaDe(cid).reduce((s, r) => s + (Number(f[r.k]) || 0), 0) : 0;
+
+const palavras = s => (s || "").trim() ? (s || "").trim().split(/\s+/).length : 0;
+// Palavras de um tópico = soma das 3 seções dele.
+const palavrasTopico = (com, doc, i) => (com.campos || []).filter(c => c.topico === i)
+  .reduce((n, c) => n + palavras(doc && doc[c.k]), 0);
 
 // Remover uma delegação da lista NÃO apaga o paper que o aluno já gravou — e o
 // professor precisa continuar enxergando esse paper. Por isso os painéis do
@@ -105,14 +160,64 @@ const tagOrfa = id => ehOrfa(id)
 // Rótulo de estado no painel do professor. Quando já existe nota mas o estado
 // não é "corrigido", o paper foi corrigido e REABERTO para o aluno revisar —
 // e o rótulo diz isso, em vez de mostrar só "Rascunho" (que parece não corrigido).
-function badgeEstado(est, fb, comNota) {
+function badgeEstado(est, fb, comNota, cid) {
   const b = ESTADO[est] || ESTADO.rascunho;
   if (fb && est !== "corrigido") {
-    const n = comNota ? " (" + notaTotal(fb) + "/100)" : "";
-    return '<span class="dg-badge st-corr" title="Você já corrigiu este paper (nota ' + notaTotal(fb) +
+    const n = comNota ? " (" + notaTotal(fb, cid) + "/100)" : "";
+    return '<span class="dg-badge st-corr" title="Você já corrigiu este paper (nota ' + notaTotal(fb, cid) +
       "/100) e o reabriu para o aluno revisar. A nota anterior está guardada; o aluno vê a correção e reenvia.\">↺ reaberto · já corrigido" + n + "</span>";
   }
-  return '<span class="dg-badge ' + b.cls + '">' + b.rot + (comNota && fb ? " · nota " + notaTotal(fb) + "/100" : "") + "</span>";
+  return '<span class="dg-badge ' + b.cls + '">' + b.rot + (comNota && fb ? " · nota " + notaTotal(fb, cid) + "/100" : "") + "</span>";
+}
+
+/* =====================  ORIENTAÇÃO PARTICULAR POR DELEGAÇÃO  ===================== */
+// Cada aluno vê só a da própria delegação, dentro da war-room. O conteúdo é
+// ancorado no guia oficial do chair (Aaron Ma) de propósito: argumento que ele
+// reconhece de leitura própria pesa mais do que argumento genérico.
+const ORIENTACOES = {
+  "cnd-ymunb-2026": {
+    espanha: {
+      eixo: "A Espanha é a <b>ponte entre a Europa e a América Latina</b>: é a principal porta de entrada da cocaína no continente europeu e, ao mesmo tempo, o país europeu com maior capilaridade de cooperação com os países produtores. Ninguém mais neste comitê ocupa esse lugar — construa os dois tópicos em cima dele.",
+      topicos: [
+        "O guia do chair descreve a Europa como <i>mercado de destino</i> e cita os portos da Bélgica e dos Países Baixos — mas <b>não menciona a Espanha</b>. Essa é a sua brecha: traga a rota atlântica e mediterrânea (Galiza, Algeciras, Valência) como a peça que falta no mapa dele. Ativos concretos que só você pode oferecer: o CITCO; o MAOC-N (Centro de Análise e Operações Marítimas – Narcóticos, sediado em Lisboa, do qual a Espanha é fundadora) como modelo pronto de interdição marítima multinacional; a rede espanhola de extradição e assistência jurídica mútua com a América Latina. Ligue isso ao que o guia já valoriza: Projeto CRIMJUST, Operação Lionfish III, a Plataforma de Monitoramento de Drogas do UNODC e o I-24/7 da INTERPOL. <b>Proposta forte:</b> replicar o modelo MAOC-N no Atlântico Sul, com adesão voluntária, somado à ampliação do Programa Global de Controle de Contêineres (UNODC-OMA).",
+        "A Espanha não cultiva. O papel dela é <b>doadora e ponte</b> — e isso é vantagem: você financia sem ter de defender o próprio histórico de erradicação. Use a AECID e o COPOLAD (cooperação UE-CELAC em políticas de drogas, com execução espanhola) como veículos que <i>já existem</i>, em vez de inventar um fundo novo. O argumento decisivo está no próprio guia: o PNIS colombiano falhou por <b>subfinanciamento e atraso nos pagamentos</b>, e o Royal Project tailandês só funcionou com <b>compromisso estatal constante e financiamento internacional</b>. Ou seja, o guia já provou que o gargalo é dinheiro previsível e comprador do outro lado. A Espanha oferece os dois: financiamento via AECID/UE e acesso ao mercado europeu para a cultura lícita.",
+      ],
+      bloco: "Você é a delegada que costura os blocos. De um lado, países de consumo e repressão; do outro, o GRULAC (Colômbia, Bolívia, Peru) pressionando por desenvolvimento e contra erradicação forçada. A Espanha fica firme dentro das três convenções da ONU, mas defende abordagem equilibrada e saúde pública — o que te dá o direito de redigir a linguagem de consenso. Quem escreve o texto de consenso ganha o comitê.",
+      evitar: "Não ponha a Espanha como protagonista da erradicação (não é) nem prometa dinheiro sem dizer de onde vem (diga AECID / fundos da UE).",
+    },
+    tailandia: {
+      eixo: "A Tailândia é <b>o caso de sucesso que o próprio guia do chair cita</b> no Tópico 2 — autoridade que nenhuma outra delegação tem. Mas o guia também registra a contradição: a Tailândia virou polo de produção de drogas sintéticas. Delegada boa não esconde a contradição; usa ela.",
+      topicos: [
+        "Seu tema é o Triângulo Dourado e a virada das redes criminosas do cultivo para a <b>manufatura sintética</b> — metanfetamina. O guia diz explicitamente que isso ameaça reduzir a eficácia de intervenções focadas em lavoura, e esse é o seu argumento central: interdição desenhada só para plantação chega atrasada. Ative o que a Tailândia já constrói na região — cooperação no Mekong, controle de precursores químicos (dialogue com o PEN Online, o PICS e o programa GRIDS do INCB, todos no guia) — e o fato de que a instabilidade em Mianmar depois do golpe de 2021 exporta o problema para os vizinhos. <b>Proposta forte:</b> mecanismo regional de rastreamento de precursores no Sudeste Asiático, porque a Tailândia é vizinha do problema e tem capacidade estatal para operar.",
+        "Aqui você fala de casa. O Royal Project (a partir dos anos 1970) tirou comunidades das terras altas do ópio para café e macadâmia, com investimento em infraestrutura e educação. Mas <b>não venda o modelo como milagre</b> — o guia registra a condição: exigiu compromisso governamental constante e financiamento internacional por décadas. Sua tese: desenvolvimento alternativo funciona, mas em escala de geração, não de mandato eleitoral, e por isso precisa de financiamento previsível e plurianual. Ofereça o que ninguém mais pode: <b>cooperação Sul-Sul técnica</b> — quem fez o Royal Project treinar quem está começando, inclusive na América Latina e na África Ocidental.",
+      ],
+      bloco: "Você é a prova viva de que a via do desenvolvimento funciona, o que te alia naturalmente à Colômbia, à Bolívia e ao Peru contra a erradicação forçada. Mas, como Estado asiático com aplicação da lei dura e polo sintético, você conversa também com o bloco da repressão. Explore isso: a Tailândia é a delegação que pode dizer “nós fizemos os dois” sem soar contraditória.",
+      evitar: "Não trate o Royal Project como receita replicável em qualquer lugar — o próprio guia diz que dependeu de condições específicas. E não ignore a metanfetamina: se você só falar de papoula, o chair percebe que você leu metade do guia.",
+    },
+    colombia: {
+      eixo: "A Colômbia é <b>o país sobre o qual o comitê inteiro vai falar</b>, com ou sem você. Sua tarefa não é se defender: é assumir a autoridade de quem pagou o preço mais alto e, por isso, tem o direito de dizer o que funciona e o que não funciona.",
+      topicos: [
+        "O guia coloca a América do Sul como polo primário de produção de cocaína e aponta a <b>falta de aplicação da lei em áreas rurais</b> como agravante. Não fuja disso — reenquadre. O argumento colombiano: o vazio não é de repressão, é de <b>presença estatal</b>, e território sem estrada, escola e crédito não se resolve com apreensão. Use o CRIMJUST e a Operação Lionfish III (ambos no guia) como prova de que a Colômbia já é parceira operacional de peso, e desloque a discussão para a <b>corresponsabilidade</b>: enquanto houver demanda nos países consumidores e armas e precursores entrando pela via inversa, interdição na origem é enxugar gelo. <b>Proposta forte:</b> rastrear o fluxo reverso — precursores químicos e armas — com a mesma energia dedicada ao fluxo de saída.",
+        "Este tópico é seu. O guia dá o número: o PNIS (2017) inscreveu mais de <b>99 mil famílias</b> que arrancaram coca voluntariamente, e falhou por <b>subfinanciamento, atraso nos pagamentos e ameaça de grupos armados</b> — não por falta de adesão do agricultor. Essa é a frase mais importante do seu paper: <i>o camponês cumpriu a parte dele</i>. Daí sai a proposta com força moral: substituição voluntária só funciona com pagamento pontual, segurança para a família que troca de cultura e comprador garantido para o produto lícito. Compare com o modelo boliviano de controle social (também no guia) e com o colapso afegão pós-2022, que o guia usa para mostrar que erradicação sem renda substituta gera insegurança alimentar.",
+      ],
+      bloco: "Você lidera o GRULAC junto com Bolívia e Peru, e tem aliada natural na Tailândia, que viveu a mesma transição. Seu antagonismo é com quem quer resolver tudo por interdição e erradicação. Mas cuidado: como o comitê é do ECOSOC e opera dentro das três convenções, proposta que soe como legalização perde votos. Fale em desenvolvimento, saúde pública e corresponsabilidade — não em ruptura com o regime dos tratados.",
+      evitar: "Não entre em vitimização, e não proponha nada que dependa só de dinheiro externo sem contrapartida colombiana — mostre o que a Colômbia põe na mesa (capacidade institucional, dados de cultivo, experiência de implementação).",
+    },
+  },
+};
+
+function painelOrientacao(cid, delId, pais, com) {
+  const o = (ORIENTACOES[cid] || {})[delId];
+  if (!o) return "";
+  const tops = com.topicos.map((t, i) => o.topicos && o.topicos[i]
+    ? '<div class="dg-or-top"><span class="dg-or-num">Tópico ' + (i + 1) + "</span><b>" + he(t) + "</b><p>" + o.topicos[i] + "</p></div>"
+    : "").join("");
+  return '<details class="dg-orient" open><summary>🎯 Orientação da delegação de ' + he(pais) +
+    " <span>— preparada para você</span></summary>" +
+    '<div class="dg-or-body"><p class="dg-or-eixo">' + o.eixo + "</p>" + tops +
+    (o.bloco ? '<div class="dg-or-bloco"><b>Seu lugar no comitê</b><p>' + o.bloco + "</p></div>" : "") +
+    (o.evitar ? '<div class="dg-or-evitar"><b>Não caia em</b><p>' + o.evitar + "</p></div>" : "") +
+    "</div></details>";
 }
 
 let IS_TEACHER = false, INIT = false;
@@ -135,8 +240,16 @@ function rascunhoDocsMapeado() {
   const solucoes = aliancas
     ? (propostas ? propostas + "\n\nAlianças e negociação:\n" + aliancas : "Alianças e negociação:\n" + aliancas)
     : propostas;
-  const map = { passadoAtual: g("pp_contexto"), posicao: g("pp_posicao"), solucoes };
-  return { map, temAlgo: !!(map.passadoAtual || map.posicao || map.solucoes) };
+  // A aba Documentos tem um único conjunto de campos. Num comitê por tópico ele
+  // vira ponto de partida do Tópico 1 — o aluno reaproveita e escreve o resto.
+  const ch = comInfo(cidDoAluno()).porTopico
+    ? { acoes: "t1_acoes", posicao: "t1_posicao", solucoes: "t1_solucoes" }
+    : { acoes: "passadoAtual", posicao: "posicao", solucoes: "solucoes" };
+  const map = {};
+  if (g("pp_contexto")) map[ch.acoes] = g("pp_contexto");
+  if (g("pp_posicao")) map[ch.posicao] = g("pp_posicao");
+  if (solucoes) map[ch.solucoes] = solucoes;
+  return { map, temAlgo: Object.keys(map).length > 0 };
 }
 // professor — DELEGACOES/DOCS_ALL/FB_ALL são a fatia do comitê ATIVO (aba),
 // preenchidas a partir de DELEG_C/DOCS_C/FB_C no início de cada renderProf().
@@ -220,7 +333,9 @@ function comoFunciona(passo, com) {
     com
       ? 'Leia o <a href="' + com.briefing + '">briefing do comitê ' + he(com.sigla) + "</a> (tópicos e contexto)"
       : "Leia o briefing do seu comitê (tópicos e contexto)",
-    "Escreva seu position paper nas 3 seções",
+    com && com.porTopico
+      ? "Escreva o position paper: <b>3 seções em cada um dos 2 tópicos</b>"
+      : "Escreva seu position paper nas 3 seções",
     "Entregue ao professor e aguarde a correção",
   ];
   return '<div class="dg-guia"><b>Como funciona</b><ol>' +
@@ -294,9 +409,24 @@ function renderAluno() {
   const travado = est !== "rascunho";
   const badge = ESTADO[est] || ESTADO.rascunho;
 
-  const campo = (id, rot, dica, val) =>
-    '<div class="field"><label>' + rot + (dica ? ' <span class="hint">— ' + dica + "</span>" : "") + "</label>" +
-    '<textarea class="dg-ta" data-pp="' + id + '" rows="5"' + (travado ? " disabled" : "") + ">" + he(val || "") + "</textarea></div>";
+  const campo = (c, n) =>
+    '<div class="field"><label>' + n + ". " + c.rot +
+    (c.en ? ' <span class="dg-en">(' + he(c.en) + ")</span>" : "") +
+    (c.dica ? ' <span class="hint">— ' + c.dica + "</span>" : "") + "</label>" +
+    '<textarea class="dg-ta" data-pp="' + c.k + '" data-topico="' + c.topico + '" rows="5"' + (travado ? " disabled" : "") + ">" + he((DOC && DOC[c.k]) || "") + "</textarea></div>";
+
+  // Blocos do paper. Com porTopico, cada tópico é uma página própria e ganha
+  // contador — é a regra do YMUNB que mais derruba delegado por descuido.
+  const blocos = com.porTopico
+    ? com.topicos.map((t, i) =>
+        '<div class="dg-topico" data-topico="' + i + '">' +
+        '<div class="dg-topico-head"><span class="dg-topico-num">Tópico ' + (i + 1) + " · uma página</span>" +
+        "<b>" + he(t) + "</b>" +
+        (com.topicosEn && com.topicosEn[i] ? '<span class="dg-topico-en">' + he(com.topicosEn[i]) + "</span>" : "") +
+        contadorTopico(com, i, DOC) + "</div>" +
+        com.campos.filter(c => c.topico === i).map((c, j) => campo(c, j + 1)).join("") +
+        "</div>").join("")
+    : com.campos.map((c, j) => campo(c, j + 1)).join("");
 
   // A devolutiva aparece sempre que existir — inclusive quando o professor
   // reabre o paper para revisão (estado volta a "rascunho"). Antes ela sumia
@@ -304,10 +434,10 @@ function renderAluno() {
   let fbHtml = "";
   if (FB) {
     const reaberto = est !== "corrigido";
-    fbHtml = '<div class="dg-fb" id="dg-correcao"><b>📝 Correção do professor — nota ' + notaTotal(FB) + "/100</b>" +
+    fbHtml = '<div class="dg-fb" id="dg-correcao"><b>📝 Correção do professor — nota ' + notaTotal(FB, cid) + "/100</b>" +
       (reaberto ? '<p class="dg-fb-reab">Seu position paper foi <b>reaberto para revisão</b>. Use a correção abaixo como guia, ajuste o texto e entregue de novo.</p>' : "") +
       '<table class="dg-rub"><tbody>' +
-      RUBRICA.map(r => "<tr><td>" + r.rot + "</td><td>" + (Number(FB[r.k]) || 0) + "/" + r.max + "</td></tr>").join("") +
+      rubricaDe(cid).map(r => "<tr><td>" + r.rot + "</td><td>" + (Number(FB[r.k]) || 0) + "/" + r.max + "</td></tr>").join("") +
       "</tbody></table>" +
       (FB.comentario ? '<p class="dg-coment">' + he(FB.comentario) + "</p>" : "") + "</div>";
   }
@@ -316,6 +446,7 @@ function renderAluno() {
   root.innerHTML =
     avisoBanner(cid) +
     comoFunciona(passo, com) +
+    painelOrientacao(cid, MINHA.delegacaoId, pais, com) +
     '<div class="dg-card">' +
       '<div class="dg-head"><div><span class="tag">' + he(com.nome) + '</span>' +
         '<h3 style="margin:.4rem 0 .2rem">Delegação: ' + he(pais) + "</h3>" +
@@ -325,13 +456,13 @@ function renderAluno() {
       (travado ? '<p class="dg-lock">📄 Position paper entregue em ' + fmt(DOC && DOC.submittedAt) + ". Ele fica travado para edição — fale com o professor se precisar reabrir.</p>" : "") +
       fbHtml + // no topo: a correção é a primeira coisa que o aluno precisa ver
       '<h4 style="margin:18px 0 4px">Position paper</h4>' +
+      regraFormato(com) +
       (!travado && rascunhoDocsMapeado().temAlgo
         ? '<div class="dg-puxar"><button class="btn ghost" id="dg-puxar-docs">⬇ Puxar meu rascunho da aba Documentos</button>' +
-          '<span class="hint">preenche as 3 seções com o que você escreveu em <b>Documentos</b> — você revisa antes de entregar</span></div>'
+          '<span class="hint">preenche ' + (com.porTopico ? "as seções do <b>Tópico 1</b>" : "as 3 seções") +
+          ' com o que você escreveu em <b>Documentos</b> — você revisa antes de entregar</span></div>'
         : "") +
-      campo("passadoAtual", "1. Ações internacionais (passado/presente)", "o histórico do tema no sistema ONU", DOC && DOC.passadoAtual) +
-      campo("posicao", "2. Posição do país (Country Position)", "o que a delegação defende e por quê", DOC && DOC.posicao) +
-      campo("solucoes", "3. Soluções propostas (Proposed Solutions)", "iniciativas com nome próprio", DOC && DOC.solucoes) +
+      blocos +
       (travado ? "" :
         '<div class="toolbar"><button class="btn primary" id="dg-salvar">💾 Salvar rascunho</button>' +
         '<button class="btn gold" id="dg-entregar">📨 Entregar ao professor</button>' +
@@ -340,11 +471,52 @@ function renderAluno() {
   paintStatus(); // repõe o aviso que o re-render acabou de apagar
 }
 
-function coletarPP() {
-  const g = id => { const t = document.querySelector('.dg-ta[data-pp="' + id + '"]'); return t ? t.value : ""; };
-  return { passadoAtual: g("passadoAtual"), posicao: g("posicao"), solucoes: g("solucoes") };
+// Régua de formato oficial do YMUNB, à vista enquanto o aluno escreve.
+function regraFormato(com) {
+  if (!com.porTopico) return "";
+  return '<div class="dg-regra"><b>Formato exigido pelo YMUN Brasil</b><ul>' +
+    "<li><b>Uma página por tópico</b> — os dois tópicos no mesmo documento, em seções separadas. Faltou um tópico, o paper é considerado incompleto e fica <b>fora da premiação</b>.</li>" +
+    "<li>Times New Roman 12, margens de 2,54 cm.</li>" +
+    "<li>No canto superior esquerdo da 1ª página: <code>Committee</code> / <code>Delegate Name</code> (seu nome real) / <code>Position</code> (seu país).</li>" +
+    "<li>Citações <b>MLA no corpo do texto</b> (não use notas de rodapé); bibliografia só no fim do documento inteiro.</li>" +
+    "<li>Entrega ao YMUNB: link do <b>Google Docs</b> com compartilhamento <b>“qualquer pessoa com o link” como EDITOR</b>.</li>" +
+    (com.idioma ? "<li>" + he(com.idioma) + "</li>" : "") +
+    '</ul><p class="dg-regra-nota">Aqui na plataforma você escreve por seções para o professor corrigir; na hora de enviar ao YMUNB, monte o documento na ordem acima.</p></div>';
 }
+
+// Contador de palavras do tópico. A faixa-alvo é por TÓPICO, não pelo documento.
+function contadorTopico(com, i, doc) {
+  const n = palavrasTopico(com, doc, i);
+  let cls = "ok", txt = "≈ 1 página ✓";
+  if (n === 0) { cls = "vazio"; txt = "não começou"; }
+  else if (n < META_MIN) { cls = "curto"; txt = "curto para uma página"; }
+  else if (n > META_MAX) { cls = "longo"; txt = "passou de uma página"; }
+  return '<span class="dg-cont ' + cls + '" data-cont="' + i + '">' + n + " palavras — " + txt + "</span>";
+}
+
+function coletarPP() {
+  const out = {};
+  comInfo(cidDoAluno()).campos.forEach(c => {
+    const t = document.querySelector('.dg-ta[data-pp="' + c.k + '"]');
+    out[c.k] = t ? t.value : ((DOC && DOC[c.k]) || "");
+  });
+  return out;
+}
+const ppVazio = (com, pp) => !com.campos.some(c => (pp[c.k] || "").trim());
 function docPath() { return "docsDelegacao/" + cidDoAluno() + "/" + MINHA.delegacaoId + "/" + PP; }
+
+// Contador de palavras ao vivo. Troca só o <span> do tópico — re-renderizar a
+// seção aqui tiraria o foco do textarea no meio da digitação.
+document.addEventListener("input", e => {
+  const ta = e.target.closest(".dg-ta");
+  if (!ta || !MINHA) return;
+  const i = Number(ta.dataset.topico || 0);
+  const alvo = document.querySelector('.dg-cont[data-cont="' + i + '"]');
+  if (!alvo) return;
+  const tmp = document.createElement("div");
+  tmp.innerHTML = contadorTopico(comInfo(cidDoAluno()), i, coletarPP());
+  alvo.replaceWith(tmp.firstChild);
+});
 
 // Aluno escolhe comitê / país e troca (auto-atendimento)
 document.addEventListener("click", async e => {
@@ -423,7 +595,17 @@ document.addEventListener("click", async e => {
   }
   if (e.target.id === "dg-entregar") {
     const pp = coletarPP();
-    if (!(pp.passadoAtual + pp.posicao + pp.solucoes).trim()) { alert("Escreva o position paper antes de entregar."); return; }
+    const com = comInfo(cidDoAluno());
+    if (ppVazio(com, pp)) { alert("Escreva o position paper antes de entregar."); return; }
+    // Entregar com um tópico em branco é o erro que tira o paper da premiação.
+    // Avisa de forma explícita, mas não bloqueia — a decisão é do delegado.
+    if (com.porTopico) {
+      const faltando = com.topicos.map((t, i) => palavrasTopico(com, pp, i) ? null : i + 1).filter(Boolean);
+      if (faltando.length && !confirm(
+        "⚠ O Tópico " + faltando.join(" e o Tópico ") + " está em branco.\n\n" +
+        "Pelas regras do YMUN Brasil, position paper sem um dos tópicos é considerado INCOMPLETO e fica fora da premiação.\n\n" +
+        "Entregar mesmo assim?")) return;
+    }
     if (!confirm("Entregar o position paper ao professor? Depois de entregar você não poderá mais editá-lo (só o professor reabre).")) return;
     try {
       await update(ref(db, docPath()), { ...pp, estado: "entregue", updatedBy: auth.currentUser.uid, updatedAt: Date.now(), submittedAt: Date.now() });
@@ -516,11 +698,11 @@ function renderProfPainel() {
     // Aluno escreveu na aba Documentos (progresso) mas não entregou pela Delegação?
     const nDocs = !doc && d.membros ? Math.max(...Object.keys(d.membros).map(ppDocsDoAluno), 0) : 0;
     const estCel = doc
-      ? badgeEstado(est, fb, false)
+      ? badgeEstado(est, fb, false, PROF_COMITE)
       : (nDocs
         ? '<span class="dg-badge st-entregue" title="O aluno preencheu o Position Paper no editor da aba Documentos (' + nDocs + '/5 campos), mas não entregou pela aba Delegação. Peça que ele copie o texto para a aba Delegação e clique Entregar.">✏️ rascunho na aba Documentos (' + nDocs + '/5)</span>'
         : '<span style="color:#8ea3bf">— sem paper —</span>');
-    const nota = fb ? notaTotal(fb) + "/100" : "—";
+    const nota = fb ? notaTotal(fb, PROF_COMITE) + "/100" : "—";
     const ult = doc && (doc.updatedAt || doc.submittedAt) ? fmt(doc.updatedAt || doc.submittedAt) : "—";
     return "<tr><td><b>" + he(paisDe(id)) + "</b>" + tagOrfa(id) + "</td><td>" + membros + "</td><td>" + estCel + "</td><td>" + nota + "</td><td>" + ult + "</td></tr>";
   }).join("");
@@ -591,7 +773,7 @@ function renderProfCorrecao() {
     const doc = DOCS_ALL[id][PP], est = estadoDe(doc);
     const fb = (FB_ALL[id] && FB_ALL[id][PP]) || null;
     return '<div class="prof-item"><div class="prof-head"><b>' + he(paisDe(id)) + '</b> ' +
-      badgeEstado(est, fb, true) + tagOrfa(id) + " " +
+      badgeEstado(est, fb, true, PROF_COMITE) + tagOrfa(id) + " " +
       '<button class="btn ghost dg-corrigir" data-id="' + id + '">Abrir / corrigir</button></div>' +
       '<div class="dg-corr-box" id="dg-corr-' + id + '" hidden></div></div>';
   }).join("");
@@ -607,11 +789,27 @@ function renderProfCorrecao() {
 }
 
 function boxCorrecao(id) {
-  const d = DELEGACOES[id] || {}, doc = (DOCS_ALL[id] && DOCS_ALL[id][PP]) || {}, fb = (FB_ALL[id] && FB_ALL[id][PP]) || {};
+  const com = comInfo(PROF_COMITE);
+  const doc = (DOCS_ALL[id] && DOCS_ALL[id][PP]) || {}, fb = (FB_ALL[id] && FB_ALL[id][PP]) || {};
   const secao = (rot, val) => "<h5 style=\"margin:12px 0 2px\">" + rot + '</h5><div class="dg-lido">' + (he(val) || "<i>(vazio)</i>") + "</div>";
-  const inputs = RUBRICA.map(r =>
+  const campos = cs => cs.map((c, j) => secao(j + 1 + ". " + c.rot, doc[c.k])).join("");
+  // Num comitê por tópico o professor vê o paper como o chair vai ver: uma
+  // página por tópico, com o tamanho de cada uma à vista.
+  const corpo = com.porTopico
+    ? com.topicos.map((t, i) => {
+        const n = palavrasTopico(com, doc, i);
+        const cls = n === 0 ? "vazio" : n < META_MIN ? "curto" : n > META_MAX ? "longo" : "ok";
+        const txt = n === 0 ? "tópico em branco — paper incompleto"
+          : n < META_MIN ? n + " palavras — abaixo de uma página"
+          : n > META_MAX ? n + " palavras — acima de uma página"
+          : n + " palavras — ≈ 1 página ✓";
+        return '<div class="dg-corr-top"><b>Tópico ' + (i + 1) + ": " + he(t) + '</b><span class="dg-cont ' + cls + '">' + txt + "</span></div>" +
+          campos(com.campos.filter(c => c.topico === i));
+      }).join("")
+    : campos(com.campos);
+  const inputs = rubricaDe(PROF_COMITE).map(r =>
     '<label class="dg-nota">' + r.rot + ' (0–' + r.max + ')<input type="number" min="0" max="' + r.max + '" class="dg-nota-in" data-k="' + r.k + '" value="' + (fb[r.k] != null ? fb[r.k] : "") + '"></label>').join("");
-  return secao("1. Ações internacionais", doc.passadoAtual) + secao("2. Posição do país", doc.posicao) + secao("3. Soluções propostas", doc.solucoes) +
+  return corpo +
     '<div class="dg-notas" data-id="' + id + '">' + inputs +
     '<label class="dg-nota" style="flex:1 1 100%">Comentário<textarea class="dg-coment-in" rows="3">' + he(fb.comentario || "") + "</textarea></label></div>" +
     '<div class="toolbar"><button class="btn primary dg-lancar" data-id="' + id + '">Lançar nota (marca como corrigido)</button>' +
