@@ -313,6 +313,7 @@ function loadExample(){
 function resetAll(){
   if(!confirm("Isso apaga todo o seu trabalho salvo (neste navegador e na nuvem). Continuar?")) return;
   localStorage.removeItem(KEY);
+  localStorage.removeItem(KEY+"_conflito");   // a cópia de conflito também é "trabalho salvo"
   document.querySelectorAll("[data-save]").forEach(n=>{
     if(n.type==="checkbox"){ n.checked=false; toggleDone(n); } else n.value="";
   });

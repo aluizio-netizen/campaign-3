@@ -93,6 +93,24 @@
   .gate-alert.ok{display:block;background:#1d3a28;color:#a6f1c0;border:1px solid #2a6b45}
   #onu-userbar{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:.85rem;color:#9fb0c8}
   #onu-userbar a{color:#c9a24a;cursor:pointer}
+  /* Conflito de sincronização: o mesmo trabalho editado em dois lugares.
+     Escolha obrigatória — não fecha no ×, no clique fora nem no Esc, porque
+     não existe padrão seguro: qualquer lado escolhido sozinho descartaria algo. */
+  #conflito{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;
+    background:rgba(8,12,22,.86);padding:20px}
+  body.conflito-open #conflito{display:flex}
+  .conflito-card{max-width:520px;text-align:left}
+  .conflito-card h2{text-align:center}
+  .conflito-card .gate-sub{text-align:center}
+  .conflito-ops{display:grid;gap:10px;margin-top:6px}
+  .conflito-op{display:block;width:100%;text-align:left;cursor:pointer;
+    background:#0d1626;border:1px solid #2c3e5c;border-radius:8px;padding:13px 15px;color:#eaf1fb;
+    font-family:inherit;font-size:.95rem;transition:border-color .15s,background .15s}
+  .conflito-op:hover{border-color:#c9a24a;background:#12203a}
+  .conflito-op:focus-visible{outline:2px solid #c9a24a;outline-offset:2px}
+  .conflito-op .rot{display:block;font-weight:700;color:#f3ecd9;margin-bottom:3px}
+  .conflito-op .det{display:block;font-size:.83rem;color:#9fb0c8;line-height:1.45}
+  .conflito-nota{margin:14px 0 0;font-size:.82rem;color:#9fb0c8;line-height:1.5;text-align:center}
 </style>
 
 <!-- Portão de acesso (Firebase Auth) -->
@@ -115,6 +133,27 @@
     </div>
   </div>
 </div>
+
+<!-- Conflito de sincronização (duas versões divergentes do mesmo trabalho) -->
+<div id="conflito" role="dialog" aria-modal="true" aria-labelledby="conflito-title" aria-hidden="true">
+  <div class="gate-card conflito-card">
+    <h2 id="conflito-title">Duas versões do seu trabalho</h2>
+    <p class="gate-sub">Este material foi editado em dois lugares diferentes e as versões não coincidem.
+      Escolha qual manter — a outra fica guardada e nada é apagado.</p>
+    <div class="conflito-ops">
+      <button type="button" class="conflito-op" id="conflito-nuvem">
+        <span class="rot">Manter a versão da nuvem</span>
+        <span class="det" id="conflito-det-nuvem"></span>
+      </button>
+      <button type="button" class="conflito-op" id="conflito-local">
+        <span class="rot">Manter a versão deste navegador</span>
+        <span class="det" id="conflito-det-local"></span>
+      </button>
+    </div>
+    <p class="conflito-nota">Na dúvida, escolha a que tiver mais conteúdo. A outra continua recuperável.</p>
+  </div>
+</div>
+
 <div id="site">
 
 <div id="pending-banner">✅ Conta criada! O professor precisa aprovar seu acesso à área do delegado — quando ele aprovar, esta página libera sozinha. <a href="#" onclick="location.reload();return false">Recarregar</a></div>
@@ -1099,7 +1138,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
          sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+import { decideSync, same, hasContent } from "./assets/sync.js";
 
 const app = initializeApp({
       apiKey: "AIzaSyArEIA1vJGcPPLJiPC-_lAvvM7jHf6zA2Y",
@@ -1170,43 +1210,195 @@ document.getElementById('gate-forgot').onclick = async e=>{
 };
 
 /* ---------- Progresso na nuvem (progresso/<uid> no Realtime DB) ----------
-   Cada salvamento local também vai para a nuvem (com debounce). Ao logar,
-   compara timestamps: se a nuvem for mais recente, ela preenche os campos;
-   senão, o trabalho local sobe. Se a nuvem falhar, o localStorage segue como
-   fallback e o aviso mostra "salvo" (sem "na nuvem"). */
+   Cada salvamento local também vai para a nuvem (com debounce). A ordenação
+   entre as duas pontas usa REVISÃO — contador que só cresce, incrementado por
+   transação no servidor — e nunca horário: relógios de máquinas diferentes não
+   são comparáveis, e comparar os dois descartava trabalho em silêncio.
+   A decisão está isolada e testada em assets/sync.js.
+   Se a nuvem falhar, o localStorage segue como fallback e o aviso mostra
+   "salvo" (sem "na nuvem"). */
+const K       = 'aluizio_onu_mun_v1';
+const K_TS    = K + '_ts';        // informativo apenas — não decide nada
+const K_REV   = K + '_rev';       // última revisão que ESTE navegador sincronizou
+const K_DIRTY = K + '_dirty';     // há edição local posterior a K_REV
+const K_BAK   = K + '_conflito';  // cópia de segurança da ponta preterida
+
 let cloudTimer;
 window.__cloudOk = false;
+
 function setSync(msg, ok){
   const el = document.getElementById('syncStatus');
   if (el){ el.textContent = msg; el.style.color = ok ? '#1E8E5A' : '#b3261e'; }
 }
-window.__cloudSave = (state)=>{
+function getBaseRev(){
+  const v = parseInt(localStorage.getItem(K_REV) ?? '', 10);
+  return Number.isFinite(v) ? v : null;
+}
+function setBaseRev(r){ try{ localStorage.setItem(K_REV, String(r)); }catch(e){} }
+function isDirty(){ return localStorage.getItem(K_DIRTY) === '1'; }
+function markDirty(){ try{ localStorage.setItem(K_DIRTY, '1'); }catch(e){} }
+function clearDirty(){ try{ localStorage.removeItem(K_DIRTY); }catch(e){} }
+
+function aplicarLocal(data, rev){
+  try{
+    localStorage.setItem(K, JSON.stringify(data));
+    localStorage.setItem(K_TS, String(Date.now()));
+  }catch(e){}
+  setBaseRev(rev); clearDirty();
+  if (window.__applyState) window.__applyState(data);
+}
+function guardarCopia(data, motivo){
+  try{
+    localStorage.setItem(K_BAK, JSON.stringify({ data, motivo, em: new Date().toISOString() }));
+  }catch(e){}
+}
+
+/* Sobe o estado local como a próxima revisão. A transação garante que duas
+   abas ou dois aparelhos nunca gravem a mesma revisão.
+
+   Os envios são SERIALIZADOS: onAuthStateChanged dispara mais de uma vez
+   (restauração da sessão e validação do token), e sem isso o envio agendado
+   e o envio disparado pela sincronização gravavam duas revisões para a mesma
+   edição. Enquanto um envio está em voo, o próximo fica pendente e sai depois,
+   sempre com o estado local mais recente — nunca com uma cópia capturada. */
+let enviando = null, reenviar = false;
+
+async function enviarAgora(user){
+  clearTimeout(cloudTimer);
+  if (enviando){ reenviar = true; return enviando; }   // já há um em voo
+  enviando = (async ()=>{
+    try{
+      const state = (window.__getState ? window.__getState() : {}) || {};
+      const res = await runTransaction(ref(db, 'progresso/' + user.uid), atual => ({
+        data:  state,
+        rev:   (atual && Number.isFinite(atual.rev) ? atual.rev : 0) + 1,
+        ts:    Date.now(),          // exibição apenas
+        email: user.email
+      }));
+      if (!res.committed) throw new Error('transação não confirmada');
+      setBaseRev(res.snapshot.val().rev);
+      clearDirty();
+      window.__cloudOk = true;
+      setSync('☁ Sincronizado na nuvem às ' + new Date().toLocaleTimeString('pt-BR'), true);
+    }catch(err){
+      window.__cloudOk = false;
+      setSync('⚠ Não foi possível salvar na nuvem (' + (err.code || err.message) + '). Seu trabalho segue salvo neste navegador.', false);
+    }
+  })();
+  await enviando;
+  enviando = null;
+  if (reenviar){ reenviar = false; return enviarAgora(user); }
+}
+
+window.__cloudSave = ()=>{
+  markDirty();                                  // síncrono: registra a edição já
   const u = auth.currentUser; if (!u) return;
   clearTimeout(cloudTimer);
-  cloudTimer = setTimeout(()=>{
-    set(ref(db, 'progresso/' + u.uid), { data: state, ts: Date.now(), email: u.email })
-      .then(()=>{ window.__cloudOk = true;
-        setSync('☁ Sincronizado na nuvem às ' + new Date().toLocaleTimeString('pt-BR'), true); })
-      .catch(err=>{ window.__cloudOk = false;
-        setSync('⚠ Não foi possível salvar na nuvem (' + (err.code || err.message) + '). Seu trabalho segue salvo neste navegador.', false); });
-  }, 1200);
+  cloudTimer = setTimeout(()=>{ enviarAgora(u); }, 1200);
 };
+
+/* Resumo legível de uma versão, para a escolha ser informada em vez de às cegas. */
+function resumirEstado(s){
+  let campos = 0, marcados = 0, palavras = 0;
+  for (const v of Object.values(s || {})){
+    if (typeof v === 'string' && v.trim()){
+      campos++; palavras += v.trim().split(/\s+/).length;
+    } else if (v === true) marcados++;
+  }
+  const p = [];
+  if (campos)   p.push(campos + (campos === 1 ? ' campo preenchido' : ' campos preenchidos'));
+  if (palavras) p.push(palavras + (palavras === 1 ? ' palavra' : ' palavras'));
+  if (marcados) p.push(marcados + (marcados === 1 ? ' item marcado' : ' itens marcados'));
+  return p.length ? p.join(' · ') : 'sem conteúdo';
+}
+
+/* Modal de conflito. Resolve para true (fica com a nuvem) ou false (fica com o local).
+   Escolha obrigatória: sem × , sem Esc, sem clique fora — não há padrão seguro. */
+function perguntarConflito(local, cloud){
+  return new Promise(resolve => {
+    const dn = document.getElementById('conflito-det-nuvem');
+    const dl = document.getElementById('conflito-det-local');
+    let quando = '';
+    if (cloud && Number.isFinite(cloud.ts)){
+      try{ quando = 'salva em ' + new Date(cloud.ts).toLocaleString('pt-BR') + ' · '; }catch(e){}
+    }
+    if (dn) dn.textContent = quando + resumirEstado(cloud && cloud.data);
+    if (dl) dl.textContent = resumirEstado(local);
+
+    const cx  = document.getElementById('conflito');
+    const bn  = document.getElementById('conflito-nuvem');
+    const bl  = document.getElementById('conflito-local');
+    const antes = document.activeElement;
+
+    function fechar(escolha){
+      bn.removeEventListener('click', pegaNuvem);
+      bl.removeEventListener('click', pegaLocal);
+      document.removeEventListener('keydown', prende, true);
+      document.body.classList.remove('conflito-open');
+      cx.setAttribute('aria-hidden', 'true');
+      if (antes && antes.focus) { try{ antes.focus(); }catch(e){} }
+      resolve(escolha);
+    }
+    function pegaNuvem(){ fechar(true); }
+    function pegaLocal(){ fechar(false); }
+    function prende(e){
+      if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); return; } // sem saída silenciosa
+      if (e.key !== 'Tab') return;
+      const alvos = [bn, bl];
+      const i = alvos.indexOf(document.activeElement);
+      e.preventDefault();
+      alvos[(i + (e.shiftKey ? alvos.length - 1 : 1) + alvos.length) % alvos.length].focus();
+    }
+
+    bn.addEventListener('click', pegaNuvem);
+    bl.addEventListener('click', pegaLocal);
+    document.addEventListener('keydown', prende, true);
+    cx.setAttribute('aria-hidden', 'false');
+    document.body.classList.remove('gate-open');   // não empilhar dois modais
+    document.body.classList.add('conflito-open');
+    bn.focus();
+  });
+}
+
 async function syncFromCloud(user){
   try {
-    const snap = await get(ref(db, 'progresso/' + user.uid));
-    const localTs = parseInt(localStorage.getItem('aluizio_onu_mun_v1_ts') || '0', 10);
-    if (snap.exists() && (snap.val().ts || 0) > localTs && snap.val().data) {
-      // Nuvem mais recente: aplica nos campos e no localStorage
-      const cloud = snap.val();
-      localStorage.setItem('aluizio_onu_mun_v1', JSON.stringify(cloud.data));
-      localStorage.setItem('aluizio_onu_mun_v1_ts', String(cloud.ts));
-      if (window.__applyState) window.__applyState(cloud.data);
+    const snap  = await get(ref(db, 'progresso/' + user.uid));
+    const cloud = snap.exists() ? snap.val() : null;
+    const local = (window.__getState ? window.__getState() : null) || {};
+
+    const decisao = decideSync({
+      hasCloud:  !!cloud,
+      cloudRev:  cloud && Number.isFinite(cloud.rev) ? cloud.rev : 0,
+      baseRev:   getBaseRev(),
+      dirty:     isDirty(),
+      hasLocal:  hasContent(local),
+      identical: !!cloud && same(local, cloud.data)
+    });
+    const cloudRev = cloud && Number.isFinite(cloud.rev) ? cloud.rev : 0;
+
+    if (decisao === 'upload'){
+      await enviarAgora(user);
+    } else if (decisao === 'adopt'){
+      aplicarLocal(cloud.data, cloudRev);
       setSync('☁ Progresso carregado da nuvem (última edição em outro acesso).', true);
+    } else if (decisao === 'align'){
+      setBaseRev(cloudRev); clearDirty();
+      setSync('☁ Tudo sincronizado.', true);
+    } else if (decisao === 'conflict'){
+      const quando = new Date().toLocaleString('pt-BR');
+      const ficarComNuvem = await perguntarConflito(local, cloud);
+      if (ficarComNuvem){
+        guardarCopia(local, 'versão deste navegador, preterida em ' + quando);
+        aplicarLocal(cloud.data, cloudRev);
+        setSync('☁ Versão da nuvem aplicada. A outra ficou guardada neste navegador.', true);
+      } else {
+        guardarCopia(cloud.data, 'versão da nuvem, preterida em ' + quando);
+        markDirty();
+        await enviarAgora(user);
+        setSync('☁ Versão deste navegador enviada para a nuvem.', true);
+      }
     } else {
-      // Local mais recente (ou nuvem vazia): sobe o local
-      const local = window.__getState ? window.__getState() : null;
-      if (local && Object.keys(local).length) window.__cloudSave(local);
-      else setSync('☁ Nuvem conectada — seu progresso será salvo automaticamente.', true);
+      setSync('☁ Nuvem conectada — seu progresso será salvo automaticamente.', true);
     }
     window.__cloudOk = true;
   } catch (e) {
