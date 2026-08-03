@@ -43,7 +43,6 @@
         }
       }
     },
-
     "comites": {
       ".read": "auth != null && (auth.token.email === 'aluizio@aluizio.education' || root.child('config/inviteOnly').val() !== true || root.child('autorizados').child(auth.uid).exists())",
       ".write": "auth.token.email === 'aluizio@aluizio.education'"
@@ -111,6 +110,32 @@
         "historico": {
           ".read": "auth.token.email === 'aluizio@aluizio.education'",
           ".write": "auth.token.email === 'aluizio@aluizio.education'"
+        }
+      }
+    },
+    "quizGeopolitica": {
+      ".read": "auth.token.email === 'aluizio@aluizio.education'",
+      ".write": "auth.token.email === 'aluizio@aluizio.education'",
+      "$id": {
+        ".write": "auth != null && !data.exists()",
+        ".validate": "newData.hasChildren(['aluno','acertos','total','enviadoEm'])",
+        "aluno": {
+          ".validate": "newData.isString() && newData.val().length <= 80"
+        },
+        "acertos": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "total": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100"
+        },
+        "erradas": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "enviadoEm": {
+          ".validate": "newData.isNumber()"
+        },
+        "$outro": {
+          ".validate": false
         }
       }
     },
