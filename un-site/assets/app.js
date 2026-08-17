@@ -295,9 +295,9 @@ function bindNetlifyForm(formId, doneId){
     const body=new URLSearchParams(new FormData(form)).toString();
     fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body})
       .then(r=>{ if(!r.ok) throw new Error("net");
-        // Google Ads: conversao "Inscricao - Site UN (Model UN)"
+        // Inscricao pelo formulario — medida no GA4 (a conta do Google Ads foi encerrada).
         if (typeof gtag === "function") {
-          gtag("event", "conversion", { send_to: "AW-18276483241/HOw2CJSW-tAcEKmB9IpE", value: 1.0, currency: "BRL" });
+          gtag("event", "inscricao_formulario", { origem: "unitednations" });
         }
         form.hidden=true;
         const done=document.getElementById(doneId);
